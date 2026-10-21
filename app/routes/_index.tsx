@@ -84,13 +84,13 @@ export default function Homepage() {
 
   return (
     <div className="overflow-hidden">
-      <section className="grid bg-secondary tablet:min-h-[calc(100svh-90px)] tablet:grid-cols-[43%_57%]">
+      <section className="grid bg-secondary tablet:min-h-[min(620px,calc(100svh-90px))] tablet:grid-cols-[43%_57%]">
         <div className="order-2 flex flex-col items-start justify-center px-[5vw] py-16 tablet:order-1 tablet:py-24">
           <p className="text-xs font-medium uppercase tracking-[0.2em] text-primary">
             The new heirlooms
           </p>
 
-          <h1 className="mt-6 max-w-[8ch] font-display text-[clamp(3.8rem,7.3vw,7rem)] font-medium leading-[0.9] tracking-[-0.05em] text-ink">
+          <h1 className="mt-6 max-w-[8ch] font-display text-[clamp(2.75rem,5vw,4.5rem)] font-medium leading-[0.9] tracking-[-0.05em] text-ink">
             Wear your <em className="text-primary">story.</em>
           </h1>
 
@@ -118,7 +118,7 @@ export default function Homepage() {
               ? `Explore ${hero.title}`
               : 'Explore all pieces'
           }
-          className="group relative order-1 block min-h-[62svh] overflow-hidden bg-primary/10 tablet:order-2"
+          className="group relative order-1 block min-h-[48svh] overflow-hidden bg-primary/10 tablet:order-2"
         >
           {heroImage ? (
             <Image
@@ -155,7 +155,7 @@ export default function Homepage() {
       </div>
 
       <section
-        className="px-[5vw] py-20 tablet:py-28"
+        className="px-[5vw] py-14 tablet:py-20"
         aria-labelledby="featured-heading"
       >
         <div className="mb-12 flex items-end justify-between gap-6">
@@ -166,7 +166,7 @@ export default function Homepage() {
 
             <h2
               id="featured-heading"
-              className="mt-4 font-display text-[clamp(2.5rem,4vw,4rem)] leading-none tracking-tight"
+              className="mt-4 font-display text-[clamp(1.875rem,3vw,2.75rem)] leading-none tracking-tight"
             >
               Currently coveted
             </h2>
@@ -232,12 +232,12 @@ export default function Homepage() {
           ) : null}
         </div>
 
-        <div className="flex flex-col items-start justify-center px-[5vw] py-16 tablet:py-24">
+        <div className="flex flex-col items-start justify-center px-[5vw] py-12 tablet:py-16">
           <p className="text-xs uppercase tracking-[0.2em] text-secondary">
             Make it yours
           </p>
 
-          <h2 className="mt-6 max-w-[9ch] font-display text-[clamp(3rem,5.5vw,5.125rem)] leading-none tracking-tight">
+          <h2 className="mt-6 max-w-[9ch] font-display text-[clamp(2.25rem,4vw,3.5rem)] leading-none tracking-tight">
             One of one, just like you.
           </h2>
 
@@ -259,7 +259,7 @@ export default function Homepage() {
 
       {collections.length ? (
         <section
-          className="px-[5vw] py-20 tablet:py-28"
+          className="px-[5vw] py-14 tablet:py-20"
           aria-labelledby="collections-heading"
         >
           <p className="text-xs uppercase tracking-[0.2em] text-primary">
@@ -268,7 +268,7 @@ export default function Homepage() {
 
           <h2
             id="collections-heading"
-            className="mt-4 font-display text-[clamp(2.5rem,4vw,4rem)] leading-none tracking-tight"
+            className="mt-4 font-display text-[clamp(1.875rem,3vw,2.75rem)] leading-none tracking-tight"
           >
             Explore the collections
           </h2>

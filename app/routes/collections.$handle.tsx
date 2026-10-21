@@ -246,202 +246,157 @@ export default function CollectionPage() {
     priceMax !== '';
 
   return (
-    <section className="px-[5vw] pb-24 pt-16 tablet:pt-20">
-      <header className="mx-auto max-w-3xl text-center">
-        <p className="text-xs uppercase tracking-[0.2em] text-primary">
+    <section className="mx-auto max-w-[1400px] px-[4vw] pb-20 pt-10 tablet:pt-14">
+      <header className="mx-auto max-w-2xl text-center">
+        <p className="text-[11px] uppercase tracking-[0.2em] text-primary">
           Jeweliette collections
         </p>
-
-        <h1 className="mt-5 font-display text-[clamp(3rem,6vw,5.5rem)] leading-none tracking-tight">
+        <h1 className="mt-3 font-display text-[clamp(2.25rem,4vw,3.5rem)] leading-none tracking-tight">
           {collection.title}
         </h1>
-
         {collection.description ? (
-          <p className="mx-auto mt-6 max-w-xl text-base leading-7 text-primary">
+          <p className="mx-auto mt-4 max-w-md text-sm leading-6 text-primary">
             {collection.description}
           </p>
         ) : null}
       </header>
 
-      <Form
-        key={paginationKey}
-        method="get"
-        preventScrollReset
-        className="mb-10 mt-14 flex flex-wrap items-end gap-4 border-y border-line py-5"
-      >
-        {collection.products.filters.map((filter) => {
-          if (filter.type === 'PRICE_RANGE') {
-            return (
-              <fieldset
-                key={filter.id}
-                className="flex items-end gap-3"
-              >
-                <legend className="mb-2 text-xs uppercase tracking-wider text-primary">
-                  Price
-                </legend>
-
-                <label className="block">
-                  <span className="mb-2 block text-xs">
-                    Minimum
-                  </span>
-
-                  <input
-                    type="number"
-                    name="priceMin"
-                    min="0"
-                    step="0.01"
-                    defaultValue={priceMin}
-                    className="min-h-11 w-28 border border-line bg-paper px-3 text-base"
-                  />
-                </label>
-
-                <label className="block">
-                  <span className="mb-2 block text-xs">
-                    Maximum
-                  </span>
-
-                  <input
-                    type="number"
-                    name="priceMax"
-                    min="0"
-                    step="0.01"
-                    defaultValue={priceMax}
-                    className="min-h-11 w-28 border border-line bg-paper px-3 text-base"
-                  />
-                </label>
-              </fieldset>
-            );
-          }
-
-          return (
-            <details
-              key={filter.id}
-              className="w-full border border-line bg-paper sm:w-auto"
+      <Pagination key={paginationKey} connection={collection.products}>
+        {({nodes, PreviousLink, NextLink, isLoading}) => (
+          <>
+            <Form
+              key={paginationKey}
+              method="get"
+              preventScrollReset
+              onChange={(event) => event.currentTarget.requestSubmit()}
+              className="relative z-10 mt-10 flex items-stretch border-y border-line bg-cream"
             >
-              <summary className="cursor-pointer px-4 py-3 text-sm">
-                {filter.label}
-              </summary>
+              <p className="flex flex-1 items-center py-4 text-[11px] uppercase tracking-widest text-primary">
+                {nodes.length} {nodes.length === 1 ? 'piece' : 'pieces'}
+                {hasActiveFilters ? (
+                  <Link
+                    to={`/collections/${collection.handle}`}
+                    preventScrollReset
+                    className="ml-4 underline underline-offset-4"
+                  >
+                    Clear
+                  </Link>
+                ) : null}
+              </p>
 
-              <div className="max-h-72 min-w-56 overflow-y-auto border-t border-line px-4 py-3">
-                {filter.values.map((value) => {
-                  const input = filterInput(value.input);
-                  const selected = selectedFilters.includes(input);
+              {collection.products.filters.map((filter) => (
+                <details key={filter.id} className="group relative border-l border-line">
+                  <summary className="flex min-h-full cursor-pointer list-none items-center gap-3 px-5 py-4 text-[11px] uppercase tracking-widest [&::-webkit-details-marker]:hidden">
+                    {filter.label}
+                    <span aria-hidden="true" className="text-base leading-none group-open:hidden">+</span>
+                    <span aria-hidden="true" className="hidden text-base leading-none group-open:inline">−</span>
+                  </summary>
 
-                  return (
-                    <label
-                      key={value.id}
-                      className="flex min-h-11 items-center gap-3 text-sm"
-                    >
+                  <div className="absolute right-0 top-full z-20 max-h-80 min-w-60 overflow-y-auto border border-line bg-paper p-4 shadow-stack">
+                    {filter.type === 'PRICE_RANGE' ? (
+                      <div className="flex items-end gap-3">
+                        <label className="block text-xs">
+                          Min
+                          <input
+                            type="number"
+                            name="priceMin"
+                            min="0"
+                            step="1"
+                            defaultValue={priceMin}
+                            className="mt-1 block h-10 w-24 border border-line bg-white px-2 text-sm"
+                          />
+                        </label>
+                        <label className="block text-xs">
+                          Max
+                          <input
+                            type="number"
+                            name="priceMax"
+                            min="0"
+                            step="1"
+                            defaultValue={priceMax}
+                            className="mt-1 block h-10 w-24 border border-line bg-white px-2 text-sm"
+                          />
+                        </label>
+                      </div>
+                    ) : (
+                      filter.values.map((value) => {
+                        const input = filterInput(value.input);
+                        const selected = selectedFilters.includes(input);
+                        return (
+                          <label
+                            key={value.id}
+                            className="flex min-h-10 items-center gap-3 text-sm"
+                          >
+                            <input
+                              type="checkbox"
+                              name="filter"
+                              value={input}
+                              defaultChecked={selected}
+                              disabled={value.count === 0 && !selected}
+                              className="h-4 w-4 accent-primary"
+                            />
+                            <span>
+                            {value.label}
+                              <span className="ml-2 text-primary">({value.count})</span>
+                          </span>
+                          </label>
+                        );
+                      })
+                    )}
+                  </div>
+                </details>
+              ))}
+
+              <details className="group relative border-l border-line">
+                <summary className="flex min-h-full cursor-pointer list-none items-center gap-3 px-5 py-4 text-[11px] uppercase tracking-widest [&::-webkit-details-marker]:hidden">
+                  Sort by
+                  <span aria-hidden="true" className="text-base leading-none group-open:hidden">+</span>
+                  <span aria-hidden="true" className="hidden text-base leading-none group-open:inline">−</span>
+                </summary>
+                <div className="absolute right-0 top-full z-20 min-w-52 border border-line bg-paper p-4 shadow-stack">
+                  {Object.entries(SORT_OPTIONS).map(([value, option]) => (
+                    <label key={value} className="flex min-h-10 items-center gap-3 text-sm">
                       <input
-                        type="checkbox"
-                        name="filter"
-                        value={input}
-                        defaultChecked={selected}
-                        disabled={value.count === 0 && !selected}
+                        type="radio"
+                        name="sort"
+                        value={value}
+                        defaultChecked={sort === value}
                         className="h-4 w-4 accent-primary"
                       />
-
-                      <span>
-                        {value.label}
-                        <span className="ml-2 text-primary">
-                          ({value.count})
-                        </span>
-                      </span>
+                      {option.label}
                     </label>
-                  );
-                })}
-              </div>
-            </details>
-          );
-        })}
+                  ))}
+                </div>
+              </details>
+            </Form>
 
-        <label className="block sm:ml-auto">
-          <span className="mb-2 block text-xs uppercase tracking-wider text-primary">
-            Sort by
-          </span>
-
-          <select
-            name="sort"
-            defaultValue={sort}
-            className="min-h-11 border border-line bg-paper px-3 text-base"
-          >
-            {Object.entries(SORT_OPTIONS).map(
-              ([value, option]) => (
-                <option key={value} value={value}>
-                  {option.label}
-                </option>
-              ),
-            )}
-          </select>
-        </label>
-
-        <button
-          type="submit"
-          className="min-h-11 bg-primary px-5 text-xs uppercase tracking-widest text-white transition-colors hover:bg-ink"
-        >
-          Apply
-        </button>
-
-        {hasActiveFilters ? (
-          <Link
-            to={`/collections/${collection.handle}`}
-            preventScrollReset
-            className="inline-flex min-h-11 items-center px-2 text-sm underline underline-offset-4"
-          >
-            Clear filters
-          </Link>
-        ) : null}
-      </Form>
-
-      <Pagination
-        key={paginationKey}
-        connection={collection.products}
-      >
-        {({
-            nodes,
-            PreviousLink,
-            NextLink,
-            isLoading,
-          }) => (
-          <>
-            <div className="mb-6 flex justify-center">
-              <PreviousLink className="inline-flex min-h-11 items-center border-b border-primary px-3 text-xs uppercase tracking-widest text-primary">
+            <div className="mt-6 flex justify-center">
+              <PreviousLink className="inline-flex min-h-10 items-center border-b border-primary text-[11px] uppercase tracking-widest text-primary">
                 {isLoading ? 'Loading…' : 'Load previous'}
               </PreviousLink>
             </div>
 
             {nodes.length ? (
-              <div className="grid grid-cols-2 gap-x-4 gap-y-12 lg:grid-cols-3">
+              <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 xl:grid-cols-4">
                 {nodes.map((product, index) => (
                   <ProductItem
                     key={product.id}
                     product={product}
-                    loading={index < 6 ? 'eager' : 'lazy'}
+                    loading={index < 8 ? 'eager' : 'lazy'}
                   />
                 ))}
               </div>
             ) : (
-              <div className="border-y border-line py-16 text-center">
-                <h2 className="font-display text-3xl">
-                  No pieces found.
-                </h2>
-
-                <p className="mt-4 text-base text-primary">
-                  Try a different selection or clear your
-                  filters.
+              <div className="mt-8 border-y border-line py-16 text-center">
+                <h2 className="font-display text-2xl">No pieces found.</h2>
+                <p className="mt-3 text-sm text-primary">
+                  Try a different selection or clear your filters.
                 </p>
-
-                <Link
-                  to={`/collections/${collection.handle}`}
-                  className="mt-6 inline-flex min-h-11 items-center border-b border-primary text-sm text-primary"
-                >
-                  View the collection
-                </Link>
               </div>
             )}
 
             <div className="mt-12 flex justify-center">
-              <NextLink className="inline-flex min-h-11 items-center border border-primary px-6 text-xs uppercase tracking-widest text-primary transition-colors hover:bg-primary hover:text-white">
+              <NextLink className="inline-flex min-h-11 items-center border border-primary px-6 text-[11px] uppercase tracking-widest text-primary transition-colors hover:bg-primary hover:text-white">
                 {isLoading ? 'Loading…' : 'Load more'}
               </NextLink>
             </div>
@@ -450,12 +405,7 @@ export default function CollectionPage() {
       </Pagination>
 
       <Analytics.CollectionView
-        data={{
-          collection: {
-            id: collection.id,
-            handle: collection.handle,
-          },
-        }}
+        data={{collection: {id: collection.id, handle: collection.handle}}}
       />
     </section>
   );

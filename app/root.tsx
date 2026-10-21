@@ -141,11 +141,11 @@ export function ErrorBoundary() {
   return (
     <main className="grid min-h-dvh place-items-center bg-cream px-6 py-20 text-center">
       <div>
-        <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">Erro {errorStatus}</p>
-        <h1 className="mt-4 font-display text-5xl text-primary">Algo não correu bem.</h1>
+        <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">Error {errorStatus}</p>
+        <h1 className="mt-4 font-display text-5xl text-primary">Something went wrong.</h1>
         <p className="mx-auto mt-5 max-w-[55ch] text-sm leading-7 text-primary/75">{errorMessage}</p>
         <a className="mt-8 inline-flex min-h-11 items-center border-b border-ink text-xs font-medium uppercase tracking-[0.13em]" href="/">
-          Voltar ao início
+          Back to home
         </a>
       </div>
     </main>

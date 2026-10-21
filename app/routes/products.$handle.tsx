@@ -1,4 +1,5 @@
-import {redirect, useLoaderData} from 'react-router';
+import {Suspense} from 'react';
+import {Await, Link, redirect, useLoaderData} from 'react-router';
 import type {Route} from './+types/products.$handle';
 import {
   getSelectedProductOptions,
@@ -9,117 +10,175 @@ import {
   useSelectedOptionInUrlParam,
 } from '@shopify/hydrogen';
 import {ProductPrice} from '~/components/ProductPrice';
-import {ProductImage} from '~/components/ProductImage';
 import {ProductForm} from '~/components/ProductForm';
+import {ProductGallery} from '~/components/ProductGallery';
+import {ProductItem} from '~/components/ProductItem';
+import {FavoriteButton} from '~/components/FavoriteButton';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
+import {JEWELIETTE_PRODUCT_CARD_FRAGMENT} from '~/lib/jeweliette-catalog';
 
-export const meta: Route.MetaFunction = ({data}) => {
-  return [
-    {title: `Hydrogen | ${data?.product.title ?? ''}`},
-    {
-      rel: 'canonical',
-      href: `/products/${data?.product.handle}`,
-    },
-  ];
-};
+export const meta: Route.MetaFunction = ({data}) => [
+  {title: `${data?.product.title ?? 'Product'} | Jeweliette`},
+  {name: 'description', content: data?.product.seo.description ?? data?.product.description ?? ''},
+  {rel: 'canonical', href: `/products/${data?.product.handle}`},
+];
 
 export async function loader(args: Route.LoaderArgs) {
-  // Start fetching non-critical data without blocking time to first byte
-  const deferredData = loadDeferredData(args);
+  const {product} = await loadCriticalData(args);
 
-  // Await the critical data required to render initial state of the page
-  const criticalData = await loadCriticalData(args);
+  const recommendations = args.context.storefront
+    .query(RECOMMENDATIONS_QUERY, {
+      variables: {productId: product.id, language: 'EN'},
+    })
+    .then((result) => result.productRecommendations ?? [])
+    .catch(() => []);
 
-  return {...deferredData, ...criticalData};
+  return {product, recommendations};
 }
 
-/**
- * Load data necessary for rendering content above the fold. This is the critical data
- * needed to render the page. If it's unavailable, the whole page should 400 or 500 error.
- */
 async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
   const {handle} = params;
-  const {storefront} = context;
+  if (!handle) throw new Error('Expected product handle to be defined');
 
-  if (!handle) {
-    throw new Error('Expected product handle to be defined');
-  }
+  const {product} = await context.storefront.query(PRODUCT_QUERY, {
+    variables: {
+      handle,
+      language: 'EN',
+      selectedOptions: getSelectedProductOptions(request),
+    },
+  });
 
-  const [{product}] = await Promise.all([
-    storefront.query(PRODUCT_QUERY, {
-      variables: {handle, selectedOptions: getSelectedProductOptions(request)},
-    }),
-    // Add other queries here, so that they are loaded in parallel
-  ]);
+  if (!product?.id) throw new Response(null, {status: 404});
 
-  if (!product?.id) {
-    throw new Response(null, {status: 404});
-  }
-
-  // The API handle might be localized, so redirect to the localized handle
   redirectIfHandleIsLocalized(request, {handle, data: product});
-
-  return {
-    product,
-  };
-}
-
-/**
- * Load data for rendering content below the fold. This data is deferred and will be
- * fetched after the initial page load. If it's unavailable, the page should still 200.
- * Make sure to not throw any errors here, as it will cause the page to 500.
- */
-function loadDeferredData({context, params}: Route.LoaderArgs) {
-  // Put any API calls that is not critical to be available on first page render
-  // For example: product reviews, product recommendations, social feeds.
-
-  return {};
+  return {product};
 }
 
 export default function Product() {
-  const {product} = useLoaderData<typeof loader>();
+  const {product, recommendations} = useLoaderData<typeof loader>();
 
-  // Optimistically selects a variant with given available variant information
   const selectedVariant = useOptimisticVariant(
     product.selectedOrFirstAvailableVariant,
     getAdjacentAndFirstAvailableVariants(product),
   );
 
-  // Sets the search param to the selected variant without navigation
-  // only when no search params are set in the url
   useSelectedOptionInUrlParam(selectedVariant.selectedOptions);
 
-  // Get the product options array
   const productOptions = getProductOptions({
     ...product,
     selectedOrFirstAvailableVariant: selectedVariant,
   });
 
-  const {title, descriptionHtml} = product;
+  const collection = product.collections.nodes[0];
 
   return (
-    <div className="product">
-      <ProductImage image={selectedVariant?.image} />
-      <div className="product-main">
-        <h1>{title}</h1>
-        <ProductPrice
-          price={selectedVariant?.price}
-          compareAtPrice={selectedVariant?.compareAtPrice}
+    <div className="mx-auto max-w-[1280px] px-[4vw] pb-20 pt-6">
+      <nav
+        aria-label="Breadcrumb"
+        className="mb-6 flex flex-wrap gap-2 text-[11px] uppercase tracking-widest text-primary"
+      >
+        <Link to="/" className="hover:text-ink">Home</Link>
+        {collection ? (
+          <>
+            <span aria-hidden="true">/</span>
+            <Link to={`/collections/${collection.handle}`} className="hover:text-ink">
+              {collection.title}
+            </Link>
+          </>
+        ) : null}
+        <span aria-hidden="true">/</span>
+        <span className="text-ink" aria-current="page">{product.title}</span>
+      </nav>
+
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-14">
+        <ProductGallery
+          images={product.images.nodes}
+          variantImage={selectedVariant?.image}
+          title={product.title}
         />
-        <br />
-        <ProductForm
-          productOptions={productOptions}
-          selectedVariant={selectedVariant}
-        />
-        <br />
-        <br />
-        <p>
-          <strong>Description</strong>
-        </p>
-        <br />
-        <div dangerouslySetInnerHTML={{__html: descriptionHtml}} />
-        <br />
+
+        <div className="lg:sticky lg:top-24 lg:self-start">
+          {product.material?.value ? (
+            <p className="text-[11px] uppercase tracking-[0.2em] text-primary">
+              {product.material.value}
+            </p>
+          ) : null}
+
+          <div className="mt-3 flex items-start justify-between gap-4">
+            <h1 className="font-display text-[clamp(1.75rem,3vw,2.5rem)] leading-tight">
+              {product.title}
+            </h1>
+            <FavoriteButton productId={product.id} title={product.title} />
+          </div>
+
+          <div className="mt-3 text-lg">
+            <ProductPrice
+              price={selectedVariant?.price}
+              compareAtPrice={selectedVariant?.compareAtPrice}
+            />
+          </div>
+
+          <div className="mt-8">
+            <ProductForm productOptions={productOptions} selectedVariant={selectedVariant} />
+          </div>
+
+          <div className="mt-10 divide-y divide-line border-y border-line text-sm">
+            <details open className="group py-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between text-[11px] uppercase tracking-widest [&::-webkit-details-marker]:hidden">
+                Description
+                <span aria-hidden="true" className="group-open:hidden">+</span>
+                <span aria-hidden="true" className="hidden group-open:inline">−</span>
+              </summary>
+              <div
+                className="prose-sm mt-4 leading-7 text-primary [&_p]:mb-3"
+                dangerouslySetInnerHTML={{__html: product.descriptionHtml}}
+              />
+            </details>
+
+            {product.material?.value ? (
+              <details className="group py-4">
+                <summary className="flex cursor-pointer list-none items-center justify-between text-[11px] uppercase tracking-widest [&::-webkit-details-marker]:hidden">
+                  Materials
+                  <span aria-hidden="true" className="group-open:hidden">+</span>
+                  <span aria-hidden="true" className="hidden group-open:inline">−</span>
+                </summary>
+                <p className="mt-4 leading-7 text-primary">{product.material.value}</p>
+              </details>
+            ) : null}
+
+            <details className="group py-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between text-[11px] uppercase tracking-widest [&::-webkit-details-marker]:hidden">
+                Shipping
+                <span aria-hidden="true" className="group-open:hidden">+</span>
+                <span aria-hidden="true" className="hidden group-open:inline">−</span>
+              </summary>
+              <p className="mt-4 leading-7 text-primary">
+                Shipping options and taxes are calculated at checkout.
+              </p>
+            </details>
+          </div>
+        </div>
       </div>
+
+      <Suspense fallback={null}>
+        <Await resolve={recommendations}>
+          {(items) =>
+            items.length ? (
+              <section className="mt-20" aria-labelledby="related-heading">
+                <h2 id="related-heading" className="font-display text-2xl">
+                  You may also like
+                </h2>
+                <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-4">
+                  {items.slice(0, 4).map((item) => (
+                    <ProductItem key={item.id} product={item} />
+                  ))}
+                </div>
+              </section>
+            ) : null
+          }
+        </Await>
+      </Suspense>
+
       <Analytics.ProductView
         data={{
           products: [
@@ -142,37 +201,15 @@ export default function Product() {
 const PRODUCT_VARIANT_FRAGMENT = `#graphql
   fragment ProductVariant on ProductVariant {
     availableForSale
-    compareAtPrice {
-      amount
-      currencyCode
-    }
+    compareAtPrice { amount currencyCode }
     id
-    image {
-      __typename
-      id
-      url
-      altText
-      width
-      height
-    }
-    price {
-      amount
-      currencyCode
-    }
-    product {
-      title
-      handle
-    }
-    selectedOptions {
-      name
-      value
-    }
+    image { __typename id url altText width height }
+    price { amount currencyCode }
+    product { title handle }
+    selectedOptions { name value }
     sku
     title
-    unitPrice {
-      amount
-      currencyCode
-    }
+    unitPrice { amount currencyCode }
   }
 ` as const;
 
@@ -186,33 +223,22 @@ const PRODUCT_FRAGMENT = `#graphql
     description
     encodedVariantExistence
     encodedVariantAvailability
+    material: metafield(namespace: "custom", key: "material") { value }
+    images(first: 10) { nodes { id url altText width height } }
+    collections(first: 1) { nodes { title handle } }
     options {
       name
       optionValues {
         name
-        firstSelectableVariant {
-          ...ProductVariant
-        }
-        swatch {
-          color
-          image {
-            previewImage {
-              url
-            }
-          }
-        }
+        firstSelectableVariant { ...ProductVariant }
+        swatch { color image { previewImage { url } } }
       }
     }
     selectedOrFirstAvailableVariant(selectedOptions: $selectedOptions, ignoreUnknownOptions: true, caseInsensitiveMatch: true) {
       ...ProductVariant
     }
-    adjacentVariants (selectedOptions: $selectedOptions) {
-      ...ProductVariant
-    }
-    seo {
-      description
-      title
-    }
+    adjacentVariants(selectedOptions: $selectedOptions) { ...ProductVariant }
+    seo { description title }
   }
   ${PRODUCT_VARIANT_FRAGMENT}
 ` as const;
@@ -224,9 +250,20 @@ const PRODUCT_QUERY = `#graphql
     $language: LanguageCode
     $selectedOptions: [SelectedOptionInput!]!
   ) @inContext(country: $country, language: $language) {
-    product(handle: $handle) {
-      ...Product
-    }
+    product(handle: $handle) { ...Product }
   }
   ${PRODUCT_FRAGMENT}
+` as const;
+
+const RECOMMENDATIONS_QUERY = `#graphql
+  ${JEWELIETTE_PRODUCT_CARD_FRAGMENT}
+  query JewelietteRecommendations(
+    $productId: ID!
+    $country: CountryCode
+    $language: LanguageCode
+  ) @inContext(country: $country, language: $language) {
+    productRecommendations(productId: $productId) {
+      ...JewelietteProductCard
+    }
+  }
 ` as const;

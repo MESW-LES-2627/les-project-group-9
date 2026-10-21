@@ -71,3 +71,15 @@
         transition-duration: 0.01ms !important;
     }
 }
+
+@layer base {
+    html {
+        font-size: 87.5%; /* 14px em vez de 16px */
+    }
+
+    @media (min-width: 1700px) {
+        html {
+            font-size: 93.75%;
+        }
+    }
+}

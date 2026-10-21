@@ -1,5 +1,5 @@
 import {Suspense} from 'react';
-import {Await, NavLink, useAsyncValue} from 'react-router';
+import {Await, NavLink, useAsyncValue, Link} from 'react-router';
 import {
   type CartViewPayload,
   useAnalytics,
@@ -8,6 +8,7 @@ import {
 import type {HeaderQuery, CartApiQueryFragment} from 'storefrontapi.generated';
 import {useAside} from '~/components/Aside';
 import {Icon} from '~/components/Icon';
+import {useFavorites} from '~/lib/favorites';
 
 interface HeaderProps {
   header: HeaderQuery;
@@ -37,15 +38,15 @@ export function Header({
   return (
     <>
       <div className="flex h-6 items-center justify-center bg-primary px-4 text-center text-xs uppercase tracking-[0.16em] text-white">
-        <span>Envio gratuito em encomendas superiores a 100 €</span>
-        <span className="hidden sm:inline"> · Criadas para durar</span>
+        <span>Free shipping on orders over €100</span>
+        <span className="hidden sm:inline"> · Made to last</span>
       </div>
       <header className="sticky top-0 z-50 grid h-[66px] grid-cols-[44px_1fr_auto] items-center border-b border-line bg-paper px-4 tablet:grid-cols-[minmax(140px,1fr)_auto_minmax(140px,1fr)] tablet:px-[3vw]">
         <div className="tablet:hidden">
           <HeaderMenuMobileToggle />
         </div>
         <NavLink
-          aria-label={`${shop.name} — início`}
+          aria-label={`${shop.name} — home`}
           className="justify-self-center font-display text-2xl font-medium tracking-[-0.04em] text-primary tablet:justify-self-start"
           prefetch="intent"
           to="/"
@@ -81,7 +82,7 @@ export function HeaderMenu({
 
   return (
     <nav
-      aria-label={mobile ? 'Menu móvel' : 'Navegação principal'}
+      aria-label={mobile ? 'Mobile menu' : 'Main navigation'}
       className={
         mobile
           ? 'flex flex-col gap-1 px-5 py-6'
@@ -96,7 +97,7 @@ export function HeaderMenu({
           prefetch="intent"
           to="/"
         >
-          <span><span className="mr-4 font-sans text-xs">01</span>Início</span>
+          <span><span className="mr-4 font-sans text-xs">01</span>Home</span>
           <Icon name="arrow" size={18} />
         </NavLink>
       )}
@@ -250,3 +251,23 @@ const FALLBACK_HEADER_MENU = {
     {id: 'custom', resourceId: null, tags: [], title: 'Custom', type: 'HTTP', url: '/collections/custom', items: []},
   ],
 };
+
+function FavoritesLink() {
+  const {ids} = useFavorites();
+  return (
+    <Link
+      to="/favorites"
+      aria-label={`Favorites${ids.length ? ` (${ids.length})` : ''}`}
+      className="relative flex h-10 w-10 items-center justify-center text-ink"
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+        <path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 2.8 5 6.2 5c2 0 3.5 1.1 4.3 2.4h3C14.3 6.1 15.8 5 17.8 5c3.4 0 5.3 3.4 3.8 6.8C19.5 16.4 12 21 12 21z" />
+      </svg>
+      {ids.length > 0 ? (
+        <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] text-white">
+          {ids.length}
+        </span>
+      ) : null}
+    </Link>
+  );
+}
