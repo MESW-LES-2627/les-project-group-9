@@ -63,7 +63,7 @@ export function PageLayout({
 function CartAside({cart}: {cart: PageLayoutProps['cart']}) {
   return (
     <Aside type="cart" heading="Shopping bag">
-      <div className="p-5 sm:p-8">
+      <div className="p-5 sm:p-8 h-full">
         <Suspense fallback={<CartSkeleton />}>
           <Await resolve={cart}>
             {(resolvedCart) => <CartMain cart={resolvedCart} layout="aside" />}

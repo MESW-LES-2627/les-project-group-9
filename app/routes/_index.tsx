@@ -273,7 +273,7 @@ export default function Homepage() {
             Explore the collections
           </h2>
 
-          <div className="mt-10 grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className="mt-10 grid grid-cols-2 md:grid-cols-3 gap-4 lg:grid-cols-4 xl:grid-cols-5">
             {collections.map((collection) => {
               const image =
                 collection.image ??

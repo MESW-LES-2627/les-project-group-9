@@ -149,6 +149,9 @@ function HeaderCtas({
       aria-label="Account actions"
       className="flex items-center justify-end gap-1 text-primary sm:gap-2"
     >
+      <SearchToggle />
+      <FavoritesLink />
+
       <NavLink
         aria-label="Account"
         className="hidden size-11 place-items-center hover:text-ink tablet:grid"
@@ -161,7 +164,6 @@ function HeaderCtas({
           </Await>
         </Suspense>
       </NavLink>
-      <SearchToggle />
       <CartToggle cart={cart} />
     </nav>
   );
