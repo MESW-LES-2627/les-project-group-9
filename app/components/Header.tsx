@@ -145,11 +145,11 @@ function HeaderCtas({
 }: Pick<HeaderProps, 'isLoggedIn' | 'cart'>) {
   return (
     <nav
-      aria-label="Ações da conta"
+      aria-label="Account actions"
       className="flex items-center justify-end gap-1 text-primary sm:gap-2"
     >
       <NavLink
-        aria-label="Conta"
+        aria-label="Account"
         className="hidden size-11 place-items-center hover:text-ink tablet:grid"
         prefetch="intent"
         to="/account"
@@ -170,7 +170,7 @@ function HeaderMenuMobileToggle() {
   const {open} = useAside();
   return (
     <button
-      aria-label="Abrir menu"
+      aria-label="Open menu"
       className="grid size-11 place-items-center text-primary"
       onClick={() => open('mobile')}
       type="button"
@@ -184,7 +184,7 @@ function SearchToggle() {
   const {open} = useAside();
   return (
     <button
-      aria-label="Pesquisar"
+      aria-label="Search"
       className="grid size-11 place-items-center hover:text-ink"
       onClick={() => open('search')}
       type="button"
@@ -200,7 +200,7 @@ function CartBadge({count}: {count: number}) {
 
   return (
     <a
-      aria-label={`Abrir carrinho com ${count} artigos`}
+      aria-label={`Open cart with ${count} items`}
       className="relative grid size-11 place-items-center hover:text-ink"
       href="/cart"
       onClick={(event) => {

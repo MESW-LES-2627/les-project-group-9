@@ -39,7 +39,7 @@ export function PageLayout({
         className="fixed left-4 top-4 z-[100] -translate-y-24 bg-ink px-4 py-2 text-sm text-white focus:translate-y-0"
         href="#main-content"
       >
-        Saltar para o conteúdo
+        Skip to content
       </a>
       <CartAside cart={cart} />
       <SearchAside />
@@ -76,7 +76,7 @@ function CartAside({cart}: {cart: PageLayoutProps['cart']}) {
 
 function CartSkeleton() {
   return (
-    <div aria-label="A carregar carrinho" className="animate-pulse space-y-5">
+    <div aria-label="Loading cart" className="animate-pulse space-y-5">
       {[0, 1].map((item) => (
         <div className="flex gap-4" key={item}>
           <div className="h-28 w-24 bg-secondary/60" />
@@ -107,12 +107,12 @@ function SearchAside() {
                 name="q"
                 onChange={fetchResults}
                 onFocus={fetchResults}
-                placeholder="O que procuras?"
+                placeholder="What are you looking for?"
                 ref={inputRef}
                 type="search"
               />
               <button
-                aria-label="Ver todos os resultados"
+                aria-label="See all results"
                 className="grid size-11 shrink-0 place-items-center text-primary hover:text-ink"
                 onClick={goToSearch}
                 type="button"
@@ -129,19 +129,19 @@ function SearchAside() {
               const {articles, collections, pages, products, queries} = items;
 
               if (state === 'loading' && term.current) {
-                return <p className="text-sm text-primary">A pesquisar…</p>;
+                return <p className="text-sm text-primary">Searching…</p>;
               }
 
               if (!term.current) {
                 return (
                   <div>
                     <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
-                      Explorar
+                      Explore
                     </p>
                     <div className="mt-5 flex flex-wrap gap-x-8 gap-y-3 font-display text-xl text-primary sm:text-2xl">
-                      <Link onClick={closeSearch} to="/collections/all">Novidades</Link>
-                      <Link onClick={closeSearch} to="/collections/jewelry">Joias</Link>
-                      <Link onClick={closeSearch} to="/collections/custom">Personalização</Link>
+                      <Link onClick={closeSearch} to="/collections/all">New Arrivals</Link>
+                      <Link onClick={closeSearch} to="/collections/jewelry">Jewelry</Link>
+                      <Link onClick={closeSearch} to="/collections/custom">Personalization</Link>
                     </div>
                   </div>
                 );
@@ -150,9 +150,9 @@ function SearchAside() {
               if (!total) {
                 return (
                   <div className="py-12 text-center">
-                    <p className="font-display text-3xl text-primary">Sem resultados</p>
+                    <p className="font-display text-3xl text-primary">No results</p>
                     <p className="mt-3 text-sm text-primary/70">
-                      Tenta outro termo para <q>{term.current}</q>.
+                      Try another term for <q>{term.current}</q>.
                     </p>
                   </div>
                 );
@@ -173,7 +173,7 @@ function SearchAside() {
                     onClick={closeSearch}
                     to={`${SEARCH_ENDPOINT}?q=${encodeURIComponent(term.current)}`}
                   >
-                    Ver todos os resultados <Icon name="arrow" size={16} />
+                    See all results <Icon name="arrow" size={16} />
                   </Link>
                 </>
               );
@@ -202,7 +202,7 @@ function MobileMenuAside({
       />
       <div className="mt-6 grid gap-3 px-5 text-xs font-medium uppercase tracking-[0.14em] text-primary">
         <Link className="flex min-h-11 items-center border-b border-line" to="/account">
-          A minha conta
+          My account
         </Link>
         <Link className="flex min-h-11 items-center border-b border-line" to="/cart">
           Shopping bag

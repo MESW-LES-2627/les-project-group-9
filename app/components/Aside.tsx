@@ -59,7 +59,7 @@ export function Aside({
       role="dialog"
     >
       <button
-        aria-label="Fechar painel"
+        aria-label="Close panel"
         className="absolute inset-0 h-full w-full cursor-default"
         onClick={close}
         type="button"
@@ -79,7 +79,7 @@ export function Aside({
             {heading}
           </h2>
           <button
-            aria-label="Fechar"
+            aria-label="Close"
             className="grid size-11 place-items-center text-primary hover:text-ink"
             onClick={close}
             type="button"
