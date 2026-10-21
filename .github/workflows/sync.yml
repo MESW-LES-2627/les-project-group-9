@@ -1,0 +1,32 @@
+name: Sync All Branches to Personal Repo
+
+on:
+  push:
+    branches:
+      - '**' # Escuta push em qualquer branch
+  create:
+  # Escuta quando uma nova branch ou tag é criada no repositório original
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Necessário para trazer todo o histórico de todas as branches
+
+      - name: Push all branches to personal repository
+        env:
+          PERSONAL_PAT: ${{ secrets.PERSONAL_PAT }}
+        run: |
+          git config --global user.name "GitHub Action Bot"
+          git config --global user.email "action@github.com"
+          
+          git remote add personal https://x-access-token:${{ secrets.PERSONAL_PAT }}@github.com/FEUP-tiago-repositories/lesw.git
+          
+          # Busca todas as referências do remote original para garantir que o runner tem tudo atualizado
+          git fetch origin --prune
+          
+          # Envia todas as branches locais/remotas para o repositório pessoal mantendo os mesmos nomes
+          git push personal '+refs/remotes/origin/*:refs/heads/*' --force
