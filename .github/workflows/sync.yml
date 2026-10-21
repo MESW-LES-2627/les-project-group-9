@@ -3,9 +3,8 @@ name: Sync All Branches to Personal Repo
 on:
   push:
     branches:
-      - '**' # Escuta push em qualquer branch
+      - '**'
   create:
-  # Escuta quando uma nova branch ou tag é criada no repositório original
 
 jobs:
   sync:
@@ -14,19 +13,33 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Necessário para trazer todo o histórico de todas as branches
-
-      - name: Push all branches to personal repository
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify Secret
+        env:
+          PERSONAL_PAT: ${{ secrets.PERSONAL_PAT }}
+        run: |
+          if [ -z "$PERSONAL_PAT" ]; then
+            echo "ERRO: O Secret PERSONAL_PAT está VAZIO ou não foi encontrado!"
+            exit 1
+          else
+            echo "O Secret PERSONAL_PAT foi carregado com sucesso."
+          fi
+      - name: Push all branches to destination
         env:
           PERSONAL_PAT: ${{ secrets.PERSONAL_PAT }}
         run: |
           git config --global user.name "GitHub Action Bot"
           git config --global user.email "action@github.com"
           
-          git remote add personal https://x-access-token:${{ secrets.PERSONAL_PAT }}@github.com/FEUP-tiago-repositories/lesw.git
+          # Remove remote se já existir de execuções anteriores
+          git remote remove personal 2>/dev/null || true
           
-          # Busca todas as referências do remote original para garantir que o runner tem tudo atualizado
+          # Adiciona o remote com o token embutido na URL
+          git remote add personal https://x-access-token:${PERSONAL_PAT}@github.com/FEUP-tiago-repositories/lesw.git
+          
+          # Garante o fetch de todas as branches
           git fetch origin --prune
           
-          # Envia todas as branches locais/remotas para o repositório pessoal mantendo os mesmos nomes
+          # Executa o push de todas as branches
           git push personal '+refs/remotes/origin/*:refs/heads/*' --force
