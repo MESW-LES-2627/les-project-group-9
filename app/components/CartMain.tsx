@@ -13,7 +13,7 @@ export type CartMainProps = {
 };
 
 export type LineItemChildrenMap = {[parentId: string]: CartLine[]};
-/** Returns a map of all line items and their children. */
+
 function getLineItemChildrenMap(lines: CartLine[]): LineItemChildrenMap {
   const children: LineItemChildrenMap = {};
   for (const line of lines) {
@@ -32,37 +32,36 @@ function getLineItemChildrenMap(lines: CartLine[]): LineItemChildrenMap {
   }
   return children;
 }
-/**
- * The main cart component that displays the cart items and summary.
- * It is used by both the /cart route and the cart aside dialog.
- */
+
 export function CartMain({layout, cart: originalCart}: CartMainProps) {
-  // The useOptimisticCart hook applies pending actions to the cart
-  // so the user immediately sees feedback when they modify the cart.
   const cart = useOptimisticCart(originalCart);
 
-  const linesCount = Boolean(cart?.lines?.nodes?.length || 0);
-  const withDiscount =
-    cart &&
-    Boolean(cart?.discountCodes?.filter((code) => code.applicable)?.length);
-  const className = `cart-main ${withDiscount ? 'with-discount' : ''}`;
+  const hasLines = Boolean(cart?.lines?.nodes?.length);
   const cartHasItems = cart?.totalQuantity ? cart.totalQuantity > 0 : false;
   const childrenMap = getLineItemChildrenMap(cart?.lines?.nodes ?? []);
 
   return (
     <section
-      className={className}
       aria-label={layout === 'page' ? 'Cart page' : 'Cart drawer'}
+      className={
+        layout === 'page'
+          ? 'mx-auto w-full max-w-3xl px-[5vw] py-16'
+          : 'flex h-full flex-col'
+      }
     >
-      <CartEmpty hidden={linesCount} layout={layout} />
-      <div className="cart-details">
-        <p id="cart-lines" className="sr-only">
-          Line items
-        </p>
-        <div>
-          <ul aria-labelledby="cart-lines">
+      {!hasLines ? <CartEmpty /> : null}
+
+      {hasLines ? (
+        <div className="flex min-h-0 flex-1 flex-col">
+          <p id="cart-lines" className="sr-only">
+            Line items
+          </p>
+
+          <ul
+            aria-labelledby="cart-lines"
+            className="flex-1 divide-y divide-line"
+          >
             {(cart?.lines?.nodes ?? []).map((line) => {
-              // we do not render non-parent lines at the root of the cart
               if (
                 'parentRelationship' in line &&
                 line.parentRelationship?.parent
@@ -79,30 +78,33 @@ export function CartMain({layout, cart: originalCart}: CartMainProps) {
               );
             })}
           </ul>
+
+          {cartHasItems ? <CartSummary cart={cart} layout={layout} /> : null}
         </div>
-        {cartHasItems && <CartSummary cart={cart} layout={layout} />}
-      </div>
+      ) : null}
     </section>
   );
 }
 
-function CartEmpty({
-  hidden = false,
-}: {
-  hidden: boolean;
-  layout?: CartMainProps['layout'];
-}) {
+function CartEmpty() {
   const {close} = useAside();
+
   return (
-    <div hidden={hidden}>
-      <br />
-      <p>
-        Looks like you haven&rsquo;t added anything yet, let&rsquo;s get you
-        started!
+    <div className="flex flex-col items-start gap-4 py-10">
+      <h2 className="font-display text-3xl leading-tight text-ink">
+        Your bag is empty
+      </h2>
+      <p className="max-w-[32ch] text-sm leading-6 text-primary">
+        Looks like you haven&rsquo;t added anything yet. Explore the
+        collections and find a piece you love.
       </p>
-      <br />
-      <Link to="/collections" onClick={close} prefetch="viewport">
-        Continue shopping →
+      <Link
+        to="/collections"
+        onClick={close}
+        prefetch="viewport"
+        className="inline-flex min-h-11 items-center bg-primary px-6 text-xs font-medium uppercase tracking-widest text-white transition-colors hover:bg-ink"
+      >
+        Continue shopping
       </Link>
     </div>
   );

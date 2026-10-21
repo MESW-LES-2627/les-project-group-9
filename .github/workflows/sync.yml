@@ -1,0 +1,37 @@
+name: Sync All Branches to Personal Repo
+
+on:
+  push:
+    branches:
+      - '**'
+  create:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push all branches to destination
+        env:
+          PERSONAL_PAT: ${{ secrets.PERSONAL_PAT }}
+        run: |
+          git config --global user.name "GitHub Action Bot"
+          git config --global user.email "action@github.com"
+          
+          # Remove credenciais salvas do checkout para não haver conflito
+          git config --local --unset-all http.https://github.com/.extraheader 2>/dev/null || true
+          
+          # Injeta o token diretamente nas configurações de rede do Git
+          git config --global url."https://x-access-token:${PERSONAL_PAT}@github.com/".insteadOf "https://github.com/"
+          
+          # Reconfigura o remote apontando diretamente para a URL standard
+          git remote remove personal 2>/dev/null || true
+          git remote add personal https://github.com/FEUP-tiago-repositories/lesw.git
+          
+          # Atualiza as referências e faz o push forçado de todas as branches
+          git fetch origin --prune
+          git push personal '+refs/remotes/origin/*:refs/heads/*' --force
