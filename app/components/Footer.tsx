@@ -1,6 +1,7 @@
 import {Suspense} from 'react';
 import {Await, NavLink} from 'react-router';
 import type {FooterQuery, HeaderQuery} from 'storefrontapi.generated';
+import {Icon} from '~/components/Icon';
 
 interface FooterProps {
   footer: Promise<FooterQuery | null>;
@@ -17,14 +18,75 @@ export function Footer({
     <Suspense>
       <Await resolve={footerPromise}>
         {(footer) => (
-          <footer className="footer">
-            {footer?.menu && header.shop.primaryDomain?.url && (
-              <FooterMenu
-                menu={footer.menu}
-                primaryDomainUrl={header.shop.primaryDomain.url}
-                publicStoreDomain={publicStoreDomain}
-              />
-            )}
+          <footer className="bg-ink px-[5vw] pb-8 pt-16 text-white sm:pt-20">
+            <div className="grid gap-12 border-b border-white/15 pb-14 sm:grid-cols-2 lg:grid-cols-[1.5fr_.7fr_.7fr_1.3fr] lg:gap-12">
+              <div>
+                <NavLink
+                  className="font-display text-3xl tracking-[-0.04em]"
+                  to="/"
+                >
+                  {header.shop.name || 'Jeweliette'}
+                </NavLink>
+                <p className="mt-5 max-w-[32ch] text-sm leading-7 text-white/65">
+                  Joias modernas para combinar, oferecer e guardar.
+                </p>
+              </div>
+
+              <div>
+                <p className="mb-5 text-xs font-medium uppercase tracking-[0.18em] text-secondary">
+                  Descobrir
+                </p>
+                <nav className="flex flex-col items-start gap-3 text-sm text-white/75">
+                  <NavLink className="hover:text-white" to="/collections/all">Novidades</NavLink>
+                  <NavLink className="hover:text-white" to="/collections/jewelry">Joias</NavLink>
+                  <NavLink className="hover:text-white" to="/collections/custom">Personalização</NavLink>
+                </nav>
+              </div>
+
+              <div>
+                <p className="mb-5 text-xs font-medium uppercase tracking-[0.18em] text-secondary">
+                  Informação
+                </p>
+                {footer?.menu && header.shop.primaryDomain?.url ? (
+                  <FooterMenu
+                    menu={footer.menu}
+                    primaryDomainUrl={header.shop.primaryDomain.url}
+                    publicStoreDomain={publicStoreDomain}
+                  />
+                ) : null}
+              </div>
+
+              <div>
+                <p className="text-xs font-medium uppercase tracking-[0.18em] text-secondary">
+                  Histórias na tua caixa de entrada
+                </p>
+                <p className="mt-4 text-sm leading-7 text-white/65">
+                  Novidades, guias de estilo e acesso antecipado.
+                </p>
+                <div className="mt-7 flex border-b border-white/40 pb-2">
+                  <input
+                    aria-label="Endereço de email"
+                    className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/45"
+                    disabled
+                    placeholder="Newsletter disponível em breve"
+                    type="email"
+                  />
+                  <button
+                    aria-label="Subscrever newsletter"
+                    className="grid size-11 place-items-center text-secondary opacity-50"
+                    disabled
+                    type="button"
+                  >
+                    <Icon name="arrow" size={18} />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2 pt-6 text-xs uppercase tracking-[0.12em] text-white/45 sm:flex-row sm:items-center sm:justify-between">
+              <span>© {new Date().getFullYear()} {header.shop.name || 'Jeweliette'}</span>
+              <span>Designed to be kept</span>
+            </div>
           </footer>
         )}
       </Await>
@@ -42,10 +104,9 @@ function FooterMenu({
   publicStoreDomain: string;
 }) {
   return (
-    <nav className="footer-menu" role="navigation">
+    <nav className="flex flex-col items-start gap-3 text-sm text-white/75">
       {(menu || FALLBACK_FOOTER_MENU).items.map((item) => {
         if (!item.url) return null;
-        // if the url is internal, we strip the domain
         const url =
           item.url.includes('myshopify.com') ||
           item.url.includes(publicStoreDomain) ||
@@ -53,16 +114,23 @@ function FooterMenu({
             ? new URL(item.url).pathname
             : item.url;
         const isExternal = !url.startsWith('/');
+
         return isExternal ? (
-          <a href={url} key={item.id} rel="noopener noreferrer" target="_blank">
+          <a
+            className="hover:text-white"
+            href={url}
+            key={item.id}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
             {item.title}
           </a>
         ) : (
           <NavLink
+            className="hover:text-white"
             end
             key={item.id}
             prefetch="intent"
-            style={activeLinkStyle}
             to={url}
           >
             {item.title}
@@ -74,56 +142,11 @@ function FooterMenu({
 }
 
 const FALLBACK_FOOTER_MENU = {
-  id: 'gid://shopify/Menu/199655620664',
+  id: 'fallback-footer-menu',
   items: [
-    {
-      id: 'gid://shopify/MenuItem/461633060920',
-      resourceId: 'gid://shopify/ShopPolicy/23358046264',
-      tags: [],
-      title: 'Privacy Policy',
-      type: 'SHOP_POLICY',
-      url: '/policies/privacy-policy',
-      items: [],
-    },
-    {
-      id: 'gid://shopify/MenuItem/461633093688',
-      resourceId: 'gid://shopify/ShopPolicy/23358013496',
-      tags: [],
-      title: 'Refund Policy',
-      type: 'SHOP_POLICY',
-      url: '/policies/refund-policy',
-      items: [],
-    },
-    {
-      id: 'gid://shopify/MenuItem/461633126456',
-      resourceId: 'gid://shopify/ShopPolicy/23358111800',
-      tags: [],
-      title: 'Shipping Policy',
-      type: 'SHOP_POLICY',
-      url: '/policies/shipping-policy',
-      items: [],
-    },
-    {
-      id: 'gid://shopify/MenuItem/461633159224',
-      resourceId: 'gid://shopify/ShopPolicy/23358079032',
-      tags: [],
-      title: 'Terms of Service',
-      type: 'SHOP_POLICY',
-      url: '/policies/terms-of-service',
-      items: [],
-    },
+    {id: 'privacy', resourceId: null, tags: [], title: 'Privacidade', type: 'SHOP_POLICY', url: '/policies/privacy-policy', items: []},
+    {id: 'refund', resourceId: null, tags: [], title: 'Devoluções', type: 'SHOP_POLICY', url: '/policies/refund-policy', items: []},
+    {id: 'shipping', resourceId: null, tags: [], title: 'Envios', type: 'SHOP_POLICY', url: '/policies/shipping-policy', items: []},
+    {id: 'terms', resourceId: null, tags: [], title: 'Termos', type: 'SHOP_POLICY', url: '/policies/terms-of-service', items: []},
   ],
 };
-
-function activeLinkStyle({
-  isActive,
-  isPending,
-}: {
-  isActive: boolean;
-  isPending: boolean;
-}) {
-  return {
-    fontWeight: isActive ? 'bold' : undefined,
-    color: isPending ? 'grey' : 'white',
-  };
-}

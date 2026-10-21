@@ -14,6 +14,7 @@ import {
   SearchFormPredictive,
 } from '~/components/SearchFormPredictive';
 import {SearchResultsPredictive} from '~/components/SearchResultsPredictive';
+import {Icon} from '~/components/Icon';
 
 interface PageLayoutProps {
   cart: Promise<CartApiQueryFragment | null>;
@@ -34,18 +35,22 @@ export function PageLayout({
 }: PageLayoutProps) {
   return (
     <Aside.Provider>
+      <a
+        className="fixed left-4 top-4 z-[100] -translate-y-24 bg-ink px-4 py-2 text-sm text-white focus:translate-y-0"
+        href="#main-content"
+      >
+        Saltar para o conteúdo
+      </a>
       <CartAside cart={cart} />
       <SearchAside />
       <MobileMenuAside header={header} publicStoreDomain={publicStoreDomain} />
-      {header && (
-        <Header
-          header={header}
-          cart={cart}
-          isLoggedIn={isLoggedIn}
-          publicStoreDomain={publicStoreDomain}
-        />
-      )}
-      <main>{children}</main>
+      <Header
+        header={header}
+        cart={cart}
+        isLoggedIn={isLoggedIn}
+        publicStoreDomain={publicStoreDomain}
+      />
+      <main id="main-content">{children}</main>
       <Footer
         footer={footer}
         header={header}
@@ -57,95 +62,124 @@ export function PageLayout({
 
 function CartAside({cart}: {cart: PageLayoutProps['cart']}) {
   return (
-    <Aside type="cart" heading="CART">
-      <Suspense fallback={<p>Loading cart ...</p>}>
-        <Await resolve={cart}>
-          {(cart) => {
-            return <CartMain cart={cart} layout="aside" />;
-          }}
-        </Await>
-      </Suspense>
+    <Aside type="cart" heading="Shopping bag">
+      <div className="p-5 sm:p-8">
+        <Suspense fallback={<CartSkeleton />}>
+          <Await resolve={cart}>
+            {(resolvedCart) => <CartMain cart={resolvedCart} layout="aside" />}
+          </Await>
+        </Suspense>
+      </div>
     </Aside>
+  );
+}
+
+function CartSkeleton() {
+  return (
+    <div aria-label="A carregar carrinho" className="animate-pulse space-y-5">
+      {[0, 1].map((item) => (
+        <div className="flex gap-4" key={item}>
+          <div className="h-28 w-24 bg-secondary/60" />
+          <div className="flex-1 space-y-3 py-2">
+            <div className="h-4 w-3/4 bg-secondary/60" />
+            <div className="h-3 w-1/2 bg-secondary/40" />
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
 function SearchAside() {
   const queriesDatalistId = useId();
+
   return (
-    <Aside type="search" heading="SEARCH">
-      <div className="predictive-search">
-        <br />
-        <SearchFormPredictive>
+    <Aside type="search" heading="Search Jeweliette">
+      <div className="mx-auto max-w-[940px] px-5 py-10 sm:px-8 sm:py-16">
+        <SearchFormPredictive className="flex items-center border-b border-primary pb-3">
           {({fetchResults, goToSearch, inputRef}) => (
             <>
+              <Icon className="mr-4 shrink-0 text-primary" name="search" size={28} />
               <input
+                autoComplete="off"
+                className="min-w-0 flex-1 bg-transparent font-display text-[clamp(2rem,5vw,4rem)] leading-none text-primary outline-none placeholder:text-primary/45"
+                list={queriesDatalistId}
                 name="q"
                 onChange={fetchResults}
                 onFocus={fetchResults}
-                placeholder="Search"
+                placeholder="O que procuras?"
                 ref={inputRef}
                 type="search"
-                list={queriesDatalistId}
               />
-              &nbsp;
-              <button onClick={goToSearch}>Search</button>
+              <button
+                aria-label="Ver todos os resultados"
+                className="grid size-11 shrink-0 place-items-center text-primary hover:text-ink"
+                onClick={goToSearch}
+                type="button"
+              >
+                <Icon name="arrow" />
+              </button>
             </>
           )}
         </SearchFormPredictive>
 
-        <SearchResultsPredictive>
-          {({items, total, term, state, closeSearch}) => {
-            const {articles, collections, pages, products, queries} = items;
+        <div className="mt-10">
+          <SearchResultsPredictive>
+            {({items, total, term, state, closeSearch}) => {
+              const {articles, collections, pages, products, queries} = items;
 
-            if (state === 'loading' && term.current) {
-              return <div>Loading...</div>;
-            }
+              if (state === 'loading' && term.current) {
+                return <p className="text-sm text-primary">A pesquisar…</p>;
+              }
 
-            if (!total) {
-              return <SearchResultsPredictive.Empty term={term} />;
-            }
-
-            return (
-              <>
-                <SearchResultsPredictive.Queries
-                  queries={queries}
-                  queriesDatalistId={queriesDatalistId}
-                />
-                <SearchResultsPredictive.Products
-                  products={products}
-                  closeSearch={closeSearch}
-                  term={term}
-                />
-                <SearchResultsPredictive.Collections
-                  collections={collections}
-                  closeSearch={closeSearch}
-                  term={term}
-                />
-                <SearchResultsPredictive.Pages
-                  pages={pages}
-                  closeSearch={closeSearch}
-                  term={term}
-                />
-                <SearchResultsPredictive.Articles
-                  articles={articles}
-                  closeSearch={closeSearch}
-                  term={term}
-                />
-                {term.current && total ? (
-                  <Link
-                    onClick={closeSearch}
-                    to={`${SEARCH_ENDPOINT}?q=${term.current}`}
-                  >
-                    <p>
-                      View all results for <q>{term.current}</q>
-                      &nbsp; →
+              if (!term.current) {
+                return (
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
+                      Explorar
                     </p>
+                    <div className="mt-5 flex flex-wrap gap-x-8 gap-y-3 font-display text-xl text-primary sm:text-2xl">
+                      <Link onClick={closeSearch} to="/collections/all">Novidades</Link>
+                      <Link onClick={closeSearch} to="/collections/jewelry">Joias</Link>
+                      <Link onClick={closeSearch} to="/collections/custom">Personalização</Link>
+                    </div>
+                  </div>
+                );
+              }
+
+              if (!total) {
+                return (
+                  <div className="py-12 text-center">
+                    <p className="font-display text-3xl text-primary">Sem resultados</p>
+                    <p className="mt-3 text-sm text-primary/70">
+                      Tenta outro termo para <q>{term.current}</q>.
+                    </p>
+                  </div>
+                );
+              }
+
+              return (
+                <>
+                  <SearchResultsPredictive.Queries
+                    queries={queries}
+                    queriesDatalistId={queriesDatalistId}
+                  />
+                  <SearchResultsPredictive.Products products={products} closeSearch={closeSearch} term={term} />
+                  <SearchResultsPredictive.Collections collections={collections} closeSearch={closeSearch} term={term} />
+                  <SearchResultsPredictive.Pages pages={pages} closeSearch={closeSearch} term={term} />
+                  <SearchResultsPredictive.Articles articles={articles} closeSearch={closeSearch} term={term} />
+                  <Link
+                    className="mt-8 inline-flex min-h-11 items-center gap-5 border-b border-ink text-xs font-medium uppercase tracking-[0.14em]"
+                    onClick={closeSearch}
+                    to={`${SEARCH_ENDPOINT}?q=${encodeURIComponent(term.current)}`}
+                  >
+                    Ver todos os resultados <Icon name="arrow" size={16} />
                   </Link>
-                ) : null}
-              </>
-            );
-          }}
-        </SearchResultsPredictive>
+                </>
+              );
+            }}
+          </SearchResultsPredictive>
+        </div>
       </div>
     </Aside>
   );
@@ -159,16 +193,21 @@ function MobileMenuAside({
   publicStoreDomain: PageLayoutProps['publicStoreDomain'];
 }) {
   return (
-    header.menu &&
-    header.shop.primaryDomain?.url && (
-      <Aside type="mobile" heading="MENU">
-        <HeaderMenu
-          menu={header.menu}
-          viewport="mobile"
-          primaryDomainUrl={header.shop.primaryDomain.url}
-          publicStoreDomain={publicStoreDomain}
-        />
-      </Aside>
-    )
+    <Aside type="mobile" heading="Menu">
+      <HeaderMenu
+        menu={header.menu}
+        viewport="mobile"
+        primaryDomainUrl={header.shop.primaryDomain.url}
+        publicStoreDomain={publicStoreDomain}
+      />
+      <div className="mt-6 grid gap-3 px-5 text-xs font-medium uppercase tracking-[0.14em] text-primary">
+        <Link className="flex min-h-11 items-center border-b border-line" to="/account">
+          A minha conta
+        </Link>
+        <Link className="flex min-h-11 items-center border-b border-line" to="/cart">
+          Shopping bag
+        </Link>
+      </div>
+    </Aside>
   );
 }
