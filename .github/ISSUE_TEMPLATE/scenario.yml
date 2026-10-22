@@ -1,0 +1,27 @@
+name: Scenario
+description: Capture a usage scenario supporting or validating requirements
+title: "SCN-<NNN>: <actor + goal>"
+labels: ["type:scenario", "status:proposed"]
+body:
+  - type: input
+    id: scenario-id
+    attributes:
+      label: ID
+  - type: textarea
+    id: narrative
+    attributes:
+      label: Narrative
+      description: "Concise story of the interaction"
+  - type: textarea
+    id: preconditions-triggers
+    attributes:
+      label: Pre-Conditions / Triggers
+  - type: textarea
+    id: flows
+    attributes:
+      label: Main Flow / Alternate Flows
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: "Trace to goals/requirements using issue numbers (e.g., #12 for REQ-SYS-010)"

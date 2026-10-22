@@ -1,0 +1,48 @@
+name: Requirement
+description: Create or update a stakeholder/system/quality requirement
+title: "REQ-<TYPE>-<NNN>: <short statement>"
+labels: ["status:proposed"]
+body:
+  - type: input
+    id: requirement-id
+    attributes:
+      label: ID
+      description: "Unique identifier (e.g., REQ-STK-001)"
+  - type: input
+    id: requirement-type
+    attributes:
+      label: Type
+      description: "stakeholder | system | quality. Apply the corresponding type:req-stakeholder, type:req-system, or type:req-quality label to the issue."
+  - type: input
+    id: source-author-responsible
+    attributes:
+      label: Source / Author / Responsible
+  - type: textarea
+    id: statement
+    attributes:
+      label: Statement
+      description: "Unambiguous, testable requirement statement"
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Rationale
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: "Bullet points; define verification conditions"
+  - type: textarea
+    id: dependencies-related
+    attributes:
+      label: Dependencies / Related
+      description: "References to issues (e.g., #12, #34) and external links"
+  - type: input
+    id: wiki-link
+    attributes:
+      label: Wiki Link
+      description: "Optional canonical page for details"
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options: ["critical", "high", "medium", "low"]
