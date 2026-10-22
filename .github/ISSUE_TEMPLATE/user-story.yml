@@ -1,0 +1,49 @@
+name: User Story
+description: Feature request or functional capability described from an end-user perspective
+title: "US-<NNN>: As a <role>, I want <goal>, so that <benefit>"
+labels: ["type:user-story"]
+body:
+  - type: input
+    id: story-id
+    attributes:
+      label: ID
+      description: "Optional tracking identifier (e.g., US-010)"
+  - type: textarea
+    id: user-story
+    attributes:
+      label: User Story
+      description: "State the story in standard format"
+      placeholder: |
+        **As a** [user role],
+        **I want** [action/feature],
+        **So that** [value/benefit].
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: "Conditions that must be met for this story to be accepted (e.g., Given/When/Then)"
+      placeholder: |
+        - [ ] Scenario 1: Given... When... Then...
+        - [ ] Scenario 2: ...
+    validations:
+      required: true
+  - type: textarea
+    id: definition-of-done
+    attributes:
+      label: Definition of Done
+      description: "Technical and quality criteria required before closing"
+      value: |
+        - [ ] Unit & integration tests written and passing
+        - [ ] Manual tests written and passing
+        - [ ] Documentation updated
+        - [ ] Code reviewed by at least one member and merged
+        - [ ] Feature deployed to staging and verified
+        - [ ] Ready for production deployment
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: "Trace to epics, parent issues, or specs (e.g., Part of Epic #12, satisfies REQ-SYS-010)"

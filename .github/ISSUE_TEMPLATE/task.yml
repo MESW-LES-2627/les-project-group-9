@@ -1,0 +1,22 @@
+name: Task
+description: Implementation or analysis task
+title: "TASK-<NNN>: <actionable verb + object>"
+labels: ["type:task", "status:proposed"]
+body:
+  - type: input
+    id: task-id
+    attributes:
+      label: ID
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+  - type: textarea
+    id: definition-of-done
+    attributes:
+      label: Definition of Done
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: "Trace to requirements or scenarios using issue numbers (e.g., Implements #12 for REQ-SYS-010)"
