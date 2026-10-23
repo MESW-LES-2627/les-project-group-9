@@ -1,4 +1,4 @@
-eweliette — Design Documentation
+# Jeweliette — Design Documentation
 
 ## 1. Project Overview
 
