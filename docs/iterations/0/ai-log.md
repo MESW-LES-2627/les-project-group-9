@@ -1,7 +1,5 @@
 # AI log - Iteration 0
 
-> TODO
+## Issue Creation
 
-| Date | Tool | Task | Prompt / outcome |
-| ---- | ---- | ---- | ---------------- |
-| TODO |      |      |                  |
+Used Deepseek v4.1 Flash Free to create issues using the User Stories and templates we wrote.
