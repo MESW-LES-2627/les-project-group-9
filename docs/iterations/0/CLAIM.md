@@ -1,10 +1,10 @@
 # CLAIM - Iteration 0
 
-|           |                                                                         |
-| --------- | ----------------------------------------------------------------------- |
-| Iteration | 0 - 16 Oct to 23 Oct 2026                                               |
-| Tag       | `iter-0`                                                                |
-| Claim     | <one sentence on what this iteration delivers and what is demonstrable> |
+|           |                                                                                                                                            |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Iteration | 0 - 16 Oct to 23 Oct 2026                                                                                                                  |
+| Tag       | `iter-0`                                                                                                                                   |
+| Claim     | <Base project setup with Shopify integration and basic functionalities like product search and details, user favorites and shopping cart.> |
 
 ## Documents
 
@@ -22,7 +22,7 @@ All files are in this folder.
 
 | Artefact                     | Link                                                                                                                                                   |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Tag                          | N/A - `iter-0` to be created at claim time                                                                                                             |
+| Tag                          | <https://github.com/MESW-LES-2627/les-project-group-9/releases/tag/iter-0>                                                                             |
 | Comparison with the last tag | N/A - first iteration                                                                                                                                  |
 | Production                   | N/A - not deployed yet                                                                                                                                 |
 | Staging                      | N/A - not deployed yet                                                                                                                                 |
