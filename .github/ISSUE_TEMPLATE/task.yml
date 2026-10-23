@@ -1,7 +1,7 @@
 name: Task
-description: Implementation or analysis task
+description: Implementation or analysis task. Link it to its user story as a sub-issue.
 title: "TASK-<NNN>: <actionable verb + object>"
-labels: ["type:task", "status:proposed"]
+labels: ["type:task", "status:ready"]
 body:
   - type: input
     id: task-id
@@ -11,12 +11,6 @@ body:
     id: description
     attributes:
       label: Description
-  - type: textarea
-    id: definition-of-done
-    attributes:
-      label: Definition of Done
-  - type: textarea
-    id: references
-    attributes:
-      label: References
-      description: "Trace to requirements or scenarios using issue numbers (e.g., Implements #12 for REQ-SYS-010)"
+      description: "What needs to be done and how to tell it is finished"
+    validations:
+      required: true

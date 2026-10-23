@@ -7,7 +7,44 @@ body:
     id: story-id
     attributes:
       label: ID
-      description: "Optional tracking identifier (e.g., US-010)"
+      description: "Tracking identifier (e.g., US-010)"
+    validations:
+      required: true
+  - type: dropdown
+    id: epic
+    attributes:
+      label: Epic
+      description: "Parent epic. Also set the epic issue as this story's parent."
+      options:
+        - "E1. Catalog and navigation"
+        - "E2. Product page"
+        - "E3. 3D visualizer"
+        - "E4. AR try-on"
+        - "E5. Fitting room (multi-piece)"
+        - "E6. Make your own (restricted)"
+        - "E7. Favorites and suggestions"
+        - "E8. Cart and checkout"
+        - "E9. Account"
+        - "E10. Video"
+        - "E11. Content"
+        - "E12. Language"
+        - "E13. Non-functional"
+        - "E14. Custom design builder"
+        - "E15. Feedback and ratings"
+        - "E16. Preferences profile"
+        - "E17. Chatbot"
+    validations:
+      required: true
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Phase
+      description: "MVP is this semester's release. Post-MVP is the wider vision."
+      options:
+        - "MVP"
+        - "Post-MVP"
+    validations:
+      required: true
   - type: textarea
     id: user-story
     attributes:
