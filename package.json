@@ -10,6 +10,8 @@
     "preview": "shopify hydrogen preview --build",
     "lint": "eslint --no-error-on-unmatched-pattern .",
     "typecheck": "react-router typegen && tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "codegen": "shopify hydrogen codegen && react-router typegen"
   },
   "prettier": "@shopify/prettier-config",
@@ -58,7 +60,8 @@
     "prettier": "^3.4.2",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.2",
-    "vite": "^8.0.1"
+    "vite": "^8.0.1",
+    "vitest": "^5.0.5"
   },
   "engines": {
     "node": "^22 || ^24"
