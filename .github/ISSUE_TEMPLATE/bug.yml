@@ -1,0 +1,46 @@
+name: Bug Report
+description: Log an internal defect discovered during development or QA to be tracked and corrected.
+title: "BUG-<NNN>: <short summary of the defect>"
+labels: ["type:bug", "status:ready"]
+body:
+  - type: input
+    id: bug-id
+    attributes:
+      label: ID
+  - type: input
+    id: parent-issue
+    attributes:
+      label: Linked User Story / Feature
+      description: "Link to the relevant user story, task, or feature branch where this bug was noticed."
+  - type: textarea
+    id: description
+    attributes:
+      label: Description & Impact
+      description: "What is currently broken, where was it noticed, and why does it need to be fixed?"
+    validations:
+      required: true
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: "Steps to consistently trigger the bug"
+      placeholder: |
+        1. Open the customizer page
+        2. Select 'Rose Gold' with 'Nickel Sensitivity' profile turned on
+        3. Observe warning banner missing
+    validations:
+      required: true
+  - type: textarea
+    id: expected-vs-actual
+    attributes:
+      label: Expected vs. Actual Behavior
+      description: "What should happen vs. what is actually happening."
+    validations:
+      required: true
+  - type: textarea
+    id: definition-of-done
+    attributes:
+      label: Correction Criteria (Definition of Done)
+      description: "How to tell the bug is officially resolved and verified."
+    validations:
+      required: true
