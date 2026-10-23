@@ -231,6 +231,11 @@ export default [
     plugins: {
       jest,
     },
+    settings: {
+      jest: {
+        version: 29,
+      },
+    },
     languageOptions: {
       globals: {
         ...globals.node,
