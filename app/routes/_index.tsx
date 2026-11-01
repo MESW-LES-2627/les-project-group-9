@@ -2,6 +2,7 @@ import {Link, useLoaderData} from 'react-router';
 import {Image} from '@shopify/hydrogen';
 import type {Route} from './+types/_index';
 import {ProductItem} from '~/components/ProductItem';
+import {RecommendedProducts} from '~/components/RecommendedProducts';
 import {
   JEWELIETTE_PRODUCT_CARD_FRAGMENT,
 } from '~/lib/jeweliette-catalog';
@@ -214,6 +215,8 @@ export default function Homepage() {
           View all pieces
         </Link>
       </section>
+
+      <RecommendedProducts className="px-[5vw] py-14 tablet:py-20" />
 
       <section className="grid bg-primary text-white tablet:grid-cols-[52%_48%]">
         <div className="relative min-h-[50svh] bg-secondary">
