@@ -3,6 +3,7 @@ import {Link} from 'react-router';
 import {CartForm, Image, Money} from '@shopify/hydrogen';
 import type {CatalogImage, CatalogProduct} from '~/lib/jeweliette-catalog';
 import {FavoriteButton} from '~/components/FavoriteButton';
+import {ProductBadge} from '~/components/ProductBadge';
 
 type Props = {product: CatalogProduct; loading?: 'eager' | 'lazy'};
 
@@ -72,11 +73,7 @@ export function ProductItem({product, loading = 'lazy'}: Props) {
           ) : null}
         </Link>
 
-        {product.badge?.value ? (
-          <span className="pointer-events-none absolute left-3 top-3 bg-paper/95 px-2.5 py-1.5 text-[10px] uppercase tracking-widest text-primary">
-            {product.badge.value}
-          </span>
-        ) : null}
+        <ProductBadge value={product.badge?.value} />
 
         <FavoriteButton
           productId={product.id}
