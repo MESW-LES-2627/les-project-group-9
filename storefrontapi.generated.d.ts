@@ -427,6 +427,144 @@ export type JewelietteProductCardFragment = Pick<
   >;
 };
 
+export type JewelietteRecommendationProductFragment = Pick<
+  StorefrontAPI.Product,
+  'id' | 'title' | 'handle' | 'productType'
+> & {
+  category?: StorefrontAPI.Maybe<
+    Pick<StorefrontAPI.TaxonomyCategory, 'id' | 'name'>
+  >;
+  metal?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+  gemstone?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+  gemColor?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+  collections: {nodes: Array<Pick<StorefrontAPI.Collection, 'handle'>>};
+  material?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+  badge?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+  featuredImage?: StorefrontAPI.Maybe<
+    Pick<StorefrontAPI.Image, 'id' | 'url' | 'altText' | 'width' | 'height'>
+  >;
+  images: {
+    nodes: Array<
+      Pick<StorefrontAPI.Image, 'id' | 'url' | 'altText' | 'width' | 'height'>
+    >;
+  };
+  options: Array<
+    Pick<StorefrontAPI.ProductOption, 'name'> & {
+      optionValues: Array<
+        Pick<StorefrontAPI.ProductOptionValue, 'name'> & {
+          swatch?: StorefrontAPI.Maybe<
+            Pick<StorefrontAPI.ProductOptionValueSwatch, 'color'> & {
+              image?: StorefrontAPI.Maybe<{
+                previewImage?: StorefrontAPI.Maybe<
+                  Pick<StorefrontAPI.Image, 'url'>
+                >;
+              }>;
+            }
+          >;
+          firstSelectableVariant?: StorefrontAPI.Maybe<
+            Pick<StorefrontAPI.ProductVariant, 'id' | 'availableForSale'> & {
+              image?: StorefrontAPI.Maybe<
+                Pick<
+                  StorefrontAPI.Image,
+                  'id' | 'url' | 'altText' | 'width' | 'height'
+                >
+              >;
+            }
+          >;
+        }
+      >;
+    }
+  >;
+  priceRange: {
+    minVariantPrice: Pick<StorefrontAPI.MoneyV2, 'amount' | 'currencyCode'>;
+    maxVariantPrice: Pick<StorefrontAPI.MoneyV2, 'amount' | 'currencyCode'>;
+  };
+  selectedOrFirstAvailableVariant?: StorefrontAPI.Maybe<
+    Pick<StorefrontAPI.ProductVariant, 'id' | 'availableForSale'>
+  >;
+};
+
+export type JewelietteRecommendationCandidatesQueryVariables =
+  StorefrontAPI.Exact<{
+    country?: StorefrontAPI.InputMaybe<StorefrontAPI.CountryCode>;
+    language?: StorefrontAPI.InputMaybe<StorefrontAPI.LanguageCode>;
+  }>;
+
+export type JewelietteRecommendationCandidatesQuery = {
+  products: {
+    nodes: Array<
+      Pick<StorefrontAPI.Product, 'id' | 'title' | 'handle' | 'productType'> & {
+        category?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.TaxonomyCategory, 'id' | 'name'>
+        >;
+        metal?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+        gemstone?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+        gemColor?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+        collections: {nodes: Array<Pick<StorefrontAPI.Collection, 'handle'>>};
+        material?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+        badge?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+        featuredImage?: StorefrontAPI.Maybe<
+          Pick<
+            StorefrontAPI.Image,
+            'id' | 'url' | 'altText' | 'width' | 'height'
+          >
+        >;
+        images: {
+          nodes: Array<
+            Pick<
+              StorefrontAPI.Image,
+              'id' | 'url' | 'altText' | 'width' | 'height'
+            >
+          >;
+        };
+        options: Array<
+          Pick<StorefrontAPI.ProductOption, 'name'> & {
+            optionValues: Array<
+              Pick<StorefrontAPI.ProductOptionValue, 'name'> & {
+                swatch?: StorefrontAPI.Maybe<
+                  Pick<StorefrontAPI.ProductOptionValueSwatch, 'color'> & {
+                    image?: StorefrontAPI.Maybe<{
+                      previewImage?: StorefrontAPI.Maybe<
+                        Pick<StorefrontAPI.Image, 'url'>
+                      >;
+                    }>;
+                  }
+                >;
+                firstSelectableVariant?: StorefrontAPI.Maybe<
+                  Pick<
+                    StorefrontAPI.ProductVariant,
+                    'id' | 'availableForSale'
+                  > & {
+                    image?: StorefrontAPI.Maybe<
+                      Pick<
+                        StorefrontAPI.Image,
+                        'id' | 'url' | 'altText' | 'width' | 'height'
+                      >
+                    >;
+                  }
+                >;
+              }
+            >;
+          }
+        >;
+        priceRange: {
+          minVariantPrice: Pick<
+            StorefrontAPI.MoneyV2,
+            'amount' | 'currencyCode'
+          >;
+          maxVariantPrice: Pick<
+            StorefrontAPI.MoneyV2,
+            'amount' | 'currencyCode'
+          >;
+        };
+        selectedOrFirstAvailableVariant?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.ProductVariant, 'id' | 'availableForSale'>
+        >;
+      }
+    >;
+  };
+};
+
 export type JewelietteHomeCollectionFragment = Pick<
   StorefrontAPI.Collection,
   'id' | 'title' | 'handle' | 'description'
@@ -1886,6 +2024,10 @@ interface GeneratedQueryTypes {
   '#graphql\n  query Footer(\n    $country: CountryCode\n    $footerMenuHandle: String!\n    $language: LanguageCode\n  ) @inContext(language: $language, country: $country) {\n    menu(handle: $footerMenuHandle) {\n      ...Menu\n    }\n  }\n  #graphql\n  fragment MenuItem on MenuItem {\n    id\n    resourceId\n    tags\n    title\n    type\n    url\n  }\n  fragment ChildMenuItem on MenuItem {\n    ...MenuItem\n  }\n  fragment ParentMenuItem on MenuItem {\n    ...MenuItem\n    items {\n      ...ChildMenuItem\n    }\n  }\n  fragment Menu on Menu {\n    id\n    items {\n      ...ParentMenuItem\n    }\n  }\n\n': {
     return: FooterQuery;
     variables: FooterQueryVariables;
+  };
+  '#graphql\n  #graphql\n  fragment JewelietteRecommendationProduct on Product {\n    ...JewelietteProductCard\n    category { id name }\n    metal: metafield(namespace: "custom", key: "metal") { value }\n    gemstone: metafield(namespace: "custom", key: "gemstone") { value }\n    gemColor: metafield(namespace: "custom", key: "gem_color") { value }\n    collections(first: 10) { nodes { handle } }\n  }\n  #graphql\n  fragment JewelietteProductCard on Product {\n    id\n    title\n    handle\n    productType\n    material: metafield(namespace: "custom", key: "material") { value }\n    badge: metafield(namespace: "custom", key: "badge") { value }\n    featuredImage { id url altText width height }\n    images(first: 2) { nodes { id url altText width height } }\n    options {\n      name\n      optionValues {\n        name\n        swatch { color image { previewImage { url } } }\n        firstSelectableVariant {\n          id\n          availableForSale\n          image { id url altText width height }\n        }\n      }\n    }\n    priceRange {\n      minVariantPrice { amount currencyCode }\n      maxVariantPrice { amount currencyCode }\n    }\n    selectedOrFirstAvailableVariant { id availableForSale }\n  }\n\n\n  query JewelietteRecommendationCandidates(\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    products(first: 250, sortKey: BEST_SELLING) {\n      nodes {\n        ...JewelietteRecommendationProduct\n      }\n    }\n  }\n': {
+    return: JewelietteRecommendationCandidatesQuery;
+    variables: JewelietteRecommendationCandidatesQueryVariables;
   };
   '#graphql\n  query Header(\n    $country: CountryCode\n    $headerMenuHandle: String!\n    $language: LanguageCode\n  ) @inContext(language: $language, country: $country) {\n    shop {\n      ...Shop\n    }\n    menu(handle: $headerMenuHandle) {\n      ...Menu\n    }\n  }\n  #graphql\n  fragment MenuItem on MenuItem {\n    id\n    resourceId\n    tags\n    title\n    type\n    url\n  }\n  fragment ChildMenuItem on MenuItem {\n    ...MenuItem\n  }\n  fragment ParentMenuItem on MenuItem {\n    ...MenuItem\n    items {\n      ...ChildMenuItem\n    }\n  }\n  fragment Menu on Menu {\n    id\n    items {\n      ...ParentMenuItem\n    }\n  }\n\n  #graphql\n  fragment Shop on Shop {\n    id\n    name\n    description\n    primaryDomain {\n      url\n    }\n    brand {\n      logo {\n        image {\n          url\n        }\n      }\n    }\n  }\n': {
     return: HeaderQuery;
