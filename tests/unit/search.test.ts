@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {urlWithTrackingParams} from './search';
+import {urlWithTrackingParams} from '~/lib/search';
 
 describe('urlWithTrackingParams', () => {
   it('adds the search term as the q parameter', () => {

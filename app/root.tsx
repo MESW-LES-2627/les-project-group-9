@@ -14,6 +14,7 @@ import type {Route} from './+types/root';
 import favicon from '~/assets/favicon.svg';
 import tailwindCss from '~/styles/tailwind.css?url';
 import {PageLayout} from './components/PageLayout';
+import {ProfileProvider} from '~/lib/profile/ProfileProvider';
 
 export type RootLoader = typeof loader;
 
@@ -110,7 +111,9 @@ export function Layout({children}: {children?: React.ReactNode}) {
     <body>
     {data ? (
       <Analytics.Provider cart={data.cart} shop={data.shop} consent={data.consent}>
-        <PageLayout {...data}>{children}</PageLayout>
+        <ProfileProvider>
+          <PageLayout {...data}>{children}</PageLayout>
+        </ProfileProvider>
       </Analytics.Provider>
     ) : (
       children

@@ -133,12 +133,10 @@ export function ProductItem({product, loading = 'lazy'}: Props) {
           ) : null}
         </div>
 
-        <p className="shrink-0 text-sm text-ink">
-          {isRange ? (
-            <span className="mr-1 text-xs text-primary">From</span>
-          ) : null}
+        <div className="shrink-0 text-sm text-ink">
+          {isRange ? <span className="mr-1 text-xs text-primary">From</span> : null}
           <Money data={min} withoutTrailingZeros />
-        </p>
+        </div>
       </div>
 
       {swatches.length > 0 && colorOption ? (
