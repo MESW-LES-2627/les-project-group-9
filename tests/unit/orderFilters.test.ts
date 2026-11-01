@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {buildOrderSearchQuery, parseOrderFilters} from './orderFilters';
+import {buildOrderSearchQuery, parseOrderFilters} from '../../app/lib/orderFilters';
 
 describe('buildOrderSearchQuery', () => {
   it('returns undefined when there are no filters', () => {
