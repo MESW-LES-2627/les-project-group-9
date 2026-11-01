@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {getVariantUrl} from './variants';
+import {getVariantUrl} from '~/lib/variants';
 
 function build(
   pathname: string,
