@@ -1,4 +1,5 @@
 import type {HydrogenRouterContextProvider} from '@shopify/hydrogen';
+import type {JewelietteRecommendationProductFragment} from 'storefrontapi.generated';
 import {
   JEWELIETTE_RECOMMENDATION_PRODUCT_FRAGMENT,
   type CatalogProductWithTraits,
@@ -32,7 +33,8 @@ export async function getRecommendationCandidates(
   );
 
   return products.nodes.filter(
-    (product): product is NonNullable<(typeof products.nodes)[number]> =>
-      product !== null,
+    (
+      product: JewelietteRecommendationProductFragment | null,
+    ): product is JewelietteRecommendationProductFragment => product !== null,
   );
 }
