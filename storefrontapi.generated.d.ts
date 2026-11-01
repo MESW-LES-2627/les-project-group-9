@@ -1065,24 +1065,6 @@ export type StoreCollectionsQuery = {
   };
 };
 
-export type MoneyCollectionItemFragment = Pick<
-  StorefrontAPI.MoneyV2,
-  'amount' | 'currencyCode'
->;
-
-export type CollectionItemFragment = Pick<
-  StorefrontAPI.Product,
-  'id' | 'handle' | 'title'
-> & {
-  featuredImage?: StorefrontAPI.Maybe<
-    Pick<StorefrontAPI.Image, 'id' | 'altText' | 'url' | 'width' | 'height'>
-  >;
-  priceRange: {
-    minVariantPrice: Pick<StorefrontAPI.MoneyV2, 'amount' | 'currencyCode'>;
-    maxVariantPrice: Pick<StorefrontAPI.MoneyV2, 'amount' | 'currencyCode'>;
-  };
-};
-
 export type CatalogQueryVariables = StorefrontAPI.Exact<{
   country?: StorefrontAPI.InputMaybe<StorefrontAPI.CountryCode>;
   language?: StorefrontAPI.InputMaybe<StorefrontAPI.LanguageCode>;
@@ -1099,12 +1081,52 @@ export type CatalogQueryVariables = StorefrontAPI.Exact<{
 export type CatalogQuery = {
   products: {
     nodes: Array<
-      Pick<StorefrontAPI.Product, 'id' | 'handle' | 'title'> & {
+      Pick<StorefrontAPI.Product, 'id' | 'title' | 'handle' | 'productType'> & {
+        material?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+        badge?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
         featuredImage?: StorefrontAPI.Maybe<
           Pick<
             StorefrontAPI.Image,
-            'id' | 'altText' | 'url' | 'width' | 'height'
+            'id' | 'url' | 'altText' | 'width' | 'height'
           >
+        >;
+        images: {
+          nodes: Array<
+            Pick<
+              StorefrontAPI.Image,
+              'id' | 'url' | 'altText' | 'width' | 'height'
+            >
+          >;
+        };
+        options: Array<
+          Pick<StorefrontAPI.ProductOption, 'name'> & {
+            optionValues: Array<
+              Pick<StorefrontAPI.ProductOptionValue, 'name'> & {
+                swatch?: StorefrontAPI.Maybe<
+                  Pick<StorefrontAPI.ProductOptionValueSwatch, 'color'> & {
+                    image?: StorefrontAPI.Maybe<{
+                      previewImage?: StorefrontAPI.Maybe<
+                        Pick<StorefrontAPI.Image, 'url'>
+                      >;
+                    }>;
+                  }
+                >;
+                firstSelectableVariant?: StorefrontAPI.Maybe<
+                  Pick<
+                    StorefrontAPI.ProductVariant,
+                    'id' | 'availableForSale'
+                  > & {
+                    image?: StorefrontAPI.Maybe<
+                      Pick<
+                        StorefrontAPI.Image,
+                        'id' | 'url' | 'altText' | 'width' | 'height'
+                      >
+                    >;
+                  }
+                >;
+              }
+            >;
+          }
         >;
         priceRange: {
           minVariantPrice: Pick<
@@ -1116,6 +1138,9 @@ export type CatalogQuery = {
             'amount' | 'currencyCode'
           >;
         };
+        selectedOrFirstAvailableVariant?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.ProductVariant, 'id' | 'availableForSale'>
+        >;
       }
     >;
     pageInfo: Pick<
@@ -1891,7 +1916,7 @@ interface GeneratedQueryTypes {
     return: HeaderQuery;
     variables: HeaderQueryVariables;
   };
-  '#graphql\n  #graphql\n  fragment JewelietteProductCard on Product {\n    id\n    title\n    handle\n    productType\n    material: metafield(namespace: "custom", key: "material") { value }\n    badge: metafield(namespace: "custom", key: "badge") { value }\n    featuredImage { id url altText width height }\n    images(first: 2) { nodes { id url altText width height } }\n    options {\n      name\n      optionValues {\n        name\n        swatch { color image { previewImage { url } } }\n        firstSelectableVariant {\n          id\n          availableForSale\n          image { id url altText width height }\n        }\n      }\n    }\n    priceRange {\n      minVariantPrice { amount currencyCode }\n      maxVariantPrice { amount currencyCode }\n    }\n    selectedOrFirstAvailableVariant { id availableForSale }\n  }\n\n\n  fragment JewelietteHomeCollection on Collection {\n    id\n    title\n    handle\n    description\n\n    image {\n      id\n      url\n      altText\n      width\n      height\n    }\n\n    products(first: 4) {\n      nodes {\n        ...JewelietteProductCard\n      }\n    }\n  }\n\n  query JewelietteHome(\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    contentMenu: menu(handle: "home-content") {\n      items {\n        title\n\n        resource {\n          __typename\n\n          ... on Collection {\n            ...JewelietteHomeCollection\n          }\n        }\n      }\n    }\n\n    collections(first: 8, sortKey: TITLE) {\n      nodes {\n        ...JewelietteHomeCollection\n      }\n    }\n\n    products(first: 4, sortKey: BEST_SELLING) {\n      nodes {\n        ...JewelietteProductCard\n      }\n    }\n  }\n': {
+  '#graphql\n  #graphql\n  fragment JewelietteProductCard on Product {\n    id\n    title\n    handle\n    productType\n    material: metafield(namespace: "custom", key: "material") { value }\n    badge: metafield(namespace: "custom", key: "product_badge") { value }\n    featuredImage { id url altText width height }\n    images(first: 2) { nodes { id url altText width height } }\n    options {\n      name\n      optionValues {\n        name\n        swatch { color image { previewImage { url } } }\n        firstSelectableVariant {\n          id\n          availableForSale\n          image { id url altText width height }\n        }\n      }\n    }\n    priceRange {\n      minVariantPrice { amount currencyCode }\n      maxVariantPrice { amount currencyCode }\n    }\n    selectedOrFirstAvailableVariant { id availableForSale }\n  }\n\n\n  fragment JewelietteHomeCollection on Collection {\n    id\n    title\n    handle\n    description\n\n    image {\n      id\n      url\n      altText\n      width\n      height\n    }\n\n    products(first: 4) {\n      nodes {\n        ...JewelietteProductCard\n      }\n    }\n  }\n\n  query JewelietteHome(\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    contentMenu: menu(handle: "home-content") {\n      items {\n        title\n\n        resource {\n          __typename\n\n          ... on Collection {\n            ...JewelietteHomeCollection\n          }\n        }\n      }\n    }\n\n    collections(first: 8, sortKey: TITLE) {\n      nodes {\n        ...JewelietteHomeCollection\n      }\n    }\n\n    products(first: 4, sortKey: BEST_SELLING) {\n      nodes {\n        ...JewelietteProductCard\n      }\n    }\n  }\n': {
     return: JewelietteHomeQuery;
     variables: JewelietteHomeQueryVariables;
   };
@@ -1907,7 +1932,7 @@ interface GeneratedQueryTypes {
     return: BlogsQuery;
     variables: BlogsQueryVariables;
   };
-  '#graphql\n  #graphql\n  fragment JewelietteProductCard on Product {\n    id\n    title\n    handle\n    productType\n    material: metafield(namespace: "custom", key: "material") { value }\n    badge: metafield(namespace: "custom", key: "badge") { value }\n    featuredImage { id url altText width height }\n    images(first: 2) { nodes { id url altText width height } }\n    options {\n      name\n      optionValues {\n        name\n        swatch { color image { previewImage { url } } }\n        firstSelectableVariant {\n          id\n          availableForSale\n          image { id url altText width height }\n        }\n      }\n    }\n    priceRange {\n      minVariantPrice { amount currencyCode }\n      maxVariantPrice { amount currencyCode }\n    }\n    selectedOrFirstAvailableVariant { id availableForSale }\n  }\n\n\n  query Collection(\n    $handle: String!\n    $country: CountryCode\n    $language: LanguageCode\n    $first: Int\n    $last: Int\n    $startCursor: String\n    $endCursor: String\n    $filters: [ProductFilter!]\n    $sortKey: ProductCollectionSortKeys\n    $reverse: Boolean\n  ) @inContext(country: $country, language: $language) {\n    collection(handle: $handle) {\n      id\n      handle\n      title\n      description\n\n      products(\n        first: $first\n        last: $last\n        before: $startCursor\n        after: $endCursor\n        filters: $filters\n        sortKey: $sortKey\n        reverse: $reverse\n      ) {\n        nodes {\n          ...JewelietteProductCard\n        }\n\n        filters {\n          id\n          label\n          type\n          values {\n            id\n            label\n            count\n            input\n          }\n        }\n\n        pageInfo {\n          hasPreviousPage\n          hasNextPage\n          endCursor\n          startCursor\n        }\n      }\n    }\n  }\n': {
+  '#graphql\n  #graphql\n  fragment JewelietteProductCard on Product {\n    id\n    title\n    handle\n    productType\n    material: metafield(namespace: "custom", key: "material") { value }\n    badge: metafield(namespace: "custom", key: "product_badge") { value }\n    featuredImage { id url altText width height }\n    images(first: 2) { nodes { id url altText width height } }\n    options {\n      name\n      optionValues {\n        name\n        swatch { color image { previewImage { url } } }\n        firstSelectableVariant {\n          id\n          availableForSale\n          image { id url altText width height }\n        }\n      }\n    }\n    priceRange {\n      minVariantPrice { amount currencyCode }\n      maxVariantPrice { amount currencyCode }\n    }\n    selectedOrFirstAvailableVariant { id availableForSale }\n  }\n\n\n  query Collection(\n    $handle: String!\n    $country: CountryCode\n    $language: LanguageCode\n    $first: Int\n    $last: Int\n    $startCursor: String\n    $endCursor: String\n    $filters: [ProductFilter!]\n    $sortKey: ProductCollectionSortKeys\n    $reverse: Boolean\n  ) @inContext(country: $country, language: $language) {\n    collection(handle: $handle) {\n      id\n      handle\n      title\n      description\n\n      products(\n        first: $first\n        last: $last\n        before: $startCursor\n        after: $endCursor\n        filters: $filters\n        sortKey: $sortKey\n        reverse: $reverse\n      ) {\n        nodes {\n          ...JewelietteProductCard\n        }\n\n        filters {\n          id\n          label\n          type\n          values {\n            id\n            label\n            count\n            input\n          }\n        }\n\n        pageInfo {\n          hasPreviousPage\n          hasNextPage\n          endCursor\n          startCursor\n        }\n      }\n    }\n  }\n': {
     return: CollectionQuery;
     variables: CollectionQueryVariables;
   };
@@ -1915,11 +1940,11 @@ interface GeneratedQueryTypes {
     return: StoreCollectionsQuery;
     variables: StoreCollectionsQueryVariables;
   };
-  '#graphql\n  query Catalog(\n    $country: CountryCode\n    $language: LanguageCode\n    $first: Int\n    $last: Int\n    $startCursor: String\n    $endCursor: String\n  ) @inContext(country: $country, language: $language) {\n    products(first: $first, last: $last, before: $startCursor, after: $endCursor) {\n      nodes {\n        ...CollectionItem\n      }\n      pageInfo {\n        hasPreviousPage\n        hasNextPage\n        startCursor\n        endCursor\n      }\n    }\n  }\n  #graphql\n  fragment MoneyCollectionItem on MoneyV2 {\n    amount\n    currencyCode\n  }\n  fragment CollectionItem on Product {\n    id\n    handle\n    title\n    featuredImage {\n      id\n      altText\n      url\n      width\n      height\n    }\n    priceRange {\n      minVariantPrice {\n        ...MoneyCollectionItem\n      }\n      maxVariantPrice {\n        ...MoneyCollectionItem\n      }\n    }\n  }\n\n': {
+  '#graphql\n  #graphql\n  fragment JewelietteProductCard on Product {\n    id\n    title\n    handle\n    productType\n    material: metafield(namespace: "custom", key: "material") { value }\n    badge: metafield(namespace: "custom", key: "product_badge") { value }\n    featuredImage { id url altText width height }\n    images(first: 2) { nodes { id url altText width height } }\n    options {\n      name\n      optionValues {\n        name\n        swatch { color image { previewImage { url } } }\n        firstSelectableVariant {\n          id\n          availableForSale\n          image { id url altText width height }\n        }\n      }\n    }\n    priceRange {\n      minVariantPrice { amount currencyCode }\n      maxVariantPrice { amount currencyCode }\n    }\n    selectedOrFirstAvailableVariant { id availableForSale }\n  }\n\n\n  query Catalog(\n    $country: CountryCode\n    $language: LanguageCode\n    $first: Int\n    $last: Int\n    $startCursor: String\n    $endCursor: String\n  ) @inContext(country: $country, language: $language) {\n    products(\n      first: $first\n      last: $last\n      before: $startCursor\n      after: $endCursor\n    ) {\n      nodes {\n        ...JewelietteProductCard\n      }\n      pageInfo {\n        hasPreviousPage\n        hasNextPage\n        startCursor\n        endCursor\n      }\n    }\n  }\n': {
     return: CatalogQuery;
     variables: CatalogQueryVariables;
   };
-  '#graphql\n  #graphql\n  fragment JewelietteProductCard on Product {\n    id\n    title\n    handle\n    productType\n    material: metafield(namespace: "custom", key: "material") { value }\n    badge: metafield(namespace: "custom", key: "badge") { value }\n    featuredImage { id url altText width height }\n    images(first: 2) { nodes { id url altText width height } }\n    options {\n      name\n      optionValues {\n        name\n        swatch { color image { previewImage { url } } }\n        firstSelectableVariant {\n          id\n          availableForSale\n          image { id url altText width height }\n        }\n      }\n    }\n    priceRange {\n      minVariantPrice { amount currencyCode }\n      maxVariantPrice { amount currencyCode }\n    }\n    selectedOrFirstAvailableVariant { id availableForSale }\n  }\n\n  query JewelietteFavorites(\n    $ids: [ID!]!\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    nodes(ids: $ids) {\n      __typename\n      ... on Product { ...JewelietteProductCard }\n    }\n  }\n': {
+  '#graphql\n  #graphql\n  fragment JewelietteProductCard on Product {\n    id\n    title\n    handle\n    productType\n    material: metafield(namespace: "custom", key: "material") { value }\n    badge: metafield(namespace: "custom", key: "product_badge") { value }\n    featuredImage { id url altText width height }\n    images(first: 2) { nodes { id url altText width height } }\n    options {\n      name\n      optionValues {\n        name\n        swatch { color image { previewImage { url } } }\n        firstSelectableVariant {\n          id\n          availableForSale\n          image { id url altText width height }\n        }\n      }\n    }\n    priceRange {\n      minVariantPrice { amount currencyCode }\n      maxVariantPrice { amount currencyCode }\n    }\n    selectedOrFirstAvailableVariant { id availableForSale }\n  }\n\n  query JewelietteFavorites(\n    $ids: [ID!]!\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    nodes(ids: $ids) {\n      __typename\n      ... on Product { ...JewelietteProductCard }\n    }\n  }\n': {
     return: JewelietteFavoritesQuery;
     variables: JewelietteFavoritesQueryVariables;
   };
@@ -1939,7 +1964,7 @@ interface GeneratedQueryTypes {
     return: ProductQuery;
     variables: ProductQueryVariables;
   };
-  '#graphql\n  #graphql\n  fragment JewelietteProductCard on Product {\n    id\n    title\n    handle\n    productType\n    material: metafield(namespace: "custom", key: "material") { value }\n    badge: metafield(namespace: "custom", key: "badge") { value }\n    featuredImage { id url altText width height }\n    images(first: 2) { nodes { id url altText width height } }\n    options {\n      name\n      optionValues {\n        name\n        swatch { color image { previewImage { url } } }\n        firstSelectableVariant {\n          id\n          availableForSale\n          image { id url altText width height }\n        }\n      }\n    }\n    priceRange {\n      minVariantPrice { amount currencyCode }\n      maxVariantPrice { amount currencyCode }\n    }\n    selectedOrFirstAvailableVariant { id availableForSale }\n  }\n\n  query JewelietteRecommendations(\n    $productId: ID!\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    productRecommendations(productId: $productId) {\n      ...JewelietteProductCard\n    }\n  }\n': {
+  '#graphql\n  #graphql\n  fragment JewelietteProductCard on Product {\n    id\n    title\n    handle\n    productType\n    material: metafield(namespace: "custom", key: "material") { value }\n    badge: metafield(namespace: "custom", key: "product_badge") { value }\n    featuredImage { id url altText width height }\n    images(first: 2) { nodes { id url altText width height } }\n    options {\n      name\n      optionValues {\n        name\n        swatch { color image { previewImage { url } } }\n        firstSelectableVariant {\n          id\n          availableForSale\n          image { id url altText width height }\n        }\n      }\n    }\n    priceRange {\n      minVariantPrice { amount currencyCode }\n      maxVariantPrice { amount currencyCode }\n    }\n    selectedOrFirstAvailableVariant { id availableForSale }\n  }\n\n  query JewelietteRecommendations(\n    $productId: ID!\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    productRecommendations(productId: $productId) {\n      ...JewelietteProductCard\n    }\n  }\n': {
     return: JewelietteRecommendationsQuery;
     variables: JewelietteRecommendationsQueryVariables;
   };

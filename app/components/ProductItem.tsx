@@ -9,6 +9,7 @@ type Props = {product: CatalogProduct; loading?: 'eager' | 'lazy'};
 const COLOR_OPTION = /^(colou?r|finish|metal)$/i;
 
 export function ProductItem({product, loading = 'lazy'}: Props) {
+
   const [variantImage, setVariantImage] = useState<CatalogImage | null>(null);
 
   const url = `/products/${product.handle}`;
@@ -133,18 +134,24 @@ export function ProductItem({product, loading = 'lazy'}: Props) {
         </div>
 
         <p className="shrink-0 text-sm text-ink">
-          {isRange ? <span className="mr-1 text-xs text-primary">From</span> : null}
+          {isRange ? (
+            <span className="mr-1 text-xs text-primary">From</span>
+          ) : null}
           <Money data={min} withoutTrailingZeros />
         </p>
       </div>
 
       {swatches.length > 0 && colorOption ? (
-        <ul className="mt-3 flex flex-wrap items-center gap-2" aria-label={colorOption.name}>
+        <ul
+          className="mt-3 flex flex-wrap items-center gap-2"
+          aria-label={colorOption.name}
+        >
           {swatches.slice(0, 6).map((value) => {
             const bg = value.swatch?.color ?? undefined;
             const img = value.swatch?.image?.previewImage?.url;
             const optionUrl = `${url}?${encodeURIComponent(colorOption.name)}=${encodeURIComponent(value.name)}`;
-            const active = variantImage?.url === value.firstSelectableVariant?.image?.url;
+            const active =
+              variantImage?.url === value.firstSelectableVariant?.image?.url;
 
             return (
               <li key={value.name}>
@@ -162,7 +169,9 @@ export function ProductItem({product, loading = 'lazy'}: Props) {
                   onMouseLeave={() => setVariantImage(null)}
                   onBlur={() => setVariantImage(null)}
                   className={`block h-4 w-4 rounded-full border bg-cover bg-center ${
-                    active ? 'border-ink ring-1 ring-ink ring-offset-2' : 'border-line'
+                    active
+                      ? 'border-ink ring-1 ring-ink ring-offset-2'
+                      : 'border-line'
                   }`}
                   style={{
                     backgroundColor: bg,
