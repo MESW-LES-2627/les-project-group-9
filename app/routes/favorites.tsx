@@ -2,6 +2,7 @@ import {useEffect} from 'react';
 import {Link, useFetcher} from 'react-router';
 import type {Route} from './+types/favorites';
 import {ProductItem} from '~/components/ProductItem';
+import {RecommendedProducts} from '~/components/RecommendedProducts';
 import {useFavorites} from '~/lib/favorites';
 import {JEWELIETTE_PRODUCT_CARD_FRAGMENT} from '~/lib/jeweliette-catalog';
 
@@ -31,7 +32,7 @@ export async function loader({request, context}: Route.LoaderArgs) {
 }
 
 export default function Favorites() {
-  const {ids} = useFavorites();
+  const {ids, ready, isLoggedIn} = useFavorites();
   const fetcher = useFetcher<typeof loader>();
   const key = ids.join(',');
 
@@ -53,7 +54,24 @@ export default function Favorites() {
         </h1>
       </header>
 
-      {ids.length === 0 ? (
+      {!ready ? (
+        <div className="mx-auto mt-14 max-w-md border-y border-line py-14 text-center text-sm text-primary">
+          Loading favorites…
+        </div>
+      ) : !isLoggedIn ? (
+        <div className="mx-auto mt-14 max-w-md border-y border-line py-14 text-center">
+          <h2 className="font-display text-2xl">Log in to save favorites.</h2>
+          <p className="mt-3 text-sm text-primary">
+            Sign in to keep your favourite pieces across devices.
+          </p>
+          <Link
+            to="/account/login"
+            className="mt-6 inline-flex min-h-11 items-center bg-primary px-6 text-[11px] uppercase tracking-widest text-white hover:bg-ink"
+          >
+            Log in
+          </Link>
+        </div>
+      ) : ids.length === 0 ? (
         <div className="mx-auto mt-14 max-w-md border-y border-line py-14 text-center">
           <h2 className="font-display text-2xl">Nothing saved yet.</h2>
           <p className="mt-3 text-sm text-primary">
@@ -67,11 +85,14 @@ export default function Favorites() {
           </Link>
         </div>
       ) : (
-        <div className="mt-12 grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 xl:grid-cols-4">
-          {products.map((product) => (
-            <ProductItem key={product.id} product={product} />
-          ))}
-        </div>
+        <>
+          <div className="mt-12 grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 xl:grid-cols-4">
+            {products.map((product) => (
+              <ProductItem key={product.id} product={product} />
+            ))}
+          </div>
+          <RecommendedProducts className="mt-16" />
+        </>
       )}
     </section>
   );

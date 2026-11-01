@@ -47,6 +47,16 @@ export type CatalogProduct = {
   };
 };
 
+export type CatalogProductWithTraits = CatalogProduct & {
+  category?: {id: string; name: string} | null;
+  metal?: {value: string} | null;
+  gemstone?: {value: string} | null;
+  gemColor?: {value: string} | null;
+  collections?: {
+    nodes: Array<{handle: string}>;
+  };
+};
+
 export const JEWELIETTE_PRODUCT_CARD_FRAGMENT = `#graphql
   fragment JewelietteProductCard on Product {
     id
@@ -75,4 +85,16 @@ export const JEWELIETTE_PRODUCT_CARD_FRAGMENT = `#graphql
     }
     selectedOrFirstAvailableVariant { id availableForSale }
   }
+` as const;
+
+export const JEWELIETTE_RECOMMENDATION_PRODUCT_FRAGMENT = `#graphql
+  fragment JewelietteRecommendationProduct on Product {
+    ...JewelietteProductCard
+    category { id name }
+    metal: metafield(namespace: "custom", key: "metal") { value }
+    gemstone: metafield(namespace: "custom", key: "gemstone") { value }
+    gemColor: metafield(namespace: "custom", key: "gem_color") { value }
+    collections(first: 10) { nodes { handle } }
+  }
+  ${JEWELIETTE_PRODUCT_CARD_FRAGMENT}
 ` as const;
