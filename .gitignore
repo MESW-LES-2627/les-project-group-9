@@ -9,3 +9,7 @@ node_modules
 .react-router
 *.tsbuildinfo
 /.idea/
+/test-results
+/playwright-report
+/blob-report
+/playwright/.cache
