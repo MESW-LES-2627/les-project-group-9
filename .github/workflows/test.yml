@@ -53,7 +53,9 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Create .env
-        run: echo "SESSION_SECRET=ci-test-secret" > .env
+        run: |
+          echo "SESSION_SECRET=ci-test-secret" > .env
+          echo "PUBLIC_STORE_DOMAIN=mock.shop" >> .env
 
       - name: E2E tests
         run: npm run test:e2e
