@@ -3,7 +3,8 @@ import {useLoaderData} from 'react-router';
 import {getPaginationVariables, Image, Money} from '@shopify/hydrogen';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 import {ProductItem} from '~/components/ProductItem';
-import type {CollectionItemFragment} from 'storefrontapi.generated';
+import {JEWELIETTE_PRODUCT_CARD_FRAGMENT} from '~/lib/jeweliette-catalog';
+import type {JewelietteProductCardFragment} from 'storefrontapi.generated';
 
 export const meta: Route.MetaFunction = () => {
   return [{title: `Hydrogen | Products`}];
@@ -53,7 +54,7 @@ export default function Collection() {
   return (
     <div className="collection">
       <h1>Products</h1>
-      <PaginatedResourceSection<CollectionItemFragment>
+      <PaginatedResourceSection<JewelietteProductCardFragment>
         connection={products}
         resourcesClassName="products-grid"
       >
@@ -69,35 +70,10 @@ export default function Collection() {
   );
 }
 
-const COLLECTION_ITEM_FRAGMENT = `#graphql
-  fragment MoneyCollectionItem on MoneyV2 {
-    amount
-    currencyCode
-  }
-  fragment CollectionItem on Product {
-    id
-    handle
-    title
-    featuredImage {
-      id
-      altText
-      url
-      width
-      height
-    }
-    priceRange {
-      minVariantPrice {
-        ...MoneyCollectionItem
-      }
-      maxVariantPrice {
-        ...MoneyCollectionItem
-      }
-    }
-  }
-` as const;
-
 // NOTE: https://shopify.dev/docs/api/storefront/latest/objects/product
 const CATALOG_QUERY = `#graphql
+  ${JEWELIETTE_PRODUCT_CARD_FRAGMENT}
+
   query Catalog(
     $country: CountryCode
     $language: LanguageCode
@@ -106,9 +82,14 @@ const CATALOG_QUERY = `#graphql
     $startCursor: String
     $endCursor: String
   ) @inContext(country: $country, language: $language) {
-    products(first: $first, last: $last, before: $startCursor, after: $endCursor) {
+    products(
+      first: $first
+      last: $last
+      before: $startCursor
+      after: $endCursor
+    ) {
       nodes {
-        ...CollectionItem
+        ...JewelietteProductCard
       }
       pageInfo {
         hasPreviousPage
@@ -118,5 +99,4 @@ const CATALOG_QUERY = `#graphql
       }
     }
   }
-  ${COLLECTION_ITEM_FRAGMENT}
 ` as const;

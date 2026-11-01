@@ -3,12 +3,14 @@ import {Link} from 'react-router';
 import {CartForm, Image, Money} from '@shopify/hydrogen';
 import type {CatalogImage, CatalogProduct} from '~/lib/jeweliette-catalog';
 import {FavoriteButton} from '~/components/FavoriteButton';
+import {ProductBadge} from '~/components/ProductBadge';
 
 type Props = {product: CatalogProduct; loading?: 'eager' | 'lazy'};
 
 const COLOR_OPTION = /^(colou?r|finish|metal)$/i;
 
 export function ProductItem({product, loading = 'lazy'}: Props) {
+
   const [variantImage, setVariantImage] = useState<CatalogImage | null>(null);
 
   const url = `/products/${product.handle}`;
@@ -71,11 +73,7 @@ export function ProductItem({product, loading = 'lazy'}: Props) {
           ) : null}
         </Link>
 
-        {product.badge?.value ? (
-          <span className="pointer-events-none absolute left-3 top-3 bg-paper/95 px-2.5 py-1.5 text-[10px] uppercase tracking-widest text-primary">
-            {product.badge.value}
-          </span>
-        ) : null}
+        <ProductBadge value={product.badge?.value} />
 
         <FavoriteButton
           productId={product.id}
@@ -139,12 +137,16 @@ export function ProductItem({product, loading = 'lazy'}: Props) {
       </div>
 
       {swatches.length > 0 && colorOption ? (
-        <ul className="mt-3 flex flex-wrap items-center gap-2" aria-label={colorOption.name}>
+        <ul
+          className="mt-3 flex flex-wrap items-center gap-2"
+          aria-label={colorOption.name}
+        >
           {swatches.slice(0, 6).map((value) => {
             const bg = value.swatch?.color ?? undefined;
             const img = value.swatch?.image?.previewImage?.url;
             const optionUrl = `${url}?${encodeURIComponent(colorOption.name)}=${encodeURIComponent(value.name)}`;
-            const active = variantImage?.url === value.firstSelectableVariant?.image?.url;
+            const active =
+              variantImage?.url === value.firstSelectableVariant?.image?.url;
 
             return (
               <li key={value.name}>
@@ -162,7 +164,9 @@ export function ProductItem({product, loading = 'lazy'}: Props) {
                   onMouseLeave={() => setVariantImage(null)}
                   onBlur={() => setVariantImage(null)}
                   className={`block h-4 w-4 rounded-full border bg-cover bg-center ${
-                    active ? 'border-ink ring-1 ring-ink ring-offset-2' : 'border-line'
+                    active
+                      ? 'border-ink ring-1 ring-ink ring-offset-2'
+                      : 'border-line'
                   }`}
                   style={{
                     backgroundColor: bg,

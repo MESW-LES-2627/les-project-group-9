@@ -64,7 +64,7 @@ export const JEWELIETTE_PRODUCT_CARD_FRAGMENT = `#graphql
     handle
     productType
     material: metafield(namespace: "custom", key: "material") { value }
-    badge: metafield(namespace: "custom", key: "badge") { value }
+    badge: metafield(namespace: "custom", key: "product_badge") { value }
     featuredImage { id url altText width height }
     images(first: 2) { nodes { id url altText width height } }
     options {
