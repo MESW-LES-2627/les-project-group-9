@@ -477,6 +477,35 @@ export type CustomerOrdersQuery = {
   };
 };
 
+export type CustomerFavoritesSetMutationVariables = CustomerAccountAPI.Exact<{
+  metafields:
+    | Array<CustomerAccountAPI.MetafieldsSetInput>
+    | CustomerAccountAPI.MetafieldsSetInput;
+}>;
+
+export type CustomerFavoritesSetMutation = {
+  metafieldsSet?: CustomerAccountAPI.Maybe<{
+    metafields?: CustomerAccountAPI.Maybe<
+      Array<Pick<CustomerAccountAPI.Metafield, 'value'>>
+    >;
+    userErrors: Array<
+      Pick<CustomerAccountAPI.MetafieldsSetUserError, 'message'>
+    >;
+  }>;
+};
+
+export type CustomerProfileQueryVariables = CustomerAccountAPI.Exact<{
+  [key: string]: never;
+}>;
+
+export type CustomerProfileQuery = {
+  customer: Pick<CustomerAccountAPI.Customer, 'id'> & {
+    favorites?: CustomerAccountAPI.Maybe<
+      Pick<CustomerAccountAPI.Metafield, 'value'>
+    >;
+  };
+};
+
 export type CustomerUpdateMutationVariables = CustomerAccountAPI.Exact<{
   customer: CustomerAccountAPI.CustomerUpdateInput;
   language?: CustomerAccountAPI.InputMaybe<CustomerAccountAPI.LanguageCode>;
@@ -516,6 +545,10 @@ interface GeneratedQueryTypes {
     return: CustomerOrdersQuery;
     variables: CustomerOrdersQueryVariables;
   };
+  '#graphql\n  query CustomerProfile {\n    customer {\n      id\n      favorites: metafield(namespace: "custom", key: "favorites") {\n        value\n      }\n    }\n  }\n': {
+    return: CustomerProfileQuery;
+    variables: CustomerProfileQueryVariables;
+  };
 }
 
 interface GeneratedMutationTypes {
@@ -530,6 +563,10 @@ interface GeneratedMutationTypes {
   '#graphql\n  mutation customerAddressCreate(\n    $address: CustomerAddressInput!\n    $defaultAddress: Boolean\n    $language: LanguageCode\n  ) @inContext(language: $language) {\n    customerAddressCreate(\n      address: $address\n      defaultAddress: $defaultAddress\n    ) {\n      customerAddress {\n        id\n      }\n      userErrors {\n        code\n        field\n        message\n      }\n    }\n  }\n': {
     return: CustomerAddressCreateMutation;
     variables: CustomerAddressCreateMutationVariables;
+  };
+  '#graphql\n  mutation CustomerFavoritesSet($metafields: [MetafieldsSetInput!]!) {\n    metafieldsSet(metafields: $metafields) {\n      metafields {\n        value\n      }\n      userErrors {\n        message\n      }\n    }\n  }\n': {
+    return: CustomerFavoritesSetMutation;
+    variables: CustomerFavoritesSetMutationVariables;
   };
   '#graphql\n  mutation customerUpdate(\n    $customer: CustomerUpdateInput!\n    $language: LanguageCode\n  ) @inContext(language: $language) {\n    customerUpdate(input: $customer) {\n      customer {\n        firstName\n        lastName\n        emailAddress {\n          emailAddress\n        }\n        phoneNumber {\n          phoneNumber\n        }\n      }\n      userErrors {\n        code\n        field\n        message\n      }\n    }\n  }\n': {
     return: CustomerUpdateMutation;
