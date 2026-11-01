@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest';
-import {updateCustomerFavorites} from './customer.server';
-import {parseFavorites, serializeFavorites} from './schema';
+import {updateCustomerFavorites} from '../../app/lib/profile/customer.server';
+import {parseFavorites, serializeFavorites} from '../../app/lib/profile/schema';
 
 const CUSTOMER_ID = 'gid://shopify/Customer/1';
 const A = 'gid://shopify/Product/1';

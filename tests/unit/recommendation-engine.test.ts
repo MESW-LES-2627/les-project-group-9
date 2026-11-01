@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest';
-import {recommendProducts} from './engine';
-import type {ProductTraits} from './types';
+import {recommendProducts} from '../../app/lib/recommendation/engine';
+import type {ProductTraits} from '../../app/lib/recommendation/types';
 
 function traits(
   id: string,

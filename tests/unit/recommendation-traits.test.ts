@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest';
 import type {CatalogProductWithTraits} from '~/lib/jeweliette-catalog';
-import {toProductTraits} from './traits';
+import {toProductTraits} from '../../app/lib/recommendation/traits';
 
 function product(
   overrides: Partial<CatalogProductWithTraits> = {},

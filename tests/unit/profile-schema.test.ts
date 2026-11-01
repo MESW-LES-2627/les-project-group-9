@@ -3,7 +3,7 @@ import {
   applyFavoriteOperation,
   parseFavorites,
   serializeFavorites,
-} from './schema';
+} from '../../app/lib/profile/schema';
 
 const A = 'gid://shopify/Product/1';
 const B = 'gid://shopify/Product/2';
