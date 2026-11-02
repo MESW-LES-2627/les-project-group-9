@@ -1,8 +1,21 @@
 export type ProfileStatus = 'loading' | 'ready';
 
+export type PreferenceProfile = {
+  allergies?: string[];
+  skin?: {
+    tone?: string;
+    undertone?: string;
+  };
+  ringSizes?: Record<string, string>;
+  preferredMaterials?: string[];
+  preferredColors?: string[];
+  preferredGemstones?: string[];
+};
+
 export type ProfileResponse = {
   loggedIn: boolean;
   favorites: string[];
+  preferences: PreferenceProfile | null;
 };
 
 export type FavoriteOperation = {

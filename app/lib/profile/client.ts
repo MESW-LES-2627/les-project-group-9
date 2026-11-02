@@ -1,4 +1,8 @@
-import type {FavoriteOperation, ProfileResponse} from './types';
+import type {
+  FavoriteOperation,
+  PreferenceProfile,
+  ProfileResponse,
+} from './types';
 
 export class ProfileRequestError extends Error {
   status: number;
@@ -38,5 +42,19 @@ export function postFavoriteOperation(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(operation),
+  });
+}
+
+export function postPreferences(
+  preferences: PreferenceProfile,
+): Promise<{preferences: PreferenceProfile}> {
+  return request<{preferences: PreferenceProfile}>('/api/profile/preferences', {
+    method: 'POST',
+    cache: 'no-store',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(preferences),
   });
 }

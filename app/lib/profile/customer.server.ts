@@ -1,17 +1,23 @@
 import type {HydrogenRouterContextProvider} from '@shopify/hydrogen';
 import {CUSTOMER_PROFILE_QUERY} from '~/graphql/customer-account/CustomerProfileQueries';
 import {METAFIELDS_SET_MUTATION} from '~/graphql/customer-account/CustomerProfileMutations';
+import {
+  normalizePreferences,
+  parsePreferences,
+  serializePreferences,
+} from './preferences';
 import {applyFavoriteOperation, parseFavorites, serializeFavorites} from './schema';
-import type {FavoriteOperation} from './types';
+import type {FavoriteOperation, PreferenceProfile} from './types';
 
 type Context = Pick<HydrogenRouterContextProvider, 'customerAccount'>;
 
-type FavoriteState = {
+type CustomerProfile = {
   customerId: string | null;
   favorites: string[];
+  preferences: PreferenceProfile;
 };
 
-async function readFavorites(context: Context): Promise<FavoriteState> {
+export async function readCustomerProfile(context: Context): Promise<CustomerProfile> {
   const {data, errors} = await context.customerAccount.query(
     CUSTOMER_PROFILE_QUERY,
   );
@@ -22,43 +28,68 @@ async function readFavorites(context: Context): Promise<FavoriteState> {
 
   const customer = data?.customer;
   if (!customer) {
-    return {customerId: null, favorites: []};
+    return {
+      customerId: null,
+      favorites: [],
+      preferences: normalizePreferences(null),
+    };
   }
 
   return {
     customerId: customer.id,
     favorites: parseFavorites(customer.favorites?.value ?? null),
+    preferences: parsePreferences(customer.preferences?.value ?? null),
   };
-}
-
-export async function readCustomerFavorites(
-  context: Context,
-): Promise<string[]> {
-  return (await readFavorites(context)).favorites;
 }
 
 export async function updateCustomerFavorites(
   context: Context,
   operation: FavoriteOperation,
 ): Promise<string[]> {
-  const state = await readFavorites(context);
-  if (!state.customerId) {
+  const profile = await readCustomerProfile(context);
+  if (!profile.customerId) {
     throw new Error('Customer not found');
   }
 
-  return writeCustomerFavorites(
-    context,
-    state.customerId,
-    applyFavoriteOperation(state.favorites, operation),
+  const value = serializeFavorites(
+    applyFavoriteOperation(profile.favorites, operation),
   );
+  const saved = await writeCustomerMetafield(
+    context,
+    profile.customerId,
+    'favorites',
+    value,
+  );
+
+  return parseFavorites(saved);
 }
 
-async function writeCustomerFavorites(
+export async function writeCustomerPreferences(
+  context: Context,
+  preferences: PreferenceProfile,
+): Promise<PreferenceProfile> {
+  const profile = await readCustomerProfile(context);
+  if (!profile.customerId) {
+    throw new Error('Customer not found');
+  }
+
+  const value = serializePreferences(preferences);
+  const saved = await writeCustomerMetafield(
+    context,
+    profile.customerId,
+    'preferences',
+    value,
+  );
+
+  return parsePreferences(saved);
+}
+
+async function writeCustomerMetafield(
   context: Context,
   customerId: string,
-  favorites: string[],
-): Promise<string[]> {
-  const value = serializeFavorites(favorites);
+  key: string,
+  value: string,
+): Promise<string> {
   const {data, errors} = await context.customerAccount.mutate(
     METAFIELDS_SET_MUTATION,
     {
@@ -67,7 +98,7 @@ async function writeCustomerFavorites(
           {
             ownerId: customerId,
             namespace: 'custom',
-            key: 'favorites',
+            key,
             type: 'json',
             value,
           },
@@ -85,5 +116,5 @@ async function writeCustomerFavorites(
     throw new Error(result.userErrors[0].message);
   }
 
-  return parseFavorites(result?.metafields?.[0]?.value ?? value);
+  return result?.metafields?.[0]?.value ?? value;
 }

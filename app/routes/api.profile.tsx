@@ -1,15 +1,19 @@
 import {data} from 'react-router';
 import type {Route} from './+types/api.profile';
-import {readCustomerFavorites} from '~/lib/profile/customer.server';
+import {readCustomerProfile} from '~/lib/profile/customer.server';
 
 export async function loader({context}: Route.LoaderArgs) {
   const loggedIn = await context.customerAccount.isLoggedIn();
-  const favorites = loggedIn
-    ? await readCustomerFavorites(context).catch(() => [])
-    : [];
+  const profile = loggedIn
+    ? await readCustomerProfile(context).catch(() => null)
+    : null;
 
   return data(
-    {loggedIn, favorites},
+    {
+      loggedIn,
+      favorites: profile?.favorites ?? [],
+      preferences: profile?.preferences ?? null,
+    },
     {
       headers: {
         'Cache-Control': 'no-store',
