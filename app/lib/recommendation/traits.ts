@@ -19,6 +19,17 @@ function parseTextMetafield(value: string | null | undefined): string[] {
   return dedupe(value.split(',').map(normalizeTraitValue).filter(Boolean));
 }
 
+function undertonesFromMetal(metal: string[]): string[] {
+  const undertones = new Set<string>();
+
+  for (const value of metal) {
+    if (value.includes('gold')) undertones.add('warm');
+    if (value.includes('silver')) undertones.add('cool');
+  }
+
+  return Array.from(undertones);
+}
+
 function parseListMetafield(value: string | null | undefined): string[] {
   if (!value) return [];
 
@@ -38,6 +49,8 @@ function parseListMetafield(value: string | null | undefined): string[] {
 }
 
 export function toProductTraits(product: CatalogProductWithTraits): ProductTraits {
+  const metal = parseTextMetafield(product.metal?.value);
+
   return {
     id: product.id,
     collections:
@@ -48,11 +61,11 @@ export function toProductTraits(product: CatalogProductWithTraits): ProductTrait
       ? [normalizeTraitValue(product.category.id)]
       : [],
     material: parseTextMetafield(product.material?.value),
-    metal: parseTextMetafield(product.metal?.value),
+    metal,
     gemstones: parseListMetafield(product.gemstone?.value),
     gemColors: parseListMetafield(product.gemColor?.value),
     skinTones: [],
-    undertones: [],
+    undertones: undertonesFromMetal(metal),
     allergens: [],
   };
 }

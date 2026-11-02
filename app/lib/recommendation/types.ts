@@ -1,14 +1,6 @@
-export type PreferenceProfile = {
-  allergies?: string[];
-  skin?: {
-    tone?: string;
-    undertone?: string;
-  };
-  ringSizes?: Record<string, string>;
-  preferredMaterials?: string[];
-  preferredColors?: string[];
-  preferredGemstones?: string[];
-};
+import type {PreferenceProfile} from '~/lib/profile/types';
+
+export type {PreferenceProfile};
 
 export type TraitKey =
   | 'collections'

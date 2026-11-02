@@ -50,7 +50,8 @@ export function RecommendedProducts({
 
       <div className="grid grid-cols-2 gap-x-4 gap-y-10 lg:grid-cols-4">
         {products.map((product) => {
-          const reason = fetcher.data?.reasons?.[product.id]?.[0];
+          const reasons = fetcher.data?.reasons?.[product.id] ?? [];
+          const reason = reasons.slice(0, 2).join(' · ');
 
           return (
             <div key={product.id}>

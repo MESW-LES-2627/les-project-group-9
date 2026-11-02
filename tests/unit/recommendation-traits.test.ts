@@ -42,6 +42,14 @@ describe('toProductTraits', () => {
     expect(traits.collections).toEqual(['frontpage']);
   });
 
+  it('derives undertones from metal', () => {
+    const gold = toProductTraits(product({metal: {value: 'gold'}}));
+    const silver = toProductTraits(product({metal: {value: 'silver'}}));
+
+    expect(gold.undertones).toEqual(['warm']);
+    expect(silver.undertones).toEqual(['cool']);
+  });
+
   it('parses a list metafield with multiple values', () => {
     const traits = toProductTraits(
       product({

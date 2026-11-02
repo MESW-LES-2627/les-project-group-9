@@ -118,6 +118,21 @@ describe('recommendProducts', () => {
     expect(results[0].reasons).toContain('Matches your preferred materials');
   });
 
+  it('uses undertone preferences', () => {
+    const favorite = traits('favorite');
+    const warm = traits('warm', {undertones: ['warm']});
+    const cool = traits('cool', {undertones: ['cool']});
+
+    const results = recommendProducts({
+      products: [cool, warm],
+      favorites: [favorite],
+      preferences: {skin: {undertone: 'warm'}},
+    });
+
+    expect(results[0].id).toBe('warm');
+    expect(results[0].reasons).toContain('Matches your undertone');
+  });
+
   it('supports a new preference through the registry', () => {
     const favorite = traits('favorite');
     const candidate = traits('candidate', {gemstones: ['moonstone']});
