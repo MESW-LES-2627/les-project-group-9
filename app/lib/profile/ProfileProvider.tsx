@@ -11,15 +11,17 @@ import {
 import {
   fetchProfile,
   postFavoriteOperation,
+  postPreferences,
   ProfileRequestError,
 } from './client';
 import {isProductGid} from './schema';
-import type {ProfileStatus} from './types';
+import type {PreferenceProfile, ProfileStatus} from './types';
 
 type ProfileState = {
   status: ProfileStatus;
   isLoggedIn: boolean;
   favorites: string[];
+  preferences: PreferenceProfile | null;
   pendingWrites: number;
 };
 
@@ -27,12 +29,14 @@ type ProfileContextValue = ProfileState & {
   syncing: boolean;
   hasFavorite: (id: string) => boolean;
   toggleFavorite: (id: string) => void;
+  savePreferences: (preferences: PreferenceProfile) => Promise<void>;
 };
 
 const INITIAL_STATE: ProfileState = {
   status: 'loading',
   isLoggedIn: false,
   favorites: [],
+  preferences: null,
   pendingWrites: 0,
 };
 
@@ -54,6 +58,7 @@ export function ProfileProvider({children}: {children: ReactNode}) {
         status: 'ready',
         isLoggedIn: profile.loggedIn,
         favorites: profile.favorites,
+        preferences: profile.preferences,
         pendingWrites: 0,
       });
     } catch {
@@ -61,6 +66,7 @@ export function ProfileProvider({children}: {children: ReactNode}) {
         status: 'ready',
         isLoggedIn: false,
         favorites: [],
+        preferences: null,
         pendingWrites: 0,
       });
     }
@@ -113,6 +119,41 @@ export function ProfileProvider({children}: {children: ReactNode}) {
     [commit, loadProfile],
   );
 
+  const savePreferences = useCallback(
+    async (preferences: PreferenceProfile) => {
+      const current = stateRef.current;
+      if (!current.isLoggedIn) return;
+
+      commit({
+        ...current,
+        pendingWrites: current.pendingWrites + 1,
+      });
+
+      try {
+        const saved = await postPreferences(preferences);
+        const latest = stateRef.current;
+        commit({
+          ...latest,
+          preferences: saved.preferences,
+          pendingWrites: Math.max(0, latest.pendingWrites - 1),
+        });
+      } catch (error) {
+        if (error instanceof ProfileRequestError && error.status === 401) {
+          await loadProfile();
+        } else {
+          const latest = stateRef.current;
+          commit({
+            ...latest,
+            pendingWrites: Math.max(0, latest.pendingWrites - 1),
+          });
+        }
+
+        throw error;
+      }
+    },
+    [commit, loadProfile],
+  );
+
   const hasFavorite = useCallback(
     (id: string) => state.favorites.includes(id),
     [state.favorites],
@@ -124,8 +165,9 @@ export function ProfileProvider({children}: {children: ReactNode}) {
       syncing: state.pendingWrites > 0,
       hasFavorite,
       toggleFavorite,
+      savePreferences,
     }),
-    [state, hasFavorite, toggleFavorite],
+    [state, hasFavorite, toggleFavorite, savePreferences],
   );
 
   return (
