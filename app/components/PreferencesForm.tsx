@@ -28,6 +28,10 @@ export function PreferencesForm() {
           preferences={preferences}
           onSave={savePreferences}
         />
+      ) : status === 'error' ? (
+        <p role="alert" className="mt-4 text-sm text-red-700">
+          Could not load preferences. Refresh the page to try again.
+        </p>
       ) : (
         <p className="mt-4 text-sm text-primary">Loading preferences…</p>
       )}

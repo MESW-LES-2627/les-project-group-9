@@ -1,4 +1,4 @@
-export type ProfileStatus = 'loading' | 'ready';
+export type ProfileStatus = 'loading' | 'ready' | 'error';
 
 export type PreferenceProfile = {
   allergies?: string[];

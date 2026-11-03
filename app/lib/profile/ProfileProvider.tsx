@@ -63,7 +63,7 @@ export function ProfileProvider({children}: {children: ReactNode}) {
       });
     } catch {
       commit({
-        status: 'ready',
+        status: 'error',
         isLoggedIn: false,
         favorites: [],
         preferences: null,
