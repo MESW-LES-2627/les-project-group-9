@@ -1,0 +1,113 @@
+name: Sync Issues to Personal Repo
+
+on:
+  issues:
+    types: [opened, edited, closed, reopened, labeled, unlabeled]
+  issue_comment:
+    types: [created, edited]
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: read
+
+concurrency:
+  group: sync-issues
+  cancel-in-progress: false
+
+env:
+  DEST: FEUP-tiago-repositories/lesw
+
+jobs:
+  sync-issues:
+    # Evita correr na cópia pessoal (o sync.yml também lá envia este ficheiro)
+    if: github.repository != 'FEUP-tiago-repositories/lesw'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Copy issues, labels and comments
+        env:
+          SRC: ${{ github.repository }}
+          SRC_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DST_TOKEN: ${{ secrets.PERSONAL_PAT }}
+        run: |
+          set -euo pipefail
+          src() { GH_TOKEN="$SRC_TOKEN" gh "$@"; }
+          dst() { GH_TOKEN="$DST_TOKEN" gh "$@"; }
+
+          # 1. Labels (o gh falha se a label não existir no destino)
+          src label list -R "$SRC" -L 200 --json name,color,description \
+            | jq -c '.[]' | while read -r l; do
+              dst label create "$(jq -r .name <<<"$l")" -R "$DEST" \
+                --color "$(jq -r .color <<<"$l")" \
+                --description "$(jq -r '.description // ""' <<<"$l")" --force
+            done
+
+          # 2. Mapa: número da issue na origem -> (número, estado) no destino
+          declare -A DNUM DSTATE
+          while read -r dn state sn; do
+            DNUM[$sn]=$dn; DSTATE[$sn]=$state
+          done < <(dst issue list -R "$DEST" --state all -L 1000 --json number,state,body \
+            | jq -r --arg src "$SRC" '.[]
+                | select((.body // "") | test("synced-from: " + $src + "#[0-9]+"))
+                | "\(.number) \(.state) \((.body | capture("synced-from: " + $src + "#(?<n>[0-9]+)").n))"')
+
+          # 3. Issues (as PRs não aparecem em "gh issue list")
+          src issue list -R "$SRC" --state all -L 1000 \
+            --json number,title,body,state,labels,url,author \
+            | jq -c 'sort_by(.number) | .[]' | while read -r issue; do
+
+              n=$(jq -r .number <<<"$issue")
+              title=$(jq -r .title <<<"$issue")
+              state=$(jq -r .state <<<"$issue")
+              labels=$(jq -c '[.labels[].name]' <<<"$issue")
+
+              {
+                printf '<!-- synced-from: %s#%s -->\n' "$SRC" "$n"
+                printf '_Mirrored from %s (opened by `%s`)._\n\n' \
+                  "$(jq -r .url <<<"$issue")" "$(jq -r '.author.login // "unknown"' <<<"$issue")"
+                jq -r '.body // ""' <<<"$issue"
+              } > body.md
+
+              if [[ -z "${DNUM[$n]:-}" ]]; then
+                url=$(dst issue create -R "$DEST" --title "$title" --body-file body.md)
+                dn="${url##*/}"
+                DNUM[$n]=$dn; DSTATE[$n]=OPEN
+                sleep 2
+              else
+                dn="${DNUM[$n]}"
+                dst issue edit "$dn" -R "$DEST" --title "$title" --body-file body.md
+              fi
+
+              # Labels (substitui o conjunto completo)
+              jq -n --argjson l "$labels" '{labels: $l}' \
+                | dst api -X PUT "repos/$DEST/issues/$dn/labels" --input - > /dev/null
+
+              # Estado
+              if [[ "$state" == "CLOSED" && "${DSTATE[$n]}" != "CLOSED" ]]; then
+                dst issue close "$dn" -R "$DEST"
+              elif [[ "$state" == "OPEN" && "${DSTATE[$n]}" == "CLOSED" ]]; then
+                dst issue reopen "$dn" -R "$DEST"
+              fi
+
+              # 4. Comentários (um marcador por comentário)
+              existing=$(dst api --paginate "repos/$DEST/issues/$dn/comments" \
+                | jq -r '.[].body // ""' | grep -o "synced-comment: [^ ]*" || true)
+
+              src api --paginate "repos/$SRC/issues/$n/comments" \
+                | jq -c '.[] | {id, login: .user.login, url: .html_url, body}' \
+                | while read -r c; do
+                    cid="$SRC#$(jq -r .id <<<"$c")"
+                    if ! grep -qF "synced-comment: $cid" <<<"$existing"; then
+                      {
+                        printf '<!-- synced-comment: %s -->\n' "$cid"
+                        printf '_Comment by `%s` — %s_\n\n' \
+                          "$(jq -r .login <<<"$c")" "$(jq -r .url <<<"$c")"
+                        jq -r '.body // ""' <<<"$c"
+                      } > comment.md
+                      dst issue comment "$dn" -R "$DEST" --body-file comment.md
+                      sleep 1
+                    fi
+                  done
+            done
