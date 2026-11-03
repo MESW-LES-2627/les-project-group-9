@@ -1,7 +1,5 @@
 import type {PreferenceProfile} from '~/lib/profile/types';
 
-export type {PreferenceProfile};
-
 export type TraitKey =
   | 'collections'
   | 'material'

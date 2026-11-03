@@ -1,10 +1,6 @@
+import type {PreferenceProfile} from '~/lib/profile/types';
 import {normalizeTraitValue} from './traits';
-import type {
-  PreferenceProfile,
-  PreferenceSignal,
-  ProductTraits,
-  TraitKey,
-} from './types';
+import type {PreferenceSignal, ProductTraits, TraitKey} from './types';
 import {TRAIT_WEIGHTS} from './weights';
 
 type PreferenceSource =
