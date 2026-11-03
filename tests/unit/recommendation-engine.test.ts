@@ -22,13 +22,51 @@ function traits(
 }
 
 describe('recommendProducts', () => {
-  it('returns no suggestions when there are no favorites', () => {
+  it('returns no suggestions when there are no favorites or preferences', () => {
     expect(
       recommendProducts({
         products: [traits('a', {material: ['gold']})],
         favorites: [],
       }),
     ).toEqual([]);
+  });
+
+  it('uses undertone preferences without favorites', () => {
+    const warm = traits('warm', {undertones: ['warm']});
+    const cool = traits('cool', {undertones: ['cool']});
+
+    const results = recommendProducts({
+      products: [cool, warm],
+      favorites: [],
+      preferences: {skin: {undertone: 'warm'}},
+    });
+
+    expect(results.map((result) => result.id)).toEqual(['warm']);
+    expect(results[0].reasons).toContain('Matches your undertone');
+  });
+
+  it('uses skin tone preferences without favorites', () => {
+    const medium = traits('medium', {skinTones: ['medium']});
+    const fair = traits('fair', {skinTones: ['fair']});
+
+    const results = recommendProducts({
+      products: [fair, medium],
+      favorites: [],
+      preferences: {skin: {tone: 'medium'}},
+    });
+
+    expect(results.map((result) => result.id)).toEqual(['medium']);
+    expect(results[0].reasons).toContain('Matches your skin tone');
+  });
+
+  it('does not fall back to popular products for preferences-only requests', () => {
+    const results = recommendProducts({
+      products: [traits('a'), traits('b')],
+      favorites: [],
+      preferences: {skin: {tone: 'medium'}},
+    });
+
+    expect(results).toEqual([]);
   });
 
   it('never recommends a favorited product', () => {

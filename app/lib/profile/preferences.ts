@@ -10,6 +10,20 @@ export const ALLERGY_LABELS: Record<(typeof ALLERGY_OPTIONS)[number], string> = 
   latex: 'Latex',
 };
 
+export function hasRecommendationPreferences(
+  preferences: PreferenceProfile | null | undefined,
+): boolean {
+  if (!preferences) return false;
+
+  return Boolean(
+    preferences.skin?.tone ||
+    preferences.skin?.undertone ||
+    preferences.preferredMaterials?.length ||
+    preferences.preferredColors?.length ||
+    preferences.preferredGemstones?.length,
+  );
+}
+
 type Skin = NonNullable<PreferenceProfile['skin']>;
 
 function isRecord(value: unknown): value is Record<string, unknown> {

@@ -19,13 +19,15 @@ export function recommendProducts({
 }: RecommendationInput): RecommendationResult[] {
   const resultLimit = Math.max(0, Math.floor(limit));
 
-  if (!resultLimit || !favorites.length) return [];
+  if (!resultLimit) return [];
 
   const favoriteIds = new Set(favorites.map((favorite) => favorite.id));
   const signals = [
     ...signalsFromFavorites(favorites),
     ...signalsFromPreferences(preferences),
   ];
+
+  if (!favorites.length && !signals.length) return [];
   const negativeSignals = signals.filter(
     (signal) => signal.polarity === 'negative',
   );
@@ -69,6 +71,7 @@ export function recommendProducts({
 
   const selected = scored.slice(0, resultLimit);
   if (selected.length) return selected;
+  if (!favorites.length) return [];
 
   return candidates.slice(0, resultLimit).map((product) => ({
     id: product.id,
