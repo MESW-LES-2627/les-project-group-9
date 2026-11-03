@@ -124,4 +124,32 @@ describe('customer preferences', () => {
       skin: {undertone: 'cool'},
     });
   });
+
+  it('preserves fields not included in the update', async () => {
+    const existing = {
+      allergies: ['nickel'],
+      skin: {tone: 'medium', undertone: 'warm'},
+      preferredMaterials: ['gold-plated'],
+      ringSizes: {'ring-1': '52'},
+    };
+    const {context, calls} = contextWith({preferences: existing});
+
+    const result = await writeCustomerPreferences(context, {
+      allergies: ['latex'],
+      skin: {undertone: 'cool'},
+    });
+
+    expect(result).toEqual({
+      allergies: ['latex'],
+      skin: {undertone: 'cool'},
+      preferredMaterials: ['gold-plated'],
+      ringSizes: {'ring-1': '52'},
+    });
+    expect(parsePreferences(calls[0].metafields[0].value)).toEqual({
+      allergies: ['latex'],
+      skin: {undertone: 'cool'},
+      preferredMaterials: ['gold-plated'],
+      ringSizes: {'ring-1': '52'},
+    });
+  });
 });

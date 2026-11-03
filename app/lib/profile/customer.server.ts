@@ -73,7 +73,10 @@ export async function writeCustomerPreferences(
     throw new Error('Customer not found');
   }
 
-  const value = serializePreferences(preferences);
+  const value = serializePreferences({
+    ...profile.preferences,
+    ...preferences,
+  });
   const saved = await writeCustomerMetafield(
     context,
     profile.customerId,

@@ -39,6 +39,33 @@ function allowedValue<T extends string>(
     : undefined;
 }
 
+function stringArray(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+
+  return Array.from(
+    new Set(
+      value
+        .filter((item): item is string => typeof item === 'string')
+        .map((item) => item.trim())
+        .filter(Boolean),
+    ),
+  );
+}
+
+function stringRecord(value: unknown): Record<string, string> | undefined {
+  if (!isRecord(value)) return undefined;
+
+  const entries: Array<[string, string]> = [];
+
+  for (const [key, item] of Object.entries(value)) {
+    if (typeof item === 'string' && item.trim()) {
+      entries.push([key, item.trim()]);
+    }
+  }
+
+  return Object.fromEntries(entries);
+}
+
 export function normalizePreferences(input: unknown): PreferenceProfile {
   const source = isRecord(input) ? input : {};
   const allergies = Array.isArray(source.allergies)
@@ -60,7 +87,24 @@ export function normalizePreferences(input: unknown): PreferenceProfile {
   if (tone) skin.tone = tone;
   if (undertone) skin.undertone = undertone;
 
-  return {allergies, skin};
+  const preferences: PreferenceProfile = {allergies, skin};
+  const ringSizes = stringRecord(source.ringSizes);
+  const preferredMaterials = stringArray(source.preferredMaterials);
+  const preferredColors = stringArray(source.preferredColors);
+  const preferredGemstones = stringArray(source.preferredGemstones);
+
+  if (ringSizes !== undefined) preferences.ringSizes = ringSizes;
+  if (preferredMaterials !== undefined) {
+    preferences.preferredMaterials = preferredMaterials;
+  }
+  if (preferredColors !== undefined) {
+    preferences.preferredColors = preferredColors;
+  }
+  if (preferredGemstones !== undefined) {
+    preferences.preferredGemstones = preferredGemstones;
+  }
+
+  return preferences;
 }
 
 export function parsePreferences(

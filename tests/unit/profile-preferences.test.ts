@@ -28,6 +28,33 @@ describe('normalizePreferences', () => {
       normalizePreferences({skin: {undertone: 'warm'}}),
     ).toEqual({allergies: [], skin: {undertone: 'warm'}});
   });
+
+  it('preserves fields that the profile form does not edit', () => {
+    expect(
+      normalizePreferences({
+        preferredMaterials: ['gold-plated', '', 'gold-plated', 42],
+        preferredColors: ['gold'],
+        preferredGemstones: ['moonstone'],
+        ringSizes: {'ring-1': ' 52 ', 'ring-2': '', bad: 7},
+      }),
+    ).toEqual({
+      allergies: [],
+      skin: {},
+      preferredMaterials: ['gold-plated'],
+      preferredColors: ['gold'],
+      preferredGemstones: ['moonstone'],
+      ringSizes: {'ring-1': '52'},
+    });
+  });
+
+  it('preserves explicit empty values', () => {
+    expect(normalizePreferences({preferredColors: [], ringSizes: {}})).toEqual({
+      allergies: [],
+      skin: {},
+      preferredColors: [],
+      ringSizes: {},
+    });
+  });
 });
 
 describe('parsePreferences', () => {
@@ -55,6 +82,9 @@ describe('serializePreferences', () => {
     const preferences = {
       allergies: ['gold-plated'],
       skin: {tone: 'tan', undertone: 'neutral'},
+      preferredMaterials: ['gold-plated'],
+      preferredGemstones: ['moonstone'],
+      ringSizes: {'ring-1': '52'},
     };
 
     expect(parsePreferences(serializePreferences(preferences))).toEqual(
