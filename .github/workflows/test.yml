@@ -53,9 +53,17 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Create .env
+        env:
+          STOREFRONT_DOMAIN: ${{ secrets.STOREFRONT_DOMAIN }}
+          STOREFRONT_API_TOKEN: ${{ secrets.STOREFRONT_API_TOKEN }}
         run: |
+          if [ -z "$STOREFRONT_DOMAIN" ] || [ -z "$STOREFRONT_API_TOKEN" ]; then
+            echo "::error::Add the STOREFRONT_DOMAIN and STOREFRONT_API_TOKEN repository secrets."
+            exit 1
+          fi
           echo "SESSION_SECRET=ci-test-secret" > .env
-          echo "PUBLIC_STORE_DOMAIN=mock.shop" >> .env
+          echo "PUBLIC_STORE_DOMAIN=$STOREFRONT_DOMAIN" >> .env
+          echo "PUBLIC_STOREFRONT_API_TOKEN=$STOREFRONT_API_TOKEN" >> .env
 
       - name: E2E tests
         run: npm run test:e2e

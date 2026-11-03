@@ -1,19 +1,27 @@
 import {expect, test} from '@playwright/test';
 
-test('selecting a color updates the variant and the main image', async ({
+test('selecting a colour updates the variant and the main image', async ({
   page,
 }) => {
   await page.goto('/products/teardrop-pave-necklace');
 
+  const group = page.locator('fieldset');
+  const unselected = group.getByRole('button', {pressed: false}).first();
+  const label = await unselected.getAttribute('aria-label');
+
+  if (!label) throw new Error('Option button has no aria-label');
+
+  const option = group.getByRole('button', {name: label, exact: true});
   const mainImage = page.locator('img[loading="eager"]');
+  const before = await mainImage.getAttribute('src');
 
-  const goldOption = page.getByRole('button', {name: 'Gold', exact: true});
-  await goldOption.click();
+  if (!before) throw new Error('Main image has no src before selecting');
 
-  await expect(page).toHaveURL(/[?&]Cor=Gold\b/);
-  await expect(goldOption).toHaveAttribute('aria-pressed', 'true');
-  await expect(
-    page.getByRole('button', {name: 'Silver', exact: true}),
-  ).toHaveAttribute('aria-pressed', 'false');
-  await expect(mainImage).toHaveAttribute('src', /gold/i);
+  await option.click();
+
+  await expect(option).toHaveAttribute('aria-pressed', 'true');
+  await expect(page).toHaveURL((url) =>
+    [...url.searchParams.values()].includes(label),
+  );
+  await expect(mainImage).not.toHaveAttribute('src', before);
 });
