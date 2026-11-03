@@ -7,42 +7,8 @@ body:
     id: story-id
     attributes:
       label: ID
-      description: "Tracking identifier (e.g., US-010)"
-    validations:
-      required: true
-  - type: dropdown
-    id: epic
-    attributes:
-      label: Epic
-      description: "Parent epic. Also set the epic issue as this story's parent."
-      options:
-        - "E1. Catalog and navigation"
-        - "E2. Product page"
-        - "E3. 3D visualizer"
-        - "E4. AR try-on"
-        - "E5. Fitting room (multi-piece)"
-        - "E6. Make your own (restricted)"
-        - "E7. Favorites and suggestions"
-        - "E8. Cart and checkout"
-        - "E9. Account"
-        - "E10. Video"
-        - "E11. Content"
-        - "E12. Language"
-        - "E13. Non-functional"
-        - "E14. Custom design builder"
-        - "E15. Feedback and ratings"
-        - "E16. Preferences profile"
-        - "E17. Chatbot"
-    validations:
-      required: true
-  - type: dropdown
-    id: phase
-    attributes:
-      label: Phase
-      description: "MVP is this semester's release. Post-MVP is the wider vision."
-      options:
-        - "MVP"
-        - "Post-MVP"
+      description: "Tracking identifier (e.g., US-073)"
+      placeholder: "US-<NNN>"
     validations:
       required: true
   - type: textarea
@@ -62,8 +28,8 @@ body:
       label: Acceptance Criteria
       description: "Conditions that must be met for this story to be accepted (e.g., Given/When/Then)"
       placeholder: |
-        - [ ] Scenario 1: Given... When... Then...
-        - [ ] Scenario 2: ...
+        - [ ] Given ... then ...
+        - [ ] Given ... then ...
     validations:
       required: true
   - type: textarea
@@ -73,14 +39,21 @@ body:
       description: "Technical and quality criteria required before closing"
       value: |
         - [ ] Unit & integration tests written and passing
-        - [ ] Manual tests written and passing
+        - [ ] End-to-End tests written and passing
         - [ ] Documentation updated
         - [ ] Code reviewed by at least one member and merged
         - [ ] Feature deployed to staging and verified
         - [ ] Ready for production deployment
-
+    validations:
+      required: true
   - type: textarea
     id: references
     attributes:
       label: References
-      description: "Trace to epics, parent issues, or specs (e.g., Part of Epic #12, satisfies REQ-SYS-010)"
+      description: "Trace to epics, parent issues, or specs."
+      placeholder: |
+        - Epic: #<N> (E<N>. <epic name>)
+        - Part of #<N>
+        - Satisfies REQ-SYS-<NNN>
+    validations:
+      required: true
