@@ -138,17 +138,6 @@ export default function Product() {
               />
             </details>
 
-            {product.material?.value ? (
-              <details className="group py-4">
-                <summary className="flex cursor-pointer list-none items-center justify-between text-[11px] uppercase tracking-widest [&::-webkit-details-marker]:hidden">
-                  Materials
-                  <span aria-hidden="true" className="group-open:hidden">+</span>
-                  <span aria-hidden="true" className="hidden group-open:inline">−</span>
-                </summary>
-                <p className="mt-4 leading-7 text-primary">{product.material.value}</p>
-              </details>
-            ) : null}
-
             <details className="group py-4">
               <summary className="flex cursor-pointer list-none items-center justify-between text-[11px] uppercase tracking-widest [&::-webkit-details-marker]:hidden">
                 Shipping
