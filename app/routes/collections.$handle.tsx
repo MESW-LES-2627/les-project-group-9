@@ -96,6 +96,21 @@ function filterInput(input: unknown): string {
   return typeof input === 'string' ? input : JSON.stringify(input);
 }
 
+function parseFilterInput(input: unknown): Record<string, unknown> {
+  try {
+    const parsed: unknown =
+      typeof input === 'string' ? JSON.parse(input) : input;
+
+    return parsed !== null &&
+    typeof parsed === 'object' &&
+    !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : {};
+  } catch {
+    return {};
+  }
+}
+
 function parseFilters(values: string[]): ProductFilter[] {
   if (values.length > 20) {
     throw new Response('Too many filters.', {
@@ -144,7 +159,7 @@ export async function loader({
     ? requestedSort
     : 'featured';
 
-  const selectedFilters = url.searchParams.getAll('filter');
+  const selectedFilters = url.searchParams.getAll('filter').filter((value) => parseFilterInput(value).available !== false,);
 
   const filters = parseFilters(selectedFilters);
 
@@ -319,7 +334,12 @@ export default function CollectionPage() {
                         </label>
                       </div>
                     ) : (
-                      filter.values.map((value) => {
+                      filter.values
+                        .filter(
+                          (value) =>
+                            parseFilterInput(value.input).available !== false,
+                        )
+                        .map((value) => {
                         const input = filterInput(value.input);
                         const selected = selectedFilters.includes(input);
                         return (
