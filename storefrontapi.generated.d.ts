@@ -1519,8 +1519,12 @@ export type ProductFragment = Pick<
   | 'description'
   | 'encodedVariantExistence'
   | 'encodedVariantAvailability'
+  | 'productType'
 > & {
   material?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+  metal?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+  gemstone?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+  gemColor?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
   images: {
     nodes: Array<
       Pick<StorefrontAPI.Image, 'id' | 'url' | 'altText' | 'width' | 'height'>
@@ -1642,8 +1646,12 @@ export type ProductQuery = {
       | 'description'
       | 'encodedVariantExistence'
       | 'encodedVariantAvailability'
+      | 'productType'
     > & {
       material?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+      metal?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+      gemstone?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+      gemColor?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
       images: {
         nodes: Array<
           Pick<
@@ -2102,7 +2110,7 @@ interface GeneratedQueryTypes {
     return: PoliciesQuery;
     variables: PoliciesQueryVariables;
   };
-  '#graphql\n  query Product(\n    $country: CountryCode\n    $handle: String!\n    $language: LanguageCode\n    $selectedOptions: [SelectedOptionInput!]!\n  ) @inContext(country: $country, language: $language) {\n    product(handle: $handle) { ...Product }\n  }\n  #graphql\n  fragment Product on Product {\n    id\n    title\n    vendor\n    handle\n    descriptionHtml\n    description\n    encodedVariantExistence\n    encodedVariantAvailability\n    material: metafield(namespace: "custom", key: "material") { value }\n    images(first: 10) { nodes { id url altText width height } }\n    collections(first: 1) { nodes { title handle } }\n    options {\n      name\n      optionValues {\n        name\n        firstSelectableVariant { ...ProductVariant }\n        swatch { color image { previewImage { url } } }\n      }\n    }\n    selectedOrFirstAvailableVariant(selectedOptions: $selectedOptions, ignoreUnknownOptions: true, caseInsensitiveMatch: true) {\n      ...ProductVariant\n    }\n    adjacentVariants(selectedOptions: $selectedOptions) { ...ProductVariant }\n    seo { description title }\n  }\n  #graphql\n  fragment ProductVariant on ProductVariant {\n    availableForSale\n    compareAtPrice { amount currencyCode }\n    id\n    image { __typename id url altText width height }\n    price { amount currencyCode }\n    product { title handle }\n    selectedOptions { name value }\n    sku\n    title\n    unitPrice { amount currencyCode }\n  }\n\n\n': {
+  '#graphql\n  query Product(\n    $country: CountryCode\n    $handle: String!\n    $language: LanguageCode\n    $selectedOptions: [SelectedOptionInput!]!\n  ) @inContext(country: $country, language: $language) {\n    product(handle: $handle) { ...Product }\n  }\n  #graphql\n  fragment Product on Product {\n    id\n    title\n    vendor\n    handle\n    descriptionHtml\n    description\n    encodedVariantExistence\n    encodedVariantAvailability\n    productType\n    material: metafield(namespace: "custom", key: "material") { value }\n    metal: metafield(namespace: "custom", key: "metal") { value }\n    gemstone: metafield(namespace: "custom", key: "gemstone") { value }\n    gemColor: metafield(namespace: "custom", key: "gem_color") { value }\n    images(first: 10) { nodes { id url altText width height } }\n    collections(first: 1) { nodes { title handle } }\n    options {\n      name\n      optionValues {\n        name\n        firstSelectableVariant { ...ProductVariant }\n        swatch { color image { previewImage { url } } }\n      }\n    }\n    selectedOrFirstAvailableVariant(selectedOptions: $selectedOptions, ignoreUnknownOptions: true, caseInsensitiveMatch: true) {\n      ...ProductVariant\n    }\n    adjacentVariants(selectedOptions: $selectedOptions) { ...ProductVariant }\n    seo { description title }\n  }\n  #graphql\n  fragment ProductVariant on ProductVariant {\n    availableForSale\n    compareAtPrice { amount currencyCode }\n    id\n    image { __typename id url altText width height }\n    price { amount currencyCode }\n    product { title handle }\n    selectedOptions { name value }\n    sku\n    title\n    unitPrice { amount currencyCode }\n  }\n\n\n': {
     return: ProductQuery;
     variables: ProductQueryVariables;
   };
