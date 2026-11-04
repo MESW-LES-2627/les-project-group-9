@@ -13,6 +13,7 @@ import {ProductPrice} from '~/components/ProductPrice';
 import {ProductForm} from '~/components/ProductForm';
 import {ProductGallery} from '~/components/ProductGallery';
 import {ProductItem} from '~/components/ProductItem';
+import {AllergenWarning} from '~/components/AllergenWarning';
 import {FavoriteButton} from '~/components/FavoriteButton';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 import {JEWELIETTE_PRODUCT_CARD_FRAGMENT} from '~/lib/jeweliette-catalog';
@@ -117,6 +118,8 @@ export default function Product() {
               compareAtPrice={selectedVariant?.compareAtPrice}
             />
           </div>
+
+          <AllergenWarning allergens={product.allergens} />
 
           <div className="mt-8">
             <ProductForm productOptions={productOptions} selectedVariant={selectedVariant} />
@@ -224,6 +227,7 @@ const PRODUCT_FRAGMENT = `#graphql
     encodedVariantExistence
     encodedVariantAvailability
     material: metafield(namespace: "custom", key: "material") { value }
+    allergens: metafield(namespace: "custom", key: "allergens") { value }
     images(first: 10) { nodes { id url altText width height } }
     collections(first: 1) { nodes { title handle } }
     options {

@@ -4,6 +4,7 @@ import {CartForm, Image, Money} from '@shopify/hydrogen';
 import type {CatalogImage, CatalogProduct} from '~/lib/jeweliette-catalog';
 import {FavoriteButton} from '~/components/FavoriteButton';
 import {ProductBadge} from '~/components/ProductBadge';
+import {AllergenWarning} from '~/components/AllergenWarning';
 
 type Props = {product: CatalogProduct; loading?: 'eager' | 'lazy'};
 
@@ -135,6 +136,8 @@ export function ProductItem({product, loading = 'lazy'}: Props) {
           <Money data={min} withoutTrailingZeros />
         </div>
       </div>
+
+      <AllergenWarning allergens={product.allergens} compact />
 
       {swatches.length > 0 && colorOption ? (
         <ul

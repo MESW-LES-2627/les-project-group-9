@@ -1,5 +1,5 @@
+import {normalizeValue} from '~/lib/metafields';
 import type {PreferenceProfile} from '~/lib/profile/types';
-import {normalizeTraitValue} from './traits';
 import type {PreferenceSignal, ProductTraits, TraitKey} from './types';
 import {TRAIT_WEIGHTS} from './weights';
 
@@ -148,7 +148,7 @@ export function signalsFromPreferences(
 
   return PREFERENCE_TRAITS.flatMap((definition) => {
     const values = preferenceValues(profile, definition.source)
-      .map(normalizeTraitValue)
+      .map(normalizeValue)
       .filter(Boolean);
 
     if (!values.length) return [];

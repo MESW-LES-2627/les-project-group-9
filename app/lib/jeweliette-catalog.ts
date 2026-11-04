@@ -38,6 +38,7 @@ export type CatalogProduct = {
   };
   productType?: string;
   material?: {value: string} | null;
+  allergens?: {value: string} | null;
   badge?: {value: string} | null;
   variants?: {
     nodes: Array<{
@@ -64,6 +65,7 @@ export const JEWELIETTE_PRODUCT_CARD_FRAGMENT = `#graphql
     handle
     productType
     material: metafield(namespace: "custom", key: "material") { value }
+    allergens: metafield(namespace: "custom", key: "allergens") { value }
     badge: metafield(namespace: "custom", key: "product_badge") { value }
     featuredImage { id url altText width height }
     images(first: 2) { nodes { id url altText width height } }
