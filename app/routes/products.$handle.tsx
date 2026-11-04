@@ -122,7 +122,11 @@ export default function Product() {
           <AllergenWarning allergens={product.allergens} />
 
           <div className="mt-8">
-            <ProductForm productOptions={productOptions} selectedVariant={selectedVariant} />
+            <ProductForm
+              allergens={product.allergens}
+              productOptions={productOptions}
+              selectedVariant={selectedVariant}
+            />
           </div>
 
           <div className="mt-10 divide-y divide-line border-y border-line text-sm">

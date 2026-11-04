@@ -1,6 +1,5 @@
-import {matchingAllergens, parseProductAllergens} from '~/lib/allergens';
 import {ALLERGY_LABELS} from '~/lib/profile/preferences';
-import {useProfile} from '~/lib/profile/ProfileProvider';
+import {useAllergenMatches} from '~/lib/profile/useAllergenMatches';
 
 type AllergenWarningProps = {
   allergens?: {value: string} | null;
@@ -18,12 +17,7 @@ export function AllergenWarning({
   allergens,
   compact = false,
 }: AllergenWarningProps) {
-  const {preferences} = useProfile();
-
-  const matches = matchingAllergens(
-    parseProductAllergens(allergens?.value),
-    preferences?.allergies,
-  );
+  const {matches} = useAllergenMatches(allergens);
 
   if (!matches.length) return null;
 
