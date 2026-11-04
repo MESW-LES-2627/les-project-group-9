@@ -9,6 +9,7 @@ import {
   useOutletContext,
 } from 'react-router';
 import type {Route} from './+types/account.profile';
+import {PreferencesForm} from '~/components/PreferencesForm';
 
 export type ActionResponse = {
   error: string | null;
@@ -86,48 +87,68 @@ export default function AccountProfile() {
   const customer = action?.customer ?? account?.customer;
 
   return (
-    <div className="account-profile">
-      <h2>My profile</h2>
-      <br />
-      <Form method="PUT">
-        <legend>Personal information</legend>
-        <fieldset>
-          <label htmlFor="firstName">First name</label>
-          <input
-            id="firstName"
-            name="firstName"
-            type="text"
-            autoComplete="given-name"
-            placeholder="First name"
-            aria-label="First name"
-            defaultValue={customer.firstName ?? ''}
-            minLength={2}
-          />
-          <label htmlFor="lastName">Last name</label>
-          <input
-            id="lastName"
-            name="lastName"
-            type="text"
-            autoComplete="family-name"
-            placeholder="Last name"
-            aria-label="Last name"
-            defaultValue={customer.lastName ?? ''}
-            minLength={2}
-          />
-        </fieldset>
-        {action?.error ? (
-          <p>
-            <mark>
-              <small>{action.error}</small>
-            </mark>
-          </p>
-        ) : (
-          <br />
-        )}
-        <button type="submit" disabled={state !== 'idle'}>
-          {state !== 'idle' ? 'Updating' : 'Update'}
-        </button>
-      </Form>
+    <div className="grid gap-12 lg:grid-cols-2">
+      <section>
+        <h2 className="font-display text-2xl text-ink">
+          Personal information
+        </h2>
+
+        <Form method="PUT" className="mt-5 space-y-5">
+          <fieldset className="space-y-4">
+            <legend className="sr-only">Personal information</legend>
+
+            <label className="block">
+              <span className="text-[11px] uppercase tracking-[0.15em] text-primary">
+                First name
+              </span>
+              <input
+                id="firstName"
+                name="firstName"
+                type="text"
+                autoComplete="given-name"
+                placeholder="First name"
+                aria-label="First name"
+                defaultValue={customer.firstName ?? ''}
+                minLength={2}
+                className="mt-1 w-full border border-line bg-paper px-3 py-2 text-sm text-ink outline-none focus:border-ink"
+              />
+            </label>
+
+            <label className="block">
+              <span className="text-[11px] uppercase tracking-[0.15em] text-primary">
+                Last name
+              </span>
+              <input
+                id="lastName"
+                name="lastName"
+                type="text"
+                autoComplete="family-name"
+                placeholder="Last name"
+                aria-label="Last name"
+                defaultValue={customer.lastName ?? ''}
+                minLength={2}
+                className="mt-1 w-full border border-line bg-paper px-3 py-2 text-sm text-ink outline-none focus:border-ink"
+              />
+            </label>
+          </fieldset>
+
+          {action?.error ? (
+            <p role="alert" className="text-sm text-red-700">
+              {action.error}
+            </p>
+          ) : null}
+
+          <button
+            type="submit"
+            disabled={state !== 'idle'}
+            className="bg-primary px-6 py-3 text-[11px] uppercase tracking-widest text-white transition-colors hover:bg-ink disabled:opacity-60"
+          >
+            {state !== 'idle' ? 'Updating' : 'Update'}
+          </button>
+        </Form>
+      </section>
+
+      <PreferencesForm />
     </div>
   );
 }

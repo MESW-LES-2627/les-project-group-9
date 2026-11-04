@@ -2,6 +2,8 @@ import {useEffect} from 'react';
 import {useFetcher} from 'react-router';
 import type {CatalogProduct} from '~/lib/jeweliette-catalog';
 import {useFavorites} from '~/lib/favorites';
+import {useProfile} from '~/lib/profile/ProfileProvider';
+import {hasRecommendationPreferences} from '~/lib/profile/preferences';
 import {ProductItem} from '~/components/ProductItem';
 
 type RecommendationLoaderData = {
@@ -15,9 +17,15 @@ export function RecommendedProducts({
   className?: string;
 }) {
   const {ids, ready, syncing} = useFavorites();
+  const {preferences} = useProfile();
   const fetcher = useFetcher<RecommendationLoaderData>();
-  const key = ids.join(',');
-  const url = ready && ids.length ? '/api/recommendations?limit=4' : null;
+  const hasFavorites = ids.length > 0;
+  const hasPreferences = hasRecommendationPreferences(preferences);
+  const key = `${ids.join(',')}|${JSON.stringify(preferences ?? null)}`;
+  const url =
+    ready && (hasFavorites || hasPreferences)
+      ? '/api/recommendations?limit=4'
+      : null;
 
   useEffect(() => {
     if (!url || syncing) return;
@@ -38,19 +46,22 @@ export function RecommendedProducts({
     <section aria-labelledby="recommendations-heading" className={className}>
       <div className="mb-10">
         <p className="text-xs uppercase tracking-[0.2em] text-primary">
-          Because you liked these
+          {hasFavorites
+            ? 'Because you liked these'
+            : 'Based on your preferences'}
         </p>
         <h2
           id="recommendations-heading"
           className="mt-3 font-display text-[clamp(1.75rem,3vw,2.5rem)] leading-none tracking-tight"
         >
-          You may also like
+          {hasFavorites ? 'You may also like' : 'Picked for you'}
         </h2>
       </div>
 
       <div className="grid grid-cols-2 gap-x-4 gap-y-10 lg:grid-cols-4">
         {products.map((product) => {
-          const reason = fetcher.data?.reasons?.[product.id]?.[0];
+          const reasons = fetcher.data?.reasons?.[product.id] ?? [];
+          const reason = reasons.slice(0, 2).join(' · ');
 
           return (
             <div key={product.id}>

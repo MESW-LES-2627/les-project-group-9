@@ -44,45 +44,40 @@ export default function AccountLayout() {
     : 'Account Details';
 
   return (
-    <div className="account">
-      <h1>{heading}</h1>
-      <br />
+    <div className="mx-auto max-w-[1100px] px-[4vw] py-12">
+      <h1 className="font-display text-[clamp(2rem,4vw,3rem)] leading-none text-ink">
+        {heading}
+      </h1>
+
       <AccountMenu />
-      <br />
-      <br />
-      <Outlet context={{customer}} />
+
+      <div className="mt-10">
+        <Outlet context={{customer}} />
+      </div>
     </div>
   );
 }
 
-function AccountMenu() {
-  function isActiveStyle({
-    isActive,
-    isPending,
-  }: {
-    isActive: boolean;
-    isPending: boolean;
-  }) {
-    return {
-      fontWeight: isActive ? 'bold' : undefined,
-      color: isPending ? 'grey' : 'black',
-    };
-  }
+const accountLinkClass = ({isActive}: {isActive: boolean}) =>
+  `text-xs uppercase tracking-[0.14em] transition-colors ${
+    isActive ? 'text-ink' : 'text-primary hover:text-ink'
+  }`;
 
+function AccountMenu() {
   return (
-    <nav role="navigation">
-      <NavLink to="/account/orders" style={isActiveStyle}>
-        Orders &nbsp;
+    <nav
+      aria-label="Account"
+      className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3 border-b border-line pb-4"
+    >
+      <NavLink to="/account/orders" className={accountLinkClass}>
+        Orders
       </NavLink>
-      &nbsp;|&nbsp;
-      <NavLink to="/account/profile" style={isActiveStyle}>
-        &nbsp; Profile &nbsp;
+      <NavLink to="/account/profile" className={accountLinkClass}>
+        Profile
       </NavLink>
-      &nbsp;|&nbsp;
-      <NavLink to="/account/addresses" style={isActiveStyle}>
-        &nbsp; Addresses &nbsp;
+      <NavLink to="/account/addresses" className={accountLinkClass}>
+        Addresses
       </NavLink>
-      &nbsp;|&nbsp;
       <Logout />
     </nav>
   );
@@ -90,8 +85,13 @@ function AccountMenu() {
 
 function Logout() {
   return (
-    <Form className="account-logout" method="POST" action="/account/logout">
-      &nbsp;<button type="submit">Sign out</button>
+    <Form method="POST" action="/account/logout">
+      <button
+        type="submit"
+        className="text-xs uppercase tracking-[0.14em] text-primary transition-colors hover:text-ink"
+      >
+        Sign out
+      </button>
     </Form>
   );
 }
