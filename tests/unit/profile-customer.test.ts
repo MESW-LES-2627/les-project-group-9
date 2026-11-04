@@ -105,12 +105,12 @@ describe('customer preferences', () => {
     const {context, calls} = contextWith();
 
     const result = await writeCustomerPreferences(context, {
-      allergies: ['latex'],
+      allergies: ['cobalt'],
       skin: {undertone: 'cool'},
     });
 
     expect(result).toEqual({
-      allergies: ['latex'],
+      allergies: ['cobalt'],
       skin: {undertone: 'cool'},
     });
     expect(calls[0].metafields[0]).toMatchObject({
@@ -120,7 +120,7 @@ describe('customer preferences', () => {
       type: 'json',
     });
     expect(parsePreferences(calls[0].metafields[0].value)).toEqual({
-      allergies: ['latex'],
+      allergies: ['cobalt'],
       skin: {undertone: 'cool'},
     });
   });
@@ -135,18 +135,18 @@ describe('customer preferences', () => {
     const {context, calls} = contextWith({preferences: existing});
 
     const result = await writeCustomerPreferences(context, {
-      allergies: ['latex'],
+      allergies: ['cobalt'],
       skin: {undertone: 'cool'},
     });
 
     expect(result).toEqual({
-      allergies: ['latex'],
+      allergies: ['cobalt'],
       skin: {undertone: 'cool'},
       preferredMaterials: ['gold-plated'],
       ringSizes: {'ring-1': '52'},
     });
     expect(parsePreferences(calls[0].metafields[0].value)).toEqual({
-      allergies: ['latex'],
+      allergies: ['cobalt'],
       skin: {undertone: 'cool'},
       preferredMaterials: ['gold-plated'],
       ringSizes: {'ring-1': '52'},
