@@ -4,5 +4,5 @@
 - End-to-End tests written and passing
 - Documentation updated
 - Code reviewed by at least one member and merged
-- Feature deployed to stating and verified
+- Feature deployed to staging and verified
 - Ready for production deployment

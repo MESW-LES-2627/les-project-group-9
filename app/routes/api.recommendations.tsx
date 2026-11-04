@@ -1,7 +1,8 @@
 import {data} from 'react-router';
 import type {Route} from './+types/api.recommendations';
 import type {CatalogProductWithTraits} from '~/lib/jeweliette-catalog';
-import {readCustomerFavorites} from '~/lib/profile/customer.server';
+import {readCustomerProfile} from '~/lib/profile/customer.server';
+import {hasRecommendationPreferences} from '~/lib/profile/preferences';
 import {getRecommendationCandidates} from '~/lib/recommendation/catalog.server';
 import {recommendProducts} from '~/lib/recommendation/engine';
 import {toProductTraits} from '~/lib/recommendation/traits';
@@ -28,8 +29,11 @@ export async function loader({request, context}: Route.LoaderArgs) {
   }
 
   try {
-    const favoriteIds = await readCustomerFavorites(context);
-    if (!favoriteIds.length) {
+    const profile = await readCustomerProfile(context);
+    const favoriteIds = profile.favorites;
+    const preferences = profile.preferences;
+
+    if (!favoriteIds.length && !hasRecommendationPreferences(preferences)) {
       return data({products: [], reasons: {}}, {headers: NO_STORE});
     }
 
@@ -39,13 +43,14 @@ export async function loader({request, context}: Route.LoaderArgs) {
       favoriteIds.includes(product.id),
     );
 
-    if (!favorites.length) {
+    if (!favorites.length && !hasRecommendationPreferences(preferences)) {
       return data({products: [], reasons: {}}, {headers: NO_STORE});
     }
 
     const results = recommendProducts({
       products,
       favorites,
+      preferences,
       limit,
     });
     const productsById = new Map(

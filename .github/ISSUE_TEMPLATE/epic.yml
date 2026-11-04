@@ -1,0 +1,28 @@
+name: Epic
+description: Group related user stories under a single product theme.
+title: "E<NN>: <epic name>"
+labels: ["epic"]
+body:
+  - type: input
+    id: epic-id
+    attributes:
+      label: ID
+      description: "Tracking identifier (e.g., E09)"
+      placeholder: "E<NN>"
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: "What this epic covers and why it matters."
+  - type: textarea
+    id: stories
+    attributes:
+      label: Stories
+      description: "Each story below is linked to this epic as a sub-issue."
+      placeholder: |
+        - US-<NNN>: As a <role>, I want <goal>, so that <benefit>
+        - US-<NNN>: As a <role>, I want <goal>, so that <benefit>
+    validations:
+      required: true

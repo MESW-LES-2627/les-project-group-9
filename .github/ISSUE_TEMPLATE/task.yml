@@ -1,16 +1,57 @@
 name: Task
 description: Implementation or analysis task. Link it to its user story as a sub-issue.
 title: "TASK-<NNN>: <actionable verb + object>"
-labels: ["type:task", "status:ready"]
+type: Task
 body:
   - type: input
     id: task-id
     attributes:
       label: ID
+      description: "Tracking identifier (e.g., TASK-001)"
+      placeholder: "TASK-<NNN>"
+    validations:
+      required: true
   - type: textarea
     id: description
     attributes:
       label: Description
-      description: "What needs to be done and how to tell it is finished"
+      description: "What needs to be done, why it is needed, and any useful context or references."
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: "What is included in this task, grouped into logical sections. Include an explicit out-of-scope section."
+      placeholder: |
+        **Setup**
+        - [ ] ...
+
+        **Implementation**
+        - [ ] ...
+
+        **Out of scope**
+        - ...
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: "Conditions that must be met for this task to be accepted (e.g., Given/When/Then)."
+      placeholder: |
+        - [ ] Given ... when ... then ...
+        - [ ] Given ... when ... then ...
+    validations:
+      required: true
+  - type: textarea
+    id: definition-of-done
+    attributes:
+      label: Definition of Done
+      description: "Technical and quality criteria required before closing."
+      placeholder: |
+        - [ ] Unit & integration tests written and passing
+        - [ ] Documentation updated
+        - [ ] Code reviewed by at least one member and merged
     validations:
       required: true
