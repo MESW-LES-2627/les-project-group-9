@@ -139,6 +139,29 @@ function parseFilters(values: string[]): ProductFilter[] {
   });
 }
 
+function getFilterLabel(filter: {id: string; label: string}) {
+  const labels: Record<string, string> = {
+    'filter.v.availability': 'Availability',
+    'filter.v.price': 'Price',
+    'filter.p.product_type': 'Product type',
+    'filter.p.vendor': 'Brand',
+    'filter.p.m.custom.material': 'Material',
+    'filter.p.m.custom.metal': 'Metal',
+    'filter.p.m.custom.gem_color': 'Gem color',
+  };
+
+  return labels[filter.id] ?? filter.label;
+}
+
+function getFilterValueLabel(value: {
+  input: unknown;
+  label: string;
+}) {
+  return parseFilterInput(value.input).available === true
+    ? 'In stock'
+    : value.label;
+}
+
 export async function loader({
                                context,
                                params,
@@ -302,7 +325,7 @@ export default function CollectionPage() {
               {collection.products.filters.map((filter) => (
                 <details key={filter.id} className="group relative border-l border-line">
                   <summary className="flex min-h-full cursor-pointer list-none items-center gap-3 px-5 py-4 text-[11px] uppercase tracking-widest [&::-webkit-details-marker]:hidden">
-                    {filter.label}
+                    {getFilterLabel(filter)}
                     <span aria-hidden="true" className="text-base leading-none group-open:hidden">+</span>
                     <span aria-hidden="true" className="hidden text-base leading-none group-open:inline">−</span>
                   </summary>
@@ -356,7 +379,7 @@ export default function CollectionPage() {
                               className="h-4 w-4 accent-primary"
                             />
                             <span>
-                            {value.label}
+                            {getFilterValueLabel(value)}
                               <span className="ml-2 text-primary">({value.count})</span>
                           </span>
                           </label>
