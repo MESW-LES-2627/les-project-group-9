@@ -1,6 +1,7 @@
 import {describe, expect, it} from 'vitest';
 import {
   normalizePreferences,
+  normalizePreferencesPatch,
   parsePreferences,
   serializePreferences,
 } from '../../app/lib/profile/preferences';
@@ -35,7 +36,7 @@ describe('normalizePreferences', () => {
         preferredMaterials: ['gold-plated', '', 'gold-plated', 42],
         preferredColors: ['gold'],
         preferredGemstones: ['moonstone'],
-        ringSizes: {'ring-1': ' 52 ', 'ring-2': '', bad: 7},
+        ringSizes: {'left-ring': ' 6.5 ', 'right-thumb': '', bogus: '7'},
       }),
     ).toEqual({
       allergies: [],
@@ -43,8 +44,57 @@ describe('normalizePreferences', () => {
       preferredMaterials: ['gold-plated'],
       preferredColors: ['gold'],
       preferredGemstones: ['moonstone'],
-      ringSizes: {'ring-1': '52'},
+      ringSizes: {'left-ring': '6.5'},
     });
+  });
+
+  it('keeps ring sizes for the ten fingers of both hands', () => {
+    expect(
+      normalizePreferences({
+        ringSizes: {
+          'left-thumb': '4',
+          'left-index': '4.5',
+          'left-middle': '13',
+          'left-ring': '6',
+          'left-pinky': '7',
+          'right-thumb': '8',
+          'right-index': '9.5',
+          'right-middle': '10',
+          'right-ring': '11',
+          'right-pinky': '12',
+        },
+      }).ringSizes,
+    ).toEqual({
+      'left-thumb': '4',
+      'left-index': '4.5',
+      'left-middle': '13',
+      'left-ring': '6',
+      'left-pinky': '7',
+      'right-thumb': '8',
+      'right-index': '9.5',
+      'right-middle': '10',
+      'right-ring': '11',
+      'right-pinky': '12',
+    });
+  });
+
+  it('drops sizes outside US 4 to 13 or not in half steps', () => {
+    expect(
+      normalizePreferences({
+        ringSizes: {
+          'left-ring': '3.5',
+          'left-index': '13.5',
+          'left-middle': '6.25',
+          'left-pinky': 'US 6',
+          'right-ring': '14',
+          'right-pinky': '6',
+        },
+      }).ringSizes,
+    ).toEqual({'right-pinky': '6'});
+  });
+
+  it('ignores ring sizes that are not a record', () => {
+    expect(normalizePreferences({ringSizes: ['6']}).ringSizes).toBeUndefined();
   });
 
   it('preserves explicit empty values', () => {
@@ -84,11 +134,30 @@ describe('serializePreferences', () => {
       skin: {tone: 'tan', undertone: 'neutral'},
       preferredMaterials: ['gold-plated'],
       preferredGemstones: ['moonstone'],
-      ringSizes: {'ring-1': '52'},
+      ringSizes: {'left-ring': '6'},
     };
 
     expect(parsePreferences(serializePreferences(preferences))).toEqual(
       preferences,
     );
+  });
+});
+
+describe('normalizePreferencesPatch', () => {
+  it('returns only the keys present in the payload', () => {
+    expect(normalizePreferencesPatch({ringSizes: {'left-ring': '6'}})).toEqual(
+      {ringSizes: {'left-ring': '6'}},
+    );
+  });
+
+  it('returns an empty patch for invalid input', () => {
+    expect(normalizePreferencesPatch(null)).toEqual({});
+    expect(normalizePreferencesPatch('nope')).toEqual({});
+  });
+
+  it('keeps an explicit empty allergy list as an update', () => {
+    expect(normalizePreferencesPatch({allergies: []})).toEqual({
+      allergies: [],
+    });
   });
 });

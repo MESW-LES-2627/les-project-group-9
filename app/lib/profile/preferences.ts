@@ -1,4 +1,9 @@
-import type {PreferenceProfile} from './types';
+import type {
+  PreferenceProfile,
+  RingFinger,
+  RingFingerName,
+  RingHand,
+} from './types';
 
 export const ALLERGY_OPTIONS = ['nickel', 'gold-plated', 'latex'] as const;
 export const SKIN_TONES = ['fair', 'light', 'medium', 'tan', 'deep'] as const;
@@ -9,6 +14,39 @@ export const ALLERGY_LABELS: Record<(typeof ALLERGY_OPTIONS)[number], string> = 
   'gold-plated': 'Gold-plated',
   latex: 'Latex',
 };
+
+export const RING_HANDS: readonly RingHand[] = ['left', 'right'];
+export const RING_FINGER_NAMES: readonly RingFingerName[] = [
+  'thumb',
+  'index',
+  'middle',
+  'ring',
+  'pinky',
+];
+
+export const RING_FINGERS: readonly RingFinger[] = RING_HANDS.flatMap((hand) =>
+  RING_FINGER_NAMES.map((finger) => `${hand}-${finger}` as RingFinger),
+);
+
+/** US ring sizes 4 to 13 in half steps, as stored and as shown on products. */
+export const US_RING_SIZES: readonly string[] = Array.from(
+  {length: 19},
+  (_, index) => String(4 + index * 0.5),
+);
+
+export const RING_HAND_LABELS: Record<RingHand, string> = {
+  left: 'Left hand',
+  right: 'Right hand',
+};
+
+export function ringFingerLabel(finger: RingFinger): string {
+  const name = finger.split('-')[1];
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+export function ringHandOf(finger: RingFinger): RingHand {
+  return finger.split('-')[0] as RingHand;
+}
 
 export function hasRecommendationPreferences(
   preferences: PreferenceProfile | null | undefined,
@@ -52,59 +90,78 @@ function stringArray(value: unknown): string[] | undefined {
   );
 }
 
-function stringRecord(value: unknown): Record<string, string> | undefined {
+/** Keeps only known fingers that have a valid US size. Sizes are trimmed. */
+function ringSizesRecord(
+  value: unknown,
+): Partial<Record<RingFinger, string>> | undefined {
   if (!isRecord(value)) return undefined;
 
-  const entries: Array<[string, string]> = [];
+  const sizes: Partial<Record<RingFinger, string>> = {};
 
-  for (const [key, item] of Object.entries(value)) {
-    if (typeof item === 'string' && item.trim()) {
-      entries.push([key, item.trim()]);
-    }
+  for (const finger of RING_FINGERS) {
+    const raw: unknown = value[finger];
+    const size = allowedValue(
+      typeof raw === 'string' ? raw.trim() : undefined,
+      US_RING_SIZES,
+    );
+    if (size) sizes[finger] = size;
   }
 
-  return Object.fromEntries(entries);
+  return sizes;
 }
 
-export function normalizePreferences(input: unknown): PreferenceProfile {
+/**
+ * Parses a request payload. Only keys present in the input are returned, so a
+ * partial save never overwrites fields it did not send.
+ */
+export function normalizePreferencesPatch(
+  input: unknown,
+): Partial<PreferenceProfile> {
   const source = isRecord(input) ? input : {};
-  const allergies = Array.isArray(source.allergies)
-    ? Array.from(
-        new Set(
-          source.allergies.filter(
-            (value): value is (typeof ALLERGY_OPTIONS)[number] =>
-              allowedValue(value, ALLERGY_OPTIONS) !== undefined,
-          ),
+  const patch: Partial<PreferenceProfile> = {};
+
+  if (Array.isArray(source.allergies)) {
+    patch.allergies = Array.from(
+      new Set(
+        source.allergies.filter(
+          (value): value is (typeof ALLERGY_OPTIONS)[number] =>
+            allowedValue(value, ALLERGY_OPTIONS) !== undefined,
         ),
-      )
-    : [];
+      ),
+    );
+  }
 
-  const skinSource = isRecord(source.skin) ? source.skin : {};
-  const skin: Skin = {};
-  const tone = allowedValue(skinSource.tone, SKIN_TONES);
-  const undertone = allowedValue(skinSource.undertone, UNDERTONES);
+  if (isRecord(source.skin)) {
+    const skin: Skin = {};
+    const tone = allowedValue(source.skin.tone, SKIN_TONES);
+    const undertone = allowedValue(source.skin.undertone, UNDERTONES);
 
-  if (tone) skin.tone = tone;
-  if (undertone) skin.undertone = undertone;
+    if (tone) skin.tone = tone;
+    if (undertone) skin.undertone = undertone;
+    patch.skin = skin;
+  }
 
-  const preferences: PreferenceProfile = {allergies, skin};
-  const ringSizes = stringRecord(source.ringSizes);
+  const ringSizes = ringSizesRecord(source.ringSizes);
   const preferredMaterials = stringArray(source.preferredMaterials);
   const preferredColors = stringArray(source.preferredColors);
   const preferredGemstones = stringArray(source.preferredGemstones);
 
-  if (ringSizes !== undefined) preferences.ringSizes = ringSizes;
+  if (ringSizes !== undefined) patch.ringSizes = ringSizes;
   if (preferredMaterials !== undefined) {
-    preferences.preferredMaterials = preferredMaterials;
+    patch.preferredMaterials = preferredMaterials;
   }
   if (preferredColors !== undefined) {
-    preferences.preferredColors = preferredColors;
+    patch.preferredColors = preferredColors;
   }
   if (preferredGemstones !== undefined) {
-    preferences.preferredGemstones = preferredGemstones;
+    patch.preferredGemstones = preferredGemstones;
   }
 
-  return preferences;
+  return patch;
+}
+
+export function normalizePreferences(input: unknown): PreferenceProfile {
+  return {allergies: [], skin: {}, ...normalizePreferencesPatch(input)};
 }
 
 export function parsePreferences(
