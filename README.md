@@ -40,6 +40,17 @@ npm run build
 npm run dev
 ```
 
+## Testing
+
+```bash
+npm test          # unit and component tests (Vitest)
+npm run test:e2e  # browser tests (Playwright)
+```
+
+The end-to-end test uses the development store configured in `.env`. In CI the
+e2e job reads the storefront credentials from the `STOREFRONT_DOMAIN` and
+`STOREFRONT_API_TOKEN` repository secrets.
+
 ## Setup for using Customer Account API (`/account` section)
 
 Follow step 1 and 2 of <https://shopify.dev/docs/custom-storefronts/building-with-the-customer-account-api/hydrogen#step-1-set-up-a-public-domain-for-local-development>
