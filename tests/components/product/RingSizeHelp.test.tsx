@@ -92,10 +92,27 @@ describe('RingSizeHelp', () => {
 
     const dialog = screen.getByRole('dialog');
     expect(dialog).toHaveTextContent('Left hand');
-    expect(dialog).toHaveTextContent('Ring: 6');
     expect(dialog).toHaveTextContent('Right hand');
-    expect(dialog).toHaveTextContent('Pinky: 6.5');
     expect(dialog).not.toHaveTextContent('not saved');
+
+    const leftColumn = screen.getByText('Left hand').closest('div');
+    const rightColumn = screen.getByText('Right hand').closest('div');
+    expect(leftColumn).toHaveTextContent('Ring: 6');
+    expect(leftColumn).not.toHaveTextContent('Pinky: 6.5');
+    expect(rightColumn).toHaveTextContent('Pinky: 6.5');
+    expect(rightColumn).not.toHaveTextContent('Ring: 6');
+  });
+
+  it('shows both hand columns even when only one hand has saved sizes', async () => {
+    const user = userEvent.setup();
+    loggedIn({'left-ring': '6'});
+    renderHelp();
+
+    await user.click(screen.getByRole('button', {name: 'Measurement Guide'}));
+
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveTextContent('Left hand');
+    expect(dialog).toHaveTextContent('Right hand');
   });
 
   it('shows a prompt and a link to the profile when no sizes are saved', async () => {

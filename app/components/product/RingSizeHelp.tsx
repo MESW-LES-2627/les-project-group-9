@@ -92,13 +92,11 @@ export function RingSizeHelp() {
             </h2>
 
             {hasSavedSizes ? (
-              <div className="mt-4 space-y-4">
+              <div className="mt-4 grid grid-cols-2 gap-6">
                 {RING_HANDS.map((hand) => {
                   const fingers = RING_FINGERS.filter(
-                    (finger) =>
-                      ringHandOf(finger) === hand && ringSizes[finger],
+                    (finger) => ringHandOf(finger) === hand,
                   );
-                  if (!fingers.length) return null;
 
                   return (
                     <div key={hand}>
@@ -108,7 +106,7 @@ export function RingSizeHelp() {
                       <ul className="mt-2 space-y-1">
                         {fingers.map((finger) => (
                           <li key={finger}>
-                            {ringFingerLabel(finger)}: {ringSizes[finger]}
+                            {ringFingerLabel(finger)}: {ringSizes[finger] ?? '—'}
                           </li>
                         ))}
                       </ul>
