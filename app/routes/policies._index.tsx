@@ -25,7 +25,7 @@ export default function Policies() {
   const {policies} = useLoaderData<typeof loader>();
 
   return (
-    <section className="mx-auto max-w-3xl px-[5vw] pb-24 pt-12">
+    <section className="mx-auto max-w-6xl px-[5vw] pb-24 pt-12">
       <p className="text-xs uppercase tracking-[0.2em] text-primary">
         Information
       </p>

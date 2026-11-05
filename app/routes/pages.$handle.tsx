@@ -59,7 +59,7 @@ export default function Page() {
   const {page} = useLoaderData<typeof loader>();
 
   return (
-    <article className="mx-auto max-w-3xl px-[5vw] pb-24 pt-12">
+    <article className="mx-auto max-w-6xl px-[5vw] pb-24 pt-12">
       <h1 className="mb-10 font-display text-[clamp(2.5rem,5vw,4rem)] leading-tight">
         {page.title}
       </h1>

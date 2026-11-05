@@ -46,7 +46,7 @@ export default function Policy() {
   const {policy} = useLoaderData<typeof loader>();
 
   return (
-    <article className="mx-auto max-w-3xl px-[5vw] pb-24 pt-12">
+    <article className="mx-auto max-w-6xl px-[5vw] pb-24 pt-12">
       <Link
         to="/policies"
         className="text-xs uppercase tracking-widest text-primary hover:text-ink"
