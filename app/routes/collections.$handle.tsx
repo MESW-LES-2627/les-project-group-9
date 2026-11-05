@@ -25,6 +25,8 @@ import {
   JEWELIETTE_PRODUCT_CARD_FRAGMENT,
 } from '~/lib/jeweliette-catalog';
 
+import {PriceIntervals} from '~/components/PriceIntervals';
+
 const SORT_OPTIONS: Record<
   string,
   {
@@ -96,6 +98,21 @@ function filterInput(input: unknown): string {
   return typeof input === 'string' ? input : JSON.stringify(input);
 }
 
+function parseFilterInput(input: unknown): Record<string, unknown> {
+  try {
+    const parsed: unknown =
+      typeof input === 'string' ? JSON.parse(input) : input;
+
+    return parsed !== null &&
+    typeof parsed === 'object' &&
+    !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : {};
+  } catch {
+    return {};
+  }
+}
+
 function parseFilters(values: string[]): ProductFilter[] {
   if (values.length > 20) {
     throw new Response('Too many filters.', {
@@ -124,6 +141,29 @@ function parseFilters(values: string[]): ProductFilter[] {
   });
 }
 
+function getFilterLabel(filter: {id: string; label: string}) {
+  const labels: Record<string, string> = {
+    'filter.v.availability': 'Availability',
+    'filter.v.price': 'Price',
+    'filter.p.product_type': 'Product type',
+    'filter.p.vendor': 'Brand',
+    'filter.p.m.custom.material': 'Material',
+    'filter.p.m.custom.metal': 'Metal',
+    'filter.p.m.custom.gem_color': 'Gem color',
+  };
+
+  return labels[filter.id] ?? filter.label;
+}
+
+function getFilterValueLabel(value: {
+  input: unknown;
+  label: string;
+}) {
+  return parseFilterInput(value.input).available === true
+    ? 'In stock'
+    : value.label;
+}
+
 export async function loader({
                                context,
                                params,
@@ -144,7 +184,7 @@ export async function loader({
     ? requestedSort
     : 'featured';
 
-  const selectedFilters = url.searchParams.getAll('filter');
+  const selectedFilters = url.searchParams.getAll('filter').filter((value) => parseFilterInput(value).available !== false,);
 
   const filters = parseFilters(selectedFilters);
 
@@ -269,7 +309,55 @@ export default function CollectionPage() {
               method="get"
               preventScrollReset
               onChange={(event) => event.currentTarget.requestSubmit()}
-              className="relative z-10 mt-10 flex items-stretch border-y border-line bg-cream"
+              onClickCapture={(event) => {
+                const target = event.target;
+
+                if (!(target instanceof Element)) return;
+
+                const summary = target.closest('summary');
+                const selectedPanel = summary?.parentElement;
+
+                if (
+                  !summary ||
+                  !(selectedPanel instanceof HTMLDetailsElement)
+                ) {
+                  return;
+                }
+
+                event.currentTarget
+                  .querySelectorAll<HTMLDetailsElement>('details[open]')
+                  .forEach((panel) => {
+                    if (panel !== selectedPanel) {
+                      panel.open = false;
+                    }
+                  });
+              }}
+              onKeyDown={(event) => {
+                if (event.key !== 'Escape') return;
+
+                event.currentTarget
+                  .querySelectorAll<HTMLDetailsElement>('details[open]')
+                  .forEach((panel) => {
+                    panel.open = false;
+                  });
+              }}
+              onBlur={(event) => {
+                const nextFocusedElement = event.relatedTarget;
+
+                if (
+                  nextFocusedElement instanceof Node &&
+                  event.currentTarget.contains(nextFocusedElement)
+                ) {
+                  return;
+                }
+
+                event.currentTarget
+                  .querySelectorAll<HTMLDetailsElement>('details[open]')
+                  .forEach((panel) => {
+                    panel.open = false;
+                  });
+              }}
+              className="relative z-10 mt-10 flex flex-wrap items-stretch border-y border-line bg-cream"
             >
               <p className="flex flex-1 items-center py-4 text-[11px] uppercase tracking-widest text-primary">
                 {nodes.length} {nodes.length === 1 ? 'piece' : 'pieces'}
@@ -287,39 +375,28 @@ export default function CollectionPage() {
               {collection.products.filters.map((filter) => (
                 <details key={filter.id} className="group relative border-l border-line">
                   <summary className="flex min-h-full cursor-pointer list-none items-center gap-3 px-5 py-4 text-[11px] uppercase tracking-widest [&::-webkit-details-marker]:hidden">
-                    {filter.label}
+                    {getFilterLabel(filter)}
                     <span aria-hidden="true" className="text-base leading-none group-open:hidden">+</span>
                     <span aria-hidden="true" className="hidden text-base leading-none group-open:inline">−</span>
                   </summary>
 
                   <div className="absolute right-0 top-full z-20 max-h-80 min-w-60 overflow-y-auto border border-line bg-paper p-4 shadow-stack">
                     {filter.type === 'PRICE_RANGE' ? (
-                      <div className="flex items-end gap-3">
-                        <label className="block text-xs">
-                          Min
-                          <input
-                            type="number"
-                            name="priceMin"
-                            min="0"
-                            step="1"
-                            defaultValue={priceMin}
-                            className="mt-1 block h-10 w-24 border border-line bg-white px-2 text-sm"
-                          />
-                        </label>
-                        <label className="block text-xs">
-                          Max
-                          <input
-                            type="number"
-                            name="priceMax"
-                            min="0"
-                            step="1"
-                            defaultValue={priceMax}
-                            className="mt-1 block h-10 w-24 border border-line bg-white px-2 text-sm"
-                          />
-                        </label>
-                      </div>
+                      <PriceIntervals
+                        values={filter.values}
+                        priceMin={priceMin}
+                        priceMax={priceMax}
+                        currencyCode={
+                          nodes[0]?.priceRange.minVariantPrice.currencyCode
+                        }
+                      />
                     ) : (
-                      filter.values.map((value) => {
+                      filter.values
+                        .filter(
+                          (value) =>
+                            parseFilterInput(value.input).available !== false,
+                        )
+                        .map((value) => {
                         const input = filterInput(value.input);
                         const selected = selectedFilters.includes(input);
                         return (
@@ -336,7 +413,7 @@ export default function CollectionPage() {
                               className="h-4 w-4 accent-primary"
                             />
                             <span>
-                            {value.label}
+                            {getFilterValueLabel(value)}
                               <span className="ml-2 text-primary">({value.count})</span>
                           </span>
                           </label>
