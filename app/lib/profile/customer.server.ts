@@ -66,7 +66,7 @@ export async function updateCustomerFavorites(
 
 export async function writeCustomerPreferences(
   context: Context,
-  preferences: PreferenceProfile,
+  patch: Partial<PreferenceProfile>,
 ): Promise<PreferenceProfile> {
   const profile = await readCustomerProfile(context);
   if (!profile.customerId) {
@@ -75,7 +75,7 @@ export async function writeCustomerPreferences(
 
   const value = serializePreferences({
     ...profile.preferences,
-    ...preferences,
+    ...patch,
   });
   const saved = await writeCustomerMetafield(
     context,
