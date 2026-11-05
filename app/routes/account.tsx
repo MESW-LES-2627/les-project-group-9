@@ -58,9 +58,10 @@ export default function AccountLayout() {
   );
 }
 
-const accountLinkClass = ({isActive}: {isActive: boolean}) =>
-  `text-xs uppercase tracking-[0.14em] transition-colors ${
-    isActive ? 'text-ink' : 'text-primary hover:text-ink'
+const accountLinkClass = ({isActive,}: { isActive: boolean; }) => `inline-flex min-h-11 items-center border-b-2 text-xs uppercase tracking-[0.14em] transition-colors ${
+    isActive
+      ? 'border-primary text-ink'
+      : 'border-transparent text-primary hover:text-ink'
   }`;
 
 function AccountMenu() {
@@ -88,7 +89,7 @@ function Logout() {
     <Form method="POST" action="/account/logout">
       <button
         type="submit"
-        className="text-xs uppercase tracking-[0.14em] text-primary transition-colors hover:text-ink"
+        className="min-h-11 text-xs uppercase tracking-[0.14em] text-primary transition-colors hover:text-ink"
       >
         Sign out
       </button>

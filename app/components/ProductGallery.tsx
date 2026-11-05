@@ -29,7 +29,13 @@ export function ProductGallery({images, variantImage, title}: Props) {
   const current = images[active] ?? images[0];
 
   return (
-    <div className="grid gap-3 md:grid-cols-[72px_minmax(0,1fr)]">
+    <div
+      className={`grid gap-3 ${
+        images.length > 1
+          ? 'md:grid-cols-[72px_minmax(0,1fr)]'
+          : 'grid-cols-1'
+      }`}
+    >
       {images.length > 1 ? (
         <ul className="order-2 flex gap-2 overflow-x-auto md:order-1 md:flex-col md:overflow-visible">
           {images.map((image, index) => (
@@ -56,7 +62,7 @@ export function ProductGallery({images, variantImage, title}: Props) {
         </ul>
       ) : null}
 
-      <div className="order-1 aspect-[4/5] overflow-hidden bg-secondary md:order-2">
+      <div className="order-1 min-w-0 aspect-[4/5] overflow-hidden bg-secondary md:order-2">
         <Image
           key={current.url}
           data={current}

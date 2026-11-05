@@ -1,6 +1,7 @@
 import {Link} from 'react-router';
-import {Image, Money, Pagination} from '@shopify/hydrogen';
+import {Pagination} from '@shopify/hydrogen';
 import {urlWithTrackingParams, type RegularSearchReturn} from '~/lib/search';
+import {ProductItem} from '~/components/ProductItem';
 
 type SearchItems = RegularSearchReturn['result']['items'];
 type PartialSearchResult<ItemType extends keyof SearchItems> = Pick<
@@ -39,7 +40,7 @@ function SearchResultsArticles({
   }
 
   return (
-    <div className="search-result">
+    <div className="space-y-4 [&_h2]:font-display [&_h2]:text-2xl">
       <h2>Articles</h2>
       <div>
         {articles?.nodes?.map((article) => {
@@ -50,7 +51,7 @@ function SearchResultsArticles({
           });
 
           return (
-            <div className="search-results-item" key={article.id}>
+            <div className="border-b border-line py-4 text-sm [&_a]:underline [&_a]:underline-offset-4" key={article.id}>
               <Link prefetch="intent" to={articleUrl}>
                 {article.title}
               </Link>
@@ -69,7 +70,7 @@ function SearchResultsPages({term, pages}: PartialSearchResult<'pages'>) {
   }
 
   return (
-    <div className="search-result">
+    <div className="space-y-4 [&_h2]:font-display [&_h2]:text-2xl">
       <h2>Pages</h2>
       <div>
         {pages?.nodes?.map((page) => {
@@ -80,7 +81,7 @@ function SearchResultsPages({term, pages}: PartialSearchResult<'pages'>) {
           });
 
           return (
-            <div className="search-results-item" key={page.id}>
+            <div className="border-b border-line py-4 text-sm [&_a]:underline [&_a]:underline-offset-4" key={page.id}>
               <Link prefetch="intent" to={pageUrl}>
                 {page.title}
               </Link>
@@ -94,68 +95,50 @@ function SearchResultsPages({term, pages}: PartialSearchResult<'pages'>) {
 }
 
 function SearchResultsProducts({
-  term,
-  products,
-}: PartialSearchResult<'products'>) {
-  if (!products?.nodes.length) {
-    return null;
-  }
+                                 products,
+                               }: PartialSearchResult<'products'>) {
+  if (!products?.nodes.length) return null;
+
+  const paginationClass =
+    'my-8 inline-flex min-h-11 items-center border border-primary px-6 text-xs uppercase tracking-widest text-primary transition-colors hover:bg-primary hover:text-white';
 
   return (
-    <div className="search-result">
-      <h2>Products</h2>
+    <section>
+      <h2 className="mb-6 font-display text-2xl">Pieces</h2>
+
       <Pagination connection={products}>
-        {({nodes, isLoading, NextLink, PreviousLink}) => {
-          const ItemsMarkup = nodes.map((product) => {
-            const productUrl = urlWithTrackingParams({
-              baseUrl: `/products/${product.handle}`,
-              trackingParams: product.trackingParameters,
-              term,
-            });
+        {({nodes, isLoading, NextLink, PreviousLink}) => (
+          <>
+            <PreviousLink className={paginationClass}>
+              {isLoading ? 'Loading…' : 'Load previous'}
+            </PreviousLink>
 
-            const price = product?.selectedOrFirstAvailableVariant?.price;
-            const image = product?.selectedOrFirstAvailableVariant?.image;
-
-            return (
-              <div className="search-results-item" key={product.id}>
-                <Link prefetch="intent" to={productUrl}>
-                  {image && (
-                    <Image data={image} alt={product.title} width={50} />
-                  )}
-                  <div>
-                    <p>{product.title}</p>
-                    <small>{price && <Money data={price} />}</small>
-                  </div>
-                </Link>
-              </div>
-            );
-          });
-
-          return (
-            <div>
-              <div>
-                <PreviousLink>
-                  {isLoading ? 'Loading...' : <span>↑ Load previous</span>}
-                </PreviousLink>
-              </div>
-              <div>
-                {ItemsMarkup}
-                <br />
-              </div>
-              <div>
-                <NextLink>
-                  {isLoading ? 'Loading...' : <span>Load more ↓</span>}
-                </NextLink>
-              </div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 xl:grid-cols-4">
+              {nodes.map((product) => (
+                <ProductItem
+                  key={product.id}
+                  product={product}
+                />
+              ))}
             </div>
-          );
-        }}
+
+            <NextLink className={paginationClass}>
+              {isLoading ? 'Loading…' : 'Load more'}
+            </NextLink>
+          </>
+        )}
       </Pagination>
-      <br />
-    </div>
+    </section>
   );
 }
 
 function SearchResultsEmpty() {
-  return <p>No results, try a different search.</p>;
+  return (
+    <div className="border-y border-line py-12 text-center">
+      <h2 className="font-display text-3xl">No results</h2>
+      <p className="mt-4 text-sm text-primary">
+        Try another product name, material or color.
+      </p>
+    </div>
+  );
 }

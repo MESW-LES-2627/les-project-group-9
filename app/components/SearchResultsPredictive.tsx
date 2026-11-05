@@ -286,16 +286,27 @@ function usePredictiveSearch(): UsePredictiveSearchReturn {
   const term = useRef<string>('');
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  if (fetcher?.state === 'loading') {
-    term.current = String(fetcher.formData?.get('q') || '');
-  }
+  const pendingTerm =
+    fetcher.formData?.get('q') ??
+    (fetcher.formAction
+      ? new URL(
+        fetcher.formAction,
+        'https://search.invalid',
+      ).searchParams.get('q')
+      : null);
+
+  term.current =
+    fetcher.state !== 'idle' && pendingTerm !== null
+      ? String(pendingTerm)
+      : fetcher.data?.term ?? '';
 
   // capture the search input element as a ref
   useEffect(() => {
-    if (!inputRef.current) {
-      inputRef.current = document.querySelector('input[type="search"]');
-    }
-  }, []);
+    inputRef.current =
+      document.querySelector<HTMLInputElement>(
+        '[role="dialog"][aria-hidden="false"] input[name="q"]',
+      );
+  });
 
   const {items, total} =
     fetcher?.data?.result ?? getEmptyPredictiveSearchResult();

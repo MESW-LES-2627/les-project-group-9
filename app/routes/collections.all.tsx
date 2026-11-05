@@ -1,14 +1,14 @@
 import type {Route} from './+types/collections.all';
 import {useLoaderData} from 'react-router';
-import {getPaginationVariables, Image, Money} from '@shopify/hydrogen';
+import {getPaginationVariables} from '@shopify/hydrogen';
 import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
 import {ProductItem} from '~/components/ProductItem';
 import {JEWELIETTE_PRODUCT_CARD_FRAGMENT} from '~/lib/jeweliette-catalog';
 import type {JewelietteProductCardFragment} from 'storefrontapi.generated';
 
-export const meta: Route.MetaFunction = () => {
-  return [{title: `Hydrogen | Products`}];
-};
+export const meta: Route.MetaFunction = () => [
+  {title: 'All pieces | Jeweliette'},
+];
 
 export async function loader(args: Route.LoaderArgs) {
   // Start fetching non-critical data without blocking time to first byte
@@ -32,7 +32,7 @@ async function loadCriticalData({context, request}: Route.LoaderArgs) {
 
   const [{products}] = await Promise.all([
     storefront.query(CATALOG_QUERY, {
-      variables: {...paginationVariables},
+      variables: {...paginationVariables, language: 'EN'},
     }),
     // Add other queries here, so that they are loaded in parallel
   ]);
@@ -52,21 +52,35 @@ export default function Collection() {
   const {products} = useLoaderData<typeof loader>();
 
   return (
-    <div className="collection">
-      <h1>Products</h1>
+    <section className="mx-auto max-w-[1400px] px-[4vw] pb-20 pt-12">
+      <header className="mb-12 text-center">
+        <p className="text-xs uppercase tracking-[0.2em] text-primary">
+          The Jeweliette collection
+        </p>
+
+        <h1 className="mt-4 font-display text-[clamp(2.5rem,5vw,4rem)] leading-none">
+          All pieces
+        </h1>
+
+        <p className="mx-auto mt-5 max-w-md text-sm leading-7 text-primary">
+          Find your next favorite. Explore pieces to wear,
+          layer and make your own.
+        </p>
+      </header>
+
       <PaginatedResourceSection<JewelietteProductCardFragment>
         connection={products}
-        resourcesClassName="products-grid"
+        resourcesClassName="grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 xl:grid-cols-4"
       >
         {({node: product, index}) => (
           <ProductItem
             key={product.id}
             product={product}
-            loading={index < 8 ? 'eager' : undefined}
+            loading={index < 8 ? 'eager' : 'lazy'}
           />
         )}
       </PaginatedResourceSection>
-    </div>
+    </section>
   );
 }
 
