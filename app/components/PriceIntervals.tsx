@@ -9,18 +9,63 @@ type Props = {
   currencyCode?: string;
 };
 
-function getPriceBounds(values: FilterValue[]) {
+function isRecord(
+  value: unknown,
+): value is Record<string, unknown> {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value)
+  );
+}
+
+function getPriceBounds(
+  values: FilterValue[],
+): {min: number; max: number} | null {
   try {
     const raw = values[0]?.input;
-    const parsed =
+
+    const parsed: unknown =
       typeof raw === 'string' ? JSON.parse(raw) : raw;
 
-    const min = Number(parsed?.price?.min ?? 0);
-    const max = Number(parsed?.price?.max);
+    if (!isRecord(parsed)) {
+      return null;
+    }
+
+    const price = parsed.price;
+
+    if (!isRecord(price)) {
+      return null;
+    }
+
+    const rawMin = price.min ?? 0;
+    const rawMax = price.max;
+
+    if (
+      (typeof rawMin !== 'number' &&
+        typeof rawMin !== 'string') ||
+      (typeof rawMax !== 'number' &&
+        typeof rawMax !== 'string')
+    ) {
+      return null;
+    }
+
+    if (
+      (typeof rawMin === 'string' &&
+        rawMin.trim() === '') ||
+      (typeof rawMax === 'string' &&
+        rawMax.trim() === '')
+    ) {
+      return null;
+    }
+
+    const min = Number(rawMin);
+    const max = Number(rawMax);
 
     if (
       !Number.isFinite(min) ||
       !Number.isFinite(max) ||
+      min < 0 ||
       max <= min
     ) {
       return null;
