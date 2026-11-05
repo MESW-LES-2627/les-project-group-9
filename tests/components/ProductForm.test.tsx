@@ -20,6 +20,12 @@ vi.mock('~/components/Aside', () => ({
   useAside: () => ({open: vi.fn()}),
 }));
 
+const profile = vi.hoisted(() => ({useProfile: vi.fn()}));
+
+vi.mock('~/lib/profile/ProfileProvider', () => ({
+  useProfile: profile.useProfile,
+}));
+
 vi.mock('@shopify/hydrogen', () => {
   const CartForm = Object.assign(
     ({children}: {children: (fetcher: {state: string}) => React.ReactNode}) =>
@@ -127,6 +133,81 @@ describe('ProductForm', () => {
     });
     expect(screen.getByRole('button', {name: 'Silver'})).toHaveStyle({
       backgroundColor: '#c0c0c0',
+    });
+  });
+
+  describe('ring size helper', () => {
+    const sizeOptions = [
+      {
+        name: 'Size',
+        optionValues: [
+          {
+            name: '6',
+            handle: 'ring',
+            variantUriQuery: 'Size=6',
+            selected: true,
+            available: true,
+            exists: true,
+            isDifferentProduct: false,
+          },
+          {
+            name: '7',
+            handle: 'ring',
+            variantUriQuery: 'Size=7',
+            selected: false,
+            available: true,
+            exists: true,
+            isDifferentProduct: false,
+          },
+        ],
+      },
+    ] as MappedProductOptions[];
+
+    beforeEach(() => {
+      profile.useProfile.mockReturnValue({
+        status: 'ready',
+        isLoggedIn: true,
+        preferences: null,
+      });
+    });
+
+    it('shows the helper on a ring product with a Size option', () => {
+      render(
+        <ProductForm
+          productOptions={sizeOptions}
+          selectedVariant={selectedVariant}
+          isRing
+        />,
+      );
+
+      expect(screen.getByRole('button', {name: '? Help'})).toBeInTheDocument();
+    });
+
+    it('hides the helper on products that are not rings', () => {
+      render(
+        <ProductForm
+          productOptions={sizeOptions}
+          selectedVariant={selectedVariant}
+        />,
+      );
+
+      expect(
+        screen.queryByRole('button', {name: '? Help'}),
+      ).not.toBeInTheDocument();
+    });
+
+    it('hides the helper on a ring product without a Size option', () => {
+      render(
+        <ProductForm
+          productOptions={productOptions}
+          selectedVariant={selectedVariant}
+          isRing
+        />,
+      );
+
+      expect(
+        screen.queryByRole('button', {name: '? Help'}),
+      ).not.toBeInTheDocument();
     });
   });
 

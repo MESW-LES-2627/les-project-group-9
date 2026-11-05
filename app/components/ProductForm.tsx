@@ -2,15 +2,18 @@ import {Link, useNavigate} from 'react-router';
 import {type MappedProductOptions, type OptimisticCartLineInput, CartForm} from '@shopify/hydrogen';
 import type {ProductFragment} from 'storefrontapi.generated';
 import {useAside} from '~/components/Aside';
+import {RingSizeHelp} from '~/components/RingSizeHelp';
 
 type Props = {
   productOptions: MappedProductOptions[];
   selectedVariant: ProductFragment['selectedOrFirstAvailableVariant'];
+  /** True for products in the "Rings" category. Enables the ring size helper. */
+  isRing?: boolean;
 };
 
 const COLOR_OPTION = /^(colou?r|finish|metal)$/i;
 
-export function ProductForm({productOptions, selectedVariant}: Props) {
+export function ProductForm({productOptions, selectedVariant, isRing = false}: Props) {
   const navigate = useNavigate();
   const {open} = useAside();
 
@@ -110,6 +113,8 @@ export function ProductForm({productOptions, selectedVariant}: Props) {
                   );
                 })}
               </div>
+
+              {isRing && /^size$/i.test(option.name) ? <RingSizeHelp /> : null}
             </fieldset>
           );
         })}

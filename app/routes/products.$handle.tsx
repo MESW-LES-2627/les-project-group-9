@@ -16,6 +16,7 @@ import {ProductItem} from '~/components/ProductItem';
 import {FavoriteButton} from '~/components/FavoriteButton';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 import {JEWELIETTE_PRODUCT_CARD_FRAGMENT} from '~/lib/jeweliette-catalog';
+import {isRingProduct} from '~/lib/profile/ringCategory';
 
 export const meta: Route.MetaFunction = ({data}) => [
   {title: `${data?.product.title ?? 'Product'} | Jeweliette`},
@@ -119,7 +120,11 @@ export default function Product() {
           </div>
 
           <div className="mt-8">
-            <ProductForm productOptions={productOptions} selectedVariant={selectedVariant} />
+            <ProductForm
+              productOptions={productOptions}
+              selectedVariant={selectedVariant}
+              isRing={isRingProduct(product)}
+            />
           </div>
 
           <div className="mt-10 divide-y divide-line border-y border-line text-sm">
@@ -226,6 +231,7 @@ const PRODUCT_FRAGMENT = `#graphql
     material: metafield(namespace: "custom", key: "material") { value }
     images(first: 10) { nodes { id url altText width height } }
     collections(first: 1) { nodes { title handle } }
+    category { id name }
     options {
       name
       optionValues {
