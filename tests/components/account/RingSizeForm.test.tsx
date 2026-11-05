@@ -77,6 +77,20 @@ describe('RingSizeFields', () => {
 });
 
 describe('RingSizeForm', () => {
+  it('links to a finger measurement guide', () => {
+    profile.useProfile.mockReturnValue({
+      status: 'loading',
+      preferences: null,
+      savePreferences: vi.fn(),
+    });
+
+    render(<RingSizeForm />);
+
+    expect(
+      screen.getByRole('link', {name: 'How to measure your finger'}),
+    ).toHaveAttribute('href', 'https://www.ringsize.app/');
+  });
+
   it('shows an error when the profile fails to load', () => {
     profile.useProfile.mockReturnValue({
       status: 'error',

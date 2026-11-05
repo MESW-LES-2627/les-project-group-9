@@ -22,6 +22,14 @@ export function RingSizeForm() {
         Save your US ring size for each finger. Ring products will show your
         saved sizes.
       </p>
+      <a
+        href="https://www.ringsize.app/"
+        target="_blank"
+        rel="noreferrer"
+        className="mt-2 inline-block text-[11px] uppercase tracking-widest text-primary underline underline-offset-4 hover:text-ink"
+      >
+        How to measure your finger
+      </a>
 
       {status === 'ready' ? (
         <RingSizeFields
