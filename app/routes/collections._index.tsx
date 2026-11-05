@@ -25,7 +25,7 @@ async function loadCriticalData({context, request}: Route.LoaderArgs) {
 
   const [{collections}] = await Promise.all([
     context.storefront.query(COLLECTIONS_QUERY, {
-      variables: paginationVariables,
+      variables: { ...paginationVariables, language: 'EN',},
     }),
     // Add other queries here, so that they are loaded in parallel
   ]);
@@ -46,11 +46,20 @@ export default function Collections() {
   const {collections} = useLoaderData<typeof loader>();
 
   return (
-    <div className="collections">
-      <h1>Collections</h1>
+    <section className="mx-auto max-w-[1400px] px-[4vw] pb-20 pt-12">
+      <header className="mb-12 text-center">
+        <p className="text-xs uppercase tracking-[0.2em] text-primary">
+          Find your next favorite
+        </p>
+
+        <h1 className="mt-4 font-display text-[clamp(2.5rem,5vw,4rem)] leading-none">
+          Collections
+        </h1>
+      </header>
+
       <PaginatedResourceSection<CollectionFragment>
         connection={collections}
-        resourcesClassName="collections-grid"
+        resourcesClassName="grid grid-cols-2 gap-x-5 gap-y-10 lg:grid-cols-4"
       >
         {({node: collection, index}) => (
           <CollectionItem
@@ -60,34 +69,45 @@ export default function Collections() {
           />
         )}
       </PaginatedResourceSection>
-    </div>
+    </section>
   );
 }
 
 function CollectionItem({
-  collection,
-  index,
-}: {
+                          collection,
+                          index,
+                        }: {
   collection: CollectionFragment;
   index: number;
 }) {
   return (
     <Link
-      className="collection-item"
-      key={collection.id}
       to={`/collections/${collection.handle}`}
       prefetch="intent"
+      className="group block"
     >
-      {collection?.image && (
-        <Image
-          alt={collection.image.altText || collection.title}
-          aspectRatio="1/1"
-          data={collection.image}
-          loading={index < 3 ? 'eager' : undefined}
-          sizes="(min-width: 45em) 400px, 100vw"
-        />
-      )}
-      <h5>{collection.title}</h5>
+      <div className="aspect-[4/5] overflow-hidden bg-secondary">
+        {collection.image ? (
+          <Image
+            alt={collection.image.altText || collection.title}
+            data={collection.image}
+            loading={index < 4 ? 'eager' : 'lazy'}
+            sizes="(min-width: 1024px) 25vw, 50vw"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center px-5 text-center font-display text-2xl text-primary">
+            {collection.title}
+          </div>
+        )}
+      </div>
+
+      <div className="mt-4 flex items-center justify-between gap-4">
+        <h2 className="font-display text-xl">
+          {collection.title}
+        </h2>
+        <span aria-hidden="true">↗</span>
+      </div>
     </Link>
   );
 }

@@ -2,6 +2,7 @@ import {Suspense} from 'react';
 import {Await, NavLink} from 'react-router';
 import type {FooterQuery, HeaderQuery} from 'storefrontapi.generated';
 import {Icon} from '~/components/Icon';
+import {useAside} from '~/components/Aside';
 
 interface FooterProps {
   footer: Promise<FooterQuery | null>;
@@ -14,6 +15,7 @@ export function Footer({
   header,
   publicStoreDomain,
 }: FooterProps) {
+  const {open} = useAside();
   return (
     <Suspense>
       <Await resolve={footerPromise}>
@@ -28,24 +30,25 @@ export function Footer({
                   {header.shop.name || 'Jeweliette'}
                 </NavLink>
                 <p className="mt-5 max-w-[32ch] text-sm leading-7 text-white/65">
-                  Joias modernas para combinar, oferecer e guardar.
+                  Modern jewelry to layer, gift and keep.
                 </p>
               </div>
 
               <div>
                 <p className="mb-5 text-xs font-medium uppercase tracking-[0.18em] text-secondary">
-                  Descobrir
+                  Discover
                 </p>
-                <nav className="flex flex-col items-start gap-3 text-sm text-white/75">
-                  <NavLink className="hover:text-white" to="/collections/all">Novidades</NavLink>
-                  <NavLink className="hover:text-white" to="/collections/jewelry">Joias</NavLink>
-                  <NavLink className="hover:text-white" to="/collections/custom">Personalização</NavLink>
-                </nav>
+                <NavLink className="hover:text-white" to="/collections/all">
+                  All pieces
+                </NavLink>
+                <NavLink className="hover:text-white" to="/collections">
+                  Collections
+                </NavLink>
               </div>
 
               <div>
                 <p className="mb-5 text-xs font-medium uppercase tracking-[0.18em] text-secondary">
-                  Informação
+                  Information
                 </p>
                 {footer?.menu && header.shop.primaryDomain?.url ? (
                   <FooterMenu
@@ -58,21 +61,21 @@ export function Footer({
 
               <div>
                 <p className="text-xs font-medium uppercase tracking-[0.18em] text-secondary">
-                  Histórias na tua caixa de entrada
+                  Stories in your inbox
                 </p>
                 <p className="mt-4 text-sm leading-7 text-white/65">
-                  Novidades, guias de estilo e acesso antecipado.
+                  News, style guides and early access.
                 </p>
                 <div className="mt-7 flex border-b border-white/40 pb-2">
                   <input
-                    aria-label="Endereço de email"
+                    aria-label="Email address"
                     className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/45"
                     disabled
-                    placeholder="Newsletter disponível em breve"
+                    placeholder="Newsletter coming soon"
                     type="email"
                   />
                   <button
-                    aria-label="Subscrever newsletter"
+                    aria-label="Subscribe to newsletter"
                     className="grid size-11 place-items-center text-secondary opacity-50"
                     disabled
                     type="button"
@@ -113,6 +116,18 @@ function FooterMenu({
           item.url.includes(primaryDomainUrl)
             ? new URL(item.url).pathname
             : item.url;
+        if (url.startsWith('/') && url.split('?')[0] === '/search') {
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => open('search')}
+              className="hover:text-white"
+            >
+              Search
+            </button>
+          );
+        }
         const isExternal = !url.startsWith('/');
 
         return isExternal ? (
@@ -144,9 +159,9 @@ function FooterMenu({
 const FALLBACK_FOOTER_MENU = {
   id: 'fallback-footer-menu',
   items: [
-    {id: 'privacy', resourceId: null, tags: [], title: 'Privacidade', type: 'SHOP_POLICY', url: '/policies/privacy-policy', items: []},
-    {id: 'refund', resourceId: null, tags: [], title: 'Devoluções', type: 'SHOP_POLICY', url: '/policies/refund-policy', items: []},
-    {id: 'shipping', resourceId: null, tags: [], title: 'Envios', type: 'SHOP_POLICY', url: '/policies/shipping-policy', items: []},
-    {id: 'terms', resourceId: null, tags: [], title: 'Termos', type: 'SHOP_POLICY', url: '/policies/terms-of-service', items: []},
+    {id: 'privacy', resourceId: null, tags: [], title: 'Privacy policy', type: 'SHOP_POLICY', url: '/policies/privacy-policy', items: []},
+    {id: 'refund', resourceId: null, tags: [], title: 'Refund policy', type: 'SHOP_POLICY', url: '/policies/refund-policy', items: []},
+    {id: 'shipping', resourceId: null, tags: [], title: 'Shipping policy', type: 'SHOP_POLICY', url: '/policies/shipping-policy', items: []},
+    {id: 'terms', resourceId: null, tags: [], title: 'Terms of service', type: 'SHOP_POLICY', url: '/policies/terms-of-service', items: []},
   ],
 };

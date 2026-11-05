@@ -5,7 +5,7 @@ import type {
   FooterQuery,
   HeaderQuery,
 } from 'storefrontapi.generated';
-import {Aside} from '~/components/Aside';
+import {Aside, useAside} from '~/components/Aside';
 import {Footer} from '~/components/Footer';
 import {Header, HeaderMenu} from '~/components/Header';
 import {CartMain} from '~/components/CartMain';
@@ -139,9 +139,9 @@ function SearchAside() {
                       Explore
                     </p>
                     <div className="mt-5 flex flex-wrap gap-x-8 gap-y-3 font-display text-xl text-primary sm:text-2xl">
-                      <Link onClick={closeSearch} to="/collections/all">New Arrivals</Link>
+                      <Link onClick={closeSearch} to="/collections/all">All pieces</Link>
                       <Link onClick={closeSearch} to="/collections/jewelry">Jewelry</Link>
-                      <Link onClick={closeSearch} to="/collections/custom">Personalization</Link>
+                      <Link onClick={closeSearch} to="/collections">Collections</Link>
                     </div>
                   </div>
                 );
@@ -192,6 +192,7 @@ function MobileMenuAside({
   header: PageLayoutProps['header'];
   publicStoreDomain: PageLayoutProps['publicStoreDomain'];
 }) {
+  const {open, close} = useAside();
   return (
     <Aside type="mobile" heading="Menu">
       <HeaderMenu
@@ -201,12 +202,16 @@ function MobileMenuAside({
         publicStoreDomain={publicStoreDomain}
       />
       <div className="mt-6 grid gap-3 px-5 text-xs font-medium uppercase tracking-[0.14em] text-primary">
-        <Link className="flex min-h-11 items-center border-b border-line" to="/account">
+        <Link className="flex min-h-11 items-center border-b border-line" to="/account" onClick={close}>
           My account
         </Link>
-        <Link className="flex min-h-11 items-center border-b border-line" to="/cart">
+        <button
+          type="button"
+          className="flex min-h-11 items-center border-b border-line text-left text-xs font-medium uppercase tracking-[0.14em] text-primary"
+          onClick={() => open('cart')}
+        >
           Shopping bag
-        </Link>
+        </button>
       </div>
     </Aside>
   );
