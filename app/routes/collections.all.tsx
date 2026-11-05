@@ -1,8 +1,8 @@
 import type {Route} from './+types/collections.all';
 import {useLoaderData} from 'react-router';
 import {getPaginationVariables} from '@shopify/hydrogen';
-import {PaginatedResourceSection} from '~/components/PaginatedResourceSection';
-import {ProductItem} from '~/components/ProductItem';
+import {PaginatedResourceSection} from '~/components/shared/PaginatedResourceSection';
+import {ProductItem} from '~/components/product/ProductItem';
 import {JEWELIETTE_PRODUCT_CARD_FRAGMENT} from '~/lib/jeweliette-catalog';
 import type {JewelietteProductCardFragment} from 'storefrontapi.generated';
 

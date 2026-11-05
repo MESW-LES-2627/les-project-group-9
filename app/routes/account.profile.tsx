@@ -9,7 +9,7 @@ import {
   useOutletContext,
 } from 'react-router';
 import type {Route} from './+types/account.profile';
-import {PreferencesForm} from '~/components/PreferencesForm';
+import {PreferencesForm} from '~/components/account/PreferencesForm';
 
 export type ActionResponse = {
   error: string | null;

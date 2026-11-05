@@ -13,7 +13,7 @@ import {
 import type {Route} from './+types/root';
 import favicon from '~/assets/favicon.svg';
 import tailwindCss from '~/styles/tailwind.css?url';
-import {PageLayout} from './components/PageLayout';
+import {PageLayout} from '~/components/layout/PageLayout';
 import {ProfileProvider} from '~/lib/profile/ProfileProvider';
 
 export type RootLoader = typeof loader;

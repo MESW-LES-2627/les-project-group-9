@@ -1,8 +1,8 @@
 import {useLoaderData} from 'react-router';
 import type {Route} from './+types/search';
 import {getPaginationVariables, Analytics} from '@shopify/hydrogen';
-import {SearchForm} from '~/components/SearchForm';
-import {SearchResults} from '~/components/SearchResults';
+import {SearchForm} from '~/components/search/SearchForm';
+import {SearchResults} from '~/components/search/SearchResults';
 import {type RegularSearchReturn, type PredictiveSearchReturn, getEmptyPredictiveSearchResult,} from '~/lib/search';
 import type {RegularSearchQuery, PredictiveSearchQuery,} from 'storefrontapi.generated';
 import {JEWELIETTE_PRODUCT_CARD_FRAGMENT,} from '~/lib/jeweliette-catalog';

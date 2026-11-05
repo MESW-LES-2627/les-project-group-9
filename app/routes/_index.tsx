@@ -1,8 +1,8 @@
 import {Link, useLoaderData} from 'react-router';
 import {Image} from '@shopify/hydrogen';
 import type {Route} from './+types/_index';
-import {ProductItem} from '~/components/ProductItem';
-import {RecommendedProducts} from '~/components/RecommendedProducts';
+import {ProductItem} from '~/components/product/ProductItem';
+import {RecommendedProducts} from '~/components/product/RecommendedProducts';
 import {
   JEWELIETTE_PRODUCT_CARD_FRAGMENT,
 } from '~/lib/jeweliette-catalog';

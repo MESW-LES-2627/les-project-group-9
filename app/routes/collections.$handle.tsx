@@ -18,14 +18,14 @@ import type {
 
 import type {Route} from './+types/collections.$handle';
 
-import {ProductItem} from '~/components/ProductItem';
+import {ProductItem} from '~/components/product/ProductItem';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 
 import {
   JEWELIETTE_PRODUCT_CARD_FRAGMENT,
 } from '~/lib/jeweliette-catalog';
 
-import {PriceIntervals} from '~/components/PriceIntervals';
+import {PriceIntervals} from '~/components/collections/PriceIntervals';
 
 const SORT_OPTIONS: Record<
   string,
