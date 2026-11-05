@@ -139,9 +139,9 @@ function SearchAside() {
                       Explore
                     </p>
                     <div className="mt-5 flex flex-wrap gap-x-8 gap-y-3 font-display text-xl text-primary sm:text-2xl">
-                      <Link onClick={closeSearch} to="/collections/all">New Arrivals</Link>
+                      <Link onClick={closeSearch} to="/collections/all">All pieces</Link>
                       <Link onClick={closeSearch} to="/collections/jewelry">Jewelry</Link>
-                      <Link onClick={closeSearch} to="/collections/custom">Personalization</Link>
+                      <Link onClick={closeSearch} to="/collections">Collections</Link>
                     </div>
                   </div>
                 );

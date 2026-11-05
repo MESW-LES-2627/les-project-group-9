@@ -250,7 +250,7 @@ const FALLBACK_HEADER_MENU = {
     {id: 'watches', resourceId: null, tags: [], title: 'Watches', type: 'HTTP', url: '/collections/watches', items: []},
     {id: 'charms', resourceId: null, tags: [], title: 'Charms', type: 'HTTP', url: '/collections/charms', items: []},
     {id: 'jewelry', resourceId: null, tags: [], title: 'Jewelry', type: 'HTTP', url: '/collections/jewelry', items: []},
-    {id: 'custom', resourceId: null, tags: [], title: 'Custom', type: 'HTTP', url: '/collections/custom', items: []},
+    {id: 'collections', resourceId: null, tags: [], title: 'Collections', type: 'HTTP', url: '/collections', items: []},
   ],
 };
 
