@@ -38,12 +38,27 @@ export function Footer({
                 <p className="mb-5 text-xs font-medium uppercase tracking-[0.18em] text-secondary">
                   Discover
                 </p>
-                <NavLink className="hover:text-white" to="/collections/all">
-                  All pieces
-                </NavLink>
-                <NavLink className="hover:text-white" to="/collections">
-                  Collections
-                </NavLink>
+                <nav
+                  aria-label="Discover"
+                  className="flex flex-col items-start gap-3 text-sm text-white/75"
+                >
+                  <NavLink
+                    className="hover:text-white"
+                    end
+                    prefetch="intent"
+                    to="/collections/all"
+                  >
+                    All pieces
+                  </NavLink>
+                  <NavLink
+                    className="hover:text-white"
+                    end
+                    prefetch="intent"
+                    to="/collections"
+                  >
+                    Collections
+                  </NavLink>
+                </nav>
               </div>
 
               <div>
