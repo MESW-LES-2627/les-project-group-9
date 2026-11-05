@@ -11,16 +11,22 @@ import {
 import {
   fetchProfile,
   postFavoriteOperation,
+  postFittingRoomOperation,
   postPreferences,
   ProfileRequestError,
 } from './client';
 import {isProductGid} from './schema';
-import type {PreferenceProfile, ProfileStatus} from './types';
+import type {
+  ListOperation,
+  PreferenceProfile,
+  ProfileStatus,
+} from './types';
 
 type ProfileState = {
   status: ProfileStatus;
   isLoggedIn: boolean;
   favorites: string[];
+  fittingRoom: string[];
   preferences: PreferenceProfile | null;
   pendingWrites: number;
 };
@@ -29,18 +35,33 @@ type ProfileContextValue = ProfileState & {
   syncing: boolean;
   hasFavorite: (id: string) => boolean;
   toggleFavorite: (id: string) => void;
+  hasFittingRoomItem: (id: string) => boolean;
+  toggleFittingRoom: (id: string) => void;
   savePreferences: (preferences: PreferenceProfile) => Promise<void>;
 };
+
+type ListKey = 'favorites' | 'fittingRoom';
 
 const INITIAL_STATE: ProfileState = {
   status: 'loading',
   isLoggedIn: false,
   favorites: [],
+  fittingRoom: [],
   preferences: null,
   pendingWrites: 0,
 };
 
 const ProfileContext = createContext<ProfileContextValue | null>(null);
+
+function withList(
+  state: ProfileState,
+  key: ListKey,
+  list: string[],
+): ProfileState {
+  return key === 'favorites'
+    ? {...state, favorites: list}
+    : {...state, fittingRoom: list};
+}
 
 export function ProfileProvider({children}: {children: ReactNode}) {
   const [state, setState] = useState<ProfileState>(INITIAL_STATE);
@@ -58,6 +79,7 @@ export function ProfileProvider({children}: {children: ReactNode}) {
         status: 'ready',
         isLoggedIn: profile.loggedIn,
         favorites: profile.favorites,
+        fittingRoom: profile.fittingRoom,
         preferences: profile.preferences,
         pendingWrites: 0,
       });
@@ -66,6 +88,7 @@ export function ProfileProvider({children}: {children: ReactNode}) {
         status: 'error',
         isLoggedIn: false,
         favorites: [],
+        fittingRoom: [],
         preferences: null,
         pendingWrites: 0,
       });
@@ -76,25 +99,29 @@ export function ProfileProvider({children}: {children: ReactNode}) {
     void loadProfile();
   }, [loadProfile]);
 
-  const toggleFavorite = useCallback(
-    (id: string) => {
+  const toggleList = useCallback(
+    (
+      key: ListKey,
+      id: string,
+      post: (operation: ListOperation) => Promise<unknown>,
+    ) => {
       if (!isProductGid(id)) return;
 
       const current = stateRef.current;
       if (!current.isLoggedIn) return;
 
-      const isFavorite = current.favorites.includes(id);
-      const next = isFavorite
-        ? current.favorites.filter((favoriteId) => favoriteId !== id)
-        : [id, ...current.favorites.filter((favoriteId) => favoriteId !== id)];
+      const list = current[key];
+      const isActive = list.includes(id);
+      const next = isActive
+        ? list.filter((item) => item !== id)
+        : [id, ...list.filter((item) => item !== id)];
 
       commit({
-        ...current,
-        favorites: next,
+        ...withList(current, key, next),
         pendingWrites: current.pendingWrites + 1,
       });
 
-      void postFavoriteOperation(isFavorite ? {remove: [id]} : {add: [id]})
+      void post(isActive ? {remove: [id]} : {add: [id]})
         .then(() => {
           const latest = stateRef.current;
           commit({
@@ -113,10 +140,20 @@ export function ProfileProvider({children}: {children: ReactNode}) {
             ...latest,
             pendingWrites: Math.max(0, latest.pendingWrites - 1),
           });
-          console.error('Could not save favorite', error);
+          console.error(`Could not save ${key}`, error);
         });
     },
     [commit, loadProfile],
+  );
+
+  const toggleFavorite = useCallback(
+    (id: string) => toggleList('favorites', id, postFavoriteOperation),
+    [toggleList],
+  );
+
+  const toggleFittingRoom = useCallback(
+    (id: string) => toggleList('fittingRoom', id, postFittingRoomOperation),
+    [toggleList],
   );
 
   const savePreferences = useCallback(
@@ -159,15 +196,29 @@ export function ProfileProvider({children}: {children: ReactNode}) {
     [state.favorites],
   );
 
+  const hasFittingRoomItem = useCallback(
+    (id: string) => state.fittingRoom.includes(id),
+    [state.fittingRoom],
+  );
+
   const value = useMemo(
     () => ({
       ...state,
       syncing: state.pendingWrites > 0,
       hasFavorite,
       toggleFavorite,
+      hasFittingRoomItem,
+      toggleFittingRoom,
       savePreferences,
     }),
-    [state, hasFavorite, toggleFavorite, savePreferences],
+    [
+      state,
+      hasFavorite,
+      toggleFavorite,
+      hasFittingRoomItem,
+      toggleFittingRoom,
+      savePreferences,
+    ],
   );
 
   return (

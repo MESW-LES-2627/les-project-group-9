@@ -9,6 +9,7 @@ import type {HeaderQuery, CartApiQueryFragment} from 'storefrontapi.generated';
 import {useAside} from '~/components/layout/Aside';
 import {Icon} from '~/components/shared/Icon';
 import {useFavorites} from '~/lib/favorites';
+import {useFittingRoom} from '~/lib/fitting-room';
 
 interface HeaderProps {
   header: HeaderQuery;
@@ -322,14 +323,19 @@ function FavoritesLink() {
 }
 
 function FittingRoomLink() {
+  const {ids} = useFittingRoom();
   return (
     <Link
       to="/fitting-room"
-      aria-label="Fitting room"
+      aria-label={`Fitting room${ids.length ? ` (${ids.length})` : ''}`}
       className="relative flex h-10 w-10 items-center justify-center hover:text-ink"
     >
       <Icon name="hanger" size={20} />
-      
+      {ids.length > 0 ? (
+        <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] text-white">
+          {ids.length}
+        </span>
+      ) : null}
     </Link>
   );
 }

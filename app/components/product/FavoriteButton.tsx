@@ -1,11 +1,12 @@
 import {Icon} from '~/components/shared/Icon';
 import {useFavorites} from '~/lib/favorites';
+import {ProductActionButton} from './ProductActionButton';
 
 export function FavoriteButton({
-                                 productId,
-                                 title,
-                                 className = '',
-                               }: {
+  productId,
+  title,
+  className = '',
+}: {
   productId: string;
   title: string;
   className?: string;
@@ -14,20 +15,17 @@ export function FavoriteButton({
   const active = has(productId);
 
   return (
-    <button
-      type="button"
-      aria-pressed={active}
-      aria-label={
+    <ProductActionButton
+      active={active}
+      className={className}
+      label={
         isLoggedIn
           ? active
             ? `Remove ${title} from favorites`
             : `Add ${title} to favorites`
           : `Log in to save ${title} to favorites`
       }
-      onClick={(event) => {
-        event.preventDefault();
-        event.stopPropagation();
-
+      onClick={() => {
         if (!isLoggedIn) {
           window.location.assign('/account/login');
           return;
@@ -35,9 +33,8 @@ export function FavoriteButton({
 
         toggle(productId);
       }}
-      className={`z-10 flex h-9 w-9 items-center justify-center rounded-full bg-paper/90 text-primary transition-colors hover:bg-white ${className}`}
     >
       <Icon filled={active} name="heart" size={18} />
-    </button>
+    </ProductActionButton>
   );
 }

@@ -15,10 +15,13 @@ export type PreferenceProfile = {
 export type ProfileResponse = {
   loggedIn: boolean;
   favorites: string[];
+  fittingRoom: string[];
   preferences: PreferenceProfile | null;
 };
 
-export type FavoriteOperation = {
+export type ListOperation = {
   add?: string[];
   remove?: string[];
 };
+
+export type FavoriteOperation = ListOperation;
