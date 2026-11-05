@@ -69,6 +69,7 @@ export function SearchFormPredictive({
 
 
   const previousAsideType = useRef(aside.type);
+  const {load} = fetcher;
 
   useEffect(() => {
     const wasSearch = previousAsideType.current === 'search';
@@ -81,10 +82,8 @@ export function SearchFormPredictive({
       inputRef.current.blur();
     }
 
-    void fetcher.load(
-      `${SEARCH_ENDPOINT}?predictive=true&q=&limit=5`,
-    );
-  }, [aside.type, fetcher.load]);
+    void load(`${SEARCH_ENDPOINT}?predictive=true&q=&limit=5`);
+  }, [aside.type, load]);
 
   if (typeof children !== 'function') {
     return null;
