@@ -100,3 +100,32 @@ export const JEWELIETTE_RECOMMENDATION_PRODUCT_FRAGMENT = `#graphql
   }
   ${JEWELIETTE_PRODUCT_CARD_FRAGMENT}
 ` as const;
+
+export function formatMetafieldValue(
+  value: string | null | undefined,
+): string {
+  if (!value?.trim()) return '';
+
+  const text = value.trim();
+
+  if (!text.startsWith('[')) return text;
+
+  try {
+    const parsed: unknown = JSON.parse(text);
+
+    if (!Array.isArray(parsed)) return text;
+
+    return parsed
+      .filter(
+        (item): item is string | number | boolean =>
+          typeof item === 'string' ||
+          typeof item === 'number' ||
+          typeof item === 'boolean',
+      )
+      .map((item) => String(item).trim())
+      .filter(Boolean)
+      .join(', ');
+  } catch {
+    return text;
+  }
+}

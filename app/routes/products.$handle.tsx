@@ -16,7 +16,7 @@ import {ProductItem} from '~/components/product/ProductItem';
 import {AllergenBadge} from '~/components/product/AllergenBadge';
 import {FavoriteButton} from '~/components/product/FavoriteButton';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
-import {JEWELIETTE_PRODUCT_CARD_FRAGMENT} from '~/lib/jeweliette-catalog';
+import {JEWELIETTE_PRODUCT_CARD_FRAGMENT, formatMetafieldValue} from '~/lib/jeweliette-catalog';
 
 export const meta: Route.MetaFunction = ({data}) => [
   {title: `${data?.product.title ?? 'Product'} | Jeweliette`},
@@ -78,10 +78,12 @@ export default function Product() {
     {label: 'Metal', value: product.metal?.value},
     {label: 'Gemstone', value: product.gemstone?.value},
     {label: 'Gem color', value: product.gemColor?.value},
-  ].filter(
-    (item): item is {label: string; value: string} =>
-      typeof item.value === 'string' && item.value.trim().length > 0,
-  );
+  ]
+    .map((item) => ({
+      ...item,
+      value: formatMetafieldValue(item.value),
+    }))
+    .filter((item) => item.value !== '');
 
   return (
     <div className="mx-auto max-w-[1280px] px-[4vw] pb-20 pt-6">
@@ -114,7 +116,7 @@ export default function Product() {
 
           {product.material?.value ? (
             <p className="text-[11px] uppercase tracking-[0.2em] text-primary">
-              {product.material.value}
+              {formatMetafieldValue(product.material.value)}
             </p>
           ) : null}
 
