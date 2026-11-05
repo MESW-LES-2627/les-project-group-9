@@ -1,9 +1,10 @@
 import {useLoaderData} from 'react-router';
 import type {Route} from './+types/pages.$handle';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
+import {RichText} from '~/components/RichText';
 
 export const meta: Route.MetaFunction = ({data}) => {
-  return [{title: `Hydrogen | ${data?.page.title ?? ''}`}];
+  return [{title: `${data?.page.title ?? 'Page'} | Jeweliette`}];
 };
 
 export async function loader(args: Route.LoaderArgs) {
@@ -58,12 +59,13 @@ export default function Page() {
   const {page} = useLoaderData<typeof loader>();
 
   return (
-    <div className="page">
-      <header>
-        <h1>{page.title}</h1>
-      </header>
-      <main dangerouslySetInnerHTML={{__html: page.body}} />
-    </div>
+    <article className="mx-auto max-w-6xl px-[5vw] pb-24 pt-12">
+      <h1 className="mb-10 font-display text-[clamp(2.5rem,5vw,4rem)] leading-tight">
+        {page.title}
+      </h1>
+
+      <RichText html={page.body} />
+    </article>
   );
 }
 
