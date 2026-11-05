@@ -104,4 +104,19 @@ describe('POST /api/profile/preferences', () => {
       skin: {tone: 'medium'},
     });
   });
+
+  it('saves only the ring sizes it receives and drops invalid ones', async () => {
+    const {context, calls} = contextWith();
+    const result = await callAction(
+      context,
+      JSON.stringify({
+        ringSizes: {'left-ring': '6.5', 'right-ring': 'US 7', 'bad-key': '5'},
+      }),
+    );
+
+    expect(result.data).toEqual({
+      preferences: {allergies: [], skin: {}, ringSizes: {'left-ring': '6.5'}},
+    });
+    expect(calls).toHaveLength(1);
+  });
 });
