@@ -1,8 +1,8 @@
 import {useEffect} from 'react';
 import {Link, useFetcher} from 'react-router';
 import type {Route} from './+types/favorites';
-import {ProductItem} from '~/components/ProductItem';
-import {RecommendedProducts} from '~/components/RecommendedProducts';
+import {ProductItem} from '~/components/product/ProductItem';
+import {RecommendedProducts} from '~/components/product/RecommendedProducts';
 import {useFavorites} from '~/lib/favorites';
 import {JEWELIETTE_PRODUCT_CARD_FRAGMENT} from '~/lib/jeweliette-catalog';
 

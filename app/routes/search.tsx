@@ -1,20 +1,14 @@
 import {useLoaderData} from 'react-router';
 import type {Route} from './+types/search';
 import {getPaginationVariables, Analytics} from '@shopify/hydrogen';
-import {SearchForm} from '~/components/SearchForm';
-import {SearchResults} from '~/components/SearchResults';
-import {
-  type RegularSearchReturn,
-  type PredictiveSearchReturn,
-  getEmptyPredictiveSearchResult,
-} from '~/lib/search';
-import type {
-  RegularSearchQuery,
-  PredictiveSearchQuery,
-} from 'storefrontapi.generated';
+import {SearchForm} from '~/components/search/SearchForm';
+import {SearchResults} from '~/components/search/SearchResults';
+import {type RegularSearchReturn, type PredictiveSearchReturn, getEmptyPredictiveSearchResult,} from '~/lib/search';
+import type {RegularSearchQuery, PredictiveSearchQuery,} from 'storefrontapi.generated';
+import {JEWELIETTE_PRODUCT_CARD_FRAGMENT,} from '~/lib/jeweliette-catalog';
 
 export const meta: Route.MetaFunction = () => {
-  return [{title: `Hydrogen | Search`}];
+  return [{title: `Search | Jeweliette`}];
 };
 
 export async function loader({request, context}: Route.LoaderArgs) {
@@ -37,43 +31,83 @@ export async function loader({request, context}: Route.LoaderArgs) {
  * Renders the /search route
  */
 export default function SearchPage() {
-  const {type, term, result, error} = useLoaderData<typeof loader>();
+  const {type, term, result, error} =
+    useLoaderData<typeof loader>();
+
   if (type === 'predictive') return null;
 
   return (
-    <div className="search">
-      <h1>Search</h1>
-      <SearchForm>
-        {({inputRef}) => (
-          <>
-            <input
-              defaultValue={term}
-              name="q"
-              placeholder="Search…"
-              ref={inputRef}
-              type="search"
-            />
-            &nbsp;
-            <button type="submit">Search</button>
-          </>
-        )}
-      </SearchForm>
-      {error && <p style={{color: 'red'}}>{error}</p>}
-      {!term || !result?.total ? (
-        <SearchResults.Empty />
-      ) : (
-        <SearchResults result={result} term={term}>
-          {({articles, pages, products, term}) => (
-            <div>
-              <SearchResults.Products products={products} term={term} />
-              <SearchResults.Pages pages={pages} term={term} />
-              <SearchResults.Articles articles={articles} term={term} />
-            </div>
+    <section className="mx-auto max-w-[1280px] px-[4vw] pb-24 pt-12">
+      <div className="mx-auto max-w-2xl">
+        <h1 className="text-xs uppercase tracking-[0.2em] text-primary">
+          Search Jeweliette
+        </h1>
+
+        <SearchForm
+          key={term}
+          action="/search"
+          className="mt-5 flex items-center gap-4 border-b border-primary"
+        >
+          {({inputRef}) => (
+            <>
+              <input
+                aria-label="Search products"
+                defaultValue={term}
+                name="q"
+                placeholder="What are you looking for?"
+                ref={inputRef}
+                type="search"
+                autoComplete="off"
+                className="min-w-0 flex-1 bg-transparent py-4 font-display text-[clamp(1.5rem,3vw,2.5rem)] outline-none placeholder:text-primary/45"
+              />
+
+              <button
+                type="submit"
+                className="min-h-11 px-3 text-xs uppercase tracking-widest text-primary hover:text-ink"
+              >
+                Search
+              </button>
+            </>
           )}
-        </SearchResults>
-      )}
-      <Analytics.SearchView data={{searchTerm: term, searchResults: result}} />
-    </div>
+        </SearchForm>
+      </div>
+
+      {error ? (
+        <p role="alert" className="mt-8 text-sm text-red-800">
+          Search is temporarily unavailable. Please try again.
+        </p>
+      ) : null}
+
+      <div className="mt-12">
+        {!term ? (
+          <p className="text-center text-sm text-primary">
+            Search for a piece, material or collection.
+          </p>
+        ) : !result?.total ? (
+          <SearchResults.Empty />
+        ) : (
+          <SearchResults result={result} term={term}>
+            {({articles, pages, products, term}) => (
+              <div className="space-y-12">
+                <SearchResults.Products
+                  products={products}
+                  term={term}
+                />
+                <SearchResults.Pages pages={pages} term={term} />
+                <SearchResults.Articles
+                  articles={articles}
+                  term={term}
+                />
+              </div>
+            )}
+          </SearchResults>
+        )}
+      </div>
+
+      <Analytics.SearchView
+        data={{searchTerm: term, searchResults: result}}
+      />
+    </section>
   );
 }
 
@@ -83,6 +117,7 @@ export default function SearchPage() {
  */
 const SEARCH_PRODUCT_FRAGMENT = `#graphql
   fragment SearchProduct on Product {
+    ...JewelietteProductCard
     __typename
     handle
     id
@@ -90,11 +125,7 @@ const SEARCH_PRODUCT_FRAGMENT = `#graphql
     title
     trackingParameters
     vendor
-    selectedOrFirstAvailableVariant(
-      selectedOptions: []
-      ignoreUnknownOptions: true
-      caseInsensitiveMatch: true
-    ) {
+    selectedOrFirstAvailableVariant {
       id
       image {
         url
@@ -208,6 +239,7 @@ export const SEARCH_QUERY = `#graphql
   ${SEARCH_PAGE_FRAGMENT}
   ${SEARCH_ARTICLE_FRAGMENT}
   ${PAGE_INFO_FRAGMENT}
+  ${JEWELIETTE_PRODUCT_CARD_FRAGMENT}
 ` as const;
 
 /**

@@ -15,11 +15,11 @@ describe('normalizePreferences', () => {
   it('keeps only supported allergies and skin values', () => {
     expect(
       normalizePreferences({
-        allergies: ['nickel', 'unknown', 'nickel', 'latex'],
+        allergies: ['nickel', 'unknown', 'nickel', 'cobalt'],
         skin: {tone: 'medium', undertone: 'hot'},
       }),
     ).toEqual({
-      allergies: ['nickel', 'latex'],
+      allergies: ['nickel', 'cobalt'],
       skin: {tone: 'medium'},
     });
   });
@@ -130,7 +130,7 @@ describe('parsePreferences', () => {
 describe('serializePreferences', () => {
   it('round-trips through parsePreferences', () => {
     const preferences = {
-      allergies: ['gold-plated'],
+      allergies: ['cobalt'],
       skin: {tone: 'tan', undertone: 'neutral'},
       preferredMaterials: ['gold-plated'],
       preferredGemstones: ['moonstone'],

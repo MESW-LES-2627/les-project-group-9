@@ -47,6 +47,9 @@ npm test          # unit and component tests (Vitest)
 npm run test:e2e  # browser tests (Playwright)
 ```
 
+The end-to-end tests use the store configured in `.env`. In CI the e2e job runs
+against [mock.shop](https://mock.shop), so no repository secrets are needed. To
+run them locally the same way, set `PUBLIC_STORE_DOMAIN=mock.shop` in `.env`.
 
 ## Setup for using Customer Account API (`/account` section)
 

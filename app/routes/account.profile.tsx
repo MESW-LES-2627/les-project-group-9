@@ -9,8 +9,8 @@ import {
   useOutletContext,
 } from 'react-router';
 import type {Route} from './+types/account.profile';
-import {PreferencesForm} from '~/components/PreferencesForm';
-import {RingSizeForm} from '~/components/RingSizeForm';
+import {PreferencesForm} from '~/components/account/PreferencesForm';
+import {RingSizeForm} from '~/components/account/RingSizeForm';
 
 export type ActionResponse = {
   error: string | null;
@@ -38,17 +38,13 @@ export async function action({request, context}: Route.ActionArgs) {
 
   try {
     const customer: CustomerUpdateInput = {};
-    const validInputKeys = ['firstName', 'lastName'] as const;
-    for (const [key, value] of form.entries()) {
-      if (!validInputKeys.includes(key as any)) {
-        continue;
-      }
-      if (typeof value === 'string' && value.length) {
-        customer[key as (typeof validInputKeys)[number]] = value;
+    for (const key of ['firstName', 'lastName'] as const) {
+      const value = form.get(key);
+      if (typeof value === 'string') {
+        customer[key] = value.trim();
       }
     }
 
-    // update customer and possibly password
     const {data, errors} = await customerAccount.mutate(
       CUSTOMER_UPDATE_MUTATION,
       {
@@ -110,7 +106,6 @@ export default function AccountProfile() {
                 placeholder="First name"
                 aria-label="First name"
                 defaultValue={customer.firstName ?? ''}
-                minLength={2}
                 className="mt-1 w-full border border-line bg-paper px-3 py-2 text-sm text-ink outline-none focus:border-ink"
               />
             </label>
@@ -127,7 +122,6 @@ export default function AccountProfile() {
                 placeholder="Last name"
                 aria-label="Last name"
                 defaultValue={customer.lastName ?? ''}
-                minLength={2}
                 className="mt-1 w-full border border-line bg-paper px-3 py-2 text-sm text-ink outline-none focus:border-ink"
               />
             </label>
@@ -136,6 +130,10 @@ export default function AccountProfile() {
           {action?.error ? (
             <p role="alert" className="text-sm text-red-700">
               {action.error}
+            </p>
+          ) : action?.customer && state === 'idle' ? (
+            <p role="status" className="text-sm text-primary">
+              Profile updated.
             </p>
           ) : null}
 
