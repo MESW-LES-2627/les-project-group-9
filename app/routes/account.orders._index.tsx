@@ -4,6 +4,7 @@ import {
   useNavigation,
   useSearchParams,
 } from 'react-router';
+import {accountInput, accountButton, accountSecondaryButton,} from '~/lib/account-ui';
 import type {Route} from './+types/account.orders._index';
 import {useRef} from 'react';
 import {
@@ -63,7 +64,8 @@ export default function Orders() {
   const {orders} = customer;
 
   return (
-    <div className="orders">
+    <div className="space-y-8">
+      <h2 className="font-display text-2xl">Your orders</h2>
       <OrderSearchForm currentFilters={filters} />
       <OrdersTable orders={orders} filters={filters} />
     </div>
@@ -92,26 +94,35 @@ function OrdersTable({
   );
 }
 
-function EmptyOrders({hasFilters = false}: {hasFilters?: boolean}) {
+function EmptyOrders({
+                       hasFilters = false,
+                     }: {
+  hasFilters?: boolean;
+}) {
   return (
-    <div>
-      {hasFilters ? (
-        <>
-          <p>No orders found matching your search.</p>
-          <br />
-          <p>
-            <Link to="/account/orders">Clear filters →</Link>
-          </p>
-        </>
-      ) : (
-        <>
-          <p>You haven&apos;t placed any orders yet.</p>
-          <br />
-          <p>
-            <Link to="/collections">Start Shopping →</Link>
-          </p>
-        </>
-      )}
+    <div className="border-y border-line py-16 text-center">
+      <h3 className="font-display text-2xl">
+        {hasFilters
+          ? 'No matching orders'
+          : 'Your story starts here'}
+      </h3>
+
+      <p className="mt-4 text-sm text-primary">
+        {hasFilters
+          ? 'Try another order number or clear your filters.'
+          : "You haven't placed any orders yet."}
+      </p>
+
+      <Link
+        to={
+          hasFilters
+            ? '/account/orders'
+            : '/collections/all'
+        }
+        className={`${accountSecondaryButton} mt-7`}
+      >
+        {hasFilters ? 'Clear filters' : 'Start shopping'}
+      </Link>
     </div>
   );
 }
@@ -152,20 +163,20 @@ function OrderSearchForm({
     <form
       ref={formRef}
       onSubmit={handleSubmit}
-      className="order-search-form"
+      className="border border-line bg-paper p-5 sm:p-6"
       aria-label="Search orders"
     >
-      <fieldset className="order-search-fieldset">
-        <legend className="order-search-legend">Filter Orders</legend>
+      <fieldset className="space-y-4">
+        <legend className="mb-4 text-xs uppercase tracking-widest text-primary">Filter Orders</legend>
 
-        <div className="order-search-inputs">
+        <div className="grid gap-4 sm:grid-cols-2">
           <input
             type="search"
             name={ORDER_FILTER_FIELDS.NAME}
             placeholder="Order #"
             aria-label="Order number"
             defaultValue={currentFilters.name || ''}
-            className="order-search-input"
+            className={accountInput}
           />
           <input
             type="search"
@@ -173,17 +184,18 @@ function OrderSearchForm({
             placeholder="Confirmation #"
             aria-label="Confirmation number"
             defaultValue={currentFilters.confirmationNumber || ''}
-            className="order-search-input"
+            className={accountInput}
           />
         </div>
 
-        <div className="order-search-buttons">
-          <button type="submit" disabled={isSearching}>
+        <div className="flex flex-wrap gap-3">
+          <button type="submit" className={accountButton} disabled={isSearching}>
             {isSearching ? 'Searching' : 'Search'}
           </button>
           {hasFilters && (
             <button
               type="button"
+              className={accountSecondaryButton}
               disabled={isSearching}
               onClick={() => {
                 setSearchParams(new URLSearchParams());
@@ -199,24 +211,55 @@ function OrderSearchForm({
   );
 }
 
-function OrderItem({order}: {order: OrderItemFragment}) {
-  const fulfillmentStatus = flattenConnection(order.fulfillments)[0]?.status;
+function OrderItem({
+                     order,
+                   }: {
+  order: OrderItemFragment;
+}) {
+  const fulfillmentStatus =
+    flattenConnection(order.fulfillments)[0]?.status;
+
+  const href = `/account/orders/${btoa(order.id)}`;
+
   return (
-    <>
-      <fieldset>
-        <Link to={`/account/orders/${btoa(order.id)}`}>
-          <strong>#{order.number}</strong>
+    <article className="mb-4 flex flex-wrap items-center justify-between gap-6 border border-line bg-paper p-6">
+      <div>
+        <Link
+          to={href}
+          className="font-display text-xl hover:text-primary"
+        >
+          Order #{order.number}
         </Link>
-        <p>{new Date(order.processedAt).toDateString()}</p>
-        {order.confirmationNumber && (
-          <p>Confirmation: {order.confirmationNumber}</p>
-        )}
-        <p>{order.financialStatus}</p>
-        {fulfillmentStatus && <p>{fulfillmentStatus}</p>}
+
+        <p className="mt-2 text-sm text-primary">
+          {new Date(order.processedAt).toLocaleDateString(
+            'en-GB',
+            {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+            },
+          )}
+        </p>
+
+        <p className="mt-3 text-xs uppercase tracking-wider text-primary">
+          {order.financialStatus}
+          {fulfillmentStatus
+            ? ` · ${fulfillmentStatus}`
+            : ''}
+        </p>
+      </div>
+
+      <div className="space-y-3 text-right">
         <Money data={order.totalPrice} />
-        <Link to={`/account/orders/${btoa(order.id)}`}>View Order →</Link>
-      </fieldset>
-      <br />
-    </>
+
+        <Link
+          to={href}
+          className="block text-xs uppercase tracking-widest underline underline-offset-4"
+        >
+          View order
+        </Link>
+      </div>
+    </article>
   );
 }
