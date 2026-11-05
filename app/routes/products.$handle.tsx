@@ -9,12 +9,12 @@ import {
   getAdjacentAndFirstAvailableVariants,
   useSelectedOptionInUrlParam,
 } from '@shopify/hydrogen';
-import {ProductPrice} from '~/components/ProductPrice';
-import {ProductForm} from '~/components/ProductForm';
-import {ProductGallery} from '~/components/ProductGallery';
-import {ProductItem} from '~/components/ProductItem';
-import {AllergenBadge} from '~/components/AllergenBadge';
-import {FavoriteButton} from '~/components/FavoriteButton';
+import {ProductPrice} from '~/components/product/ProductPrice';
+import {ProductForm} from '~/components/product/ProductForm';
+import {ProductGallery} from '~/components/product/ProductGallery';
+import {ProductItem} from '~/components/product/ProductItem';
+import {AllergenBadge} from '~/components/product/AllergenBadge';
+import {FavoriteButton} from '~/components/product/FavoriteButton';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 import {JEWELIETTE_PRODUCT_CARD_FRAGMENT} from '~/lib/jeweliette-catalog';
 
@@ -258,6 +258,7 @@ const PRODUCT_FRAGMENT = `#graphql
     metal: metafield(namespace: "custom", key: "metal") { value }
     gemstone: metafield(namespace: "custom", key: "gemstone") { value }
     gemColor: metafield(namespace: "custom", key: "gem_color") { value }
+    allergens: metafield(namespace: "custom", key: "allergens") { value }
     images(first: 10) { nodes { id url altText width height } }
     collections(first: 1) { nodes { title handle } }
     options {
