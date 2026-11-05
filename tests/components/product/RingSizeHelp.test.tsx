@@ -83,6 +83,20 @@ describe('RingSizeHelp', () => {
     expect(trigger).toHaveFocus();
   });
 
+  it('closes when clicking outside the dialog', async () => {
+    const user = userEvent.setup();
+    loggedIn({'left-ring': '6'});
+    renderHelp();
+
+    const trigger = screen.getByRole('button', {name: 'Measurement Guide'});
+    await user.click(trigger);
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', {name: 'Close dialog'}));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+  });
+
   it('lists the saved sizes grouped by hand', async () => {
     const user = userEvent.setup();
     loggedIn({'left-ring': '6', 'right-pinky': '6.5'});

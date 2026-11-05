@@ -79,13 +79,20 @@ export function RingSizeHelp() {
       </button>
 
       {open ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-ink/40 px-4">
+        <div className="fixed inset-0 z-50 grid place-items-center px-4">
+          <button
+            aria-label="Close dialog"
+            className="absolute inset-0 h-full w-full cursor-default bg-ink/40"
+            onClick={close}
+            tabIndex={-1}
+            type="button"
+          />
           <div
             ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
-            className="w-full max-w-md bg-paper p-6 text-sm text-ink"
+            className="relative w-full max-w-md bg-paper p-6 text-sm text-ink"
           >
             <h2 id={titleId} className="font-display text-2xl">
               Your ring sizes
