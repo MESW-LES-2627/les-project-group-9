@@ -20,6 +20,7 @@ function contextWith({
         customer: {
           id: CUSTOMER_ID,
           favorites: {value: '[]'},
+          fittingRoom: {value: '[]'},
           preferences: {value: '{"skin":{"tone":"medium"}}'},
         },
       },
@@ -52,6 +53,7 @@ describe('GET /api/profile', () => {
     expect(result.data).toEqual({
       loggedIn: true,
       favorites: [],
+      fittingRoom: [],
       preferences: {allergies: [], skin: {tone: 'medium'}},
     });
   });
@@ -63,6 +65,7 @@ describe('GET /api/profile', () => {
     expect(result.data).toEqual({
       loggedIn: false,
       favorites: [],
+      fittingRoom: [],
       preferences: null,
     });
     expect(query).not.toHaveBeenCalled();
