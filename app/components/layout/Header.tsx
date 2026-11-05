@@ -19,7 +19,10 @@ interface HeaderProps {
 
 type Viewport = 'desktop' | 'mobile';
 
-const navLinkClass = ({isActive, isPending}: {
+const navLinkClass = ({
+  isActive,
+  isPending,
+}: {
   isActive: boolean;
   isPending: boolean;
 }) =>
@@ -97,7 +100,9 @@ export function HeaderMenu({
           prefetch="intent"
           to="/"
         >
-          <span><span className="mr-4 font-sans text-xs">01</span>Home</span>
+          <span>
+            <span className="mr-4 font-sans text-xs">01</span>Home
+          </span>
           <Icon name="arrow" size={18} />
         </NavLink>
       )}
@@ -112,9 +117,10 @@ export function HeaderMenu({
 
         return (
           <NavLink
-            className={mobile
-              ? 'flex min-h-14 items-center justify-between border-b border-line font-display text-3xl text-primary'
-              : navLinkClass
+            className={
+              mobile
+                ? 'flex min-h-14 items-center justify-between border-b border-line font-display text-3xl text-primary'
+                : navLinkClass
             }
             end
             key={item.id}
@@ -132,7 +138,9 @@ export function HeaderMenu({
                 </span>
                 <Icon name="arrow" size={18} />
               </>
-            ) : item.title}
+            ) : (
+              item.title
+            )}
           </NavLink>
         );
       })}
@@ -151,6 +159,7 @@ function HeaderCtas({
     >
       <SearchToggle />
       <FavoritesLink />
+      <FittingRoomLink />
 
       <NavLink
         aria-label="Account"
@@ -246,11 +255,51 @@ function CartBanner() {
 const FALLBACK_HEADER_MENU = {
   id: 'fallback-header-menu',
   items: [
-    {id: 'trending', resourceId: null, tags: [], title: 'Trending', type: 'HTTP', url: '/', items: []},
-    {id: 'watches', resourceId: null, tags: [], title: 'Watches', type: 'HTTP', url: '/collections/watches', items: []},
-    {id: 'charms', resourceId: null, tags: [], title: 'Charms', type: 'HTTP', url: '/collections/charms', items: []},
-    {id: 'jewelry', resourceId: null, tags: [], title: 'Jewelry', type: 'HTTP', url: '/collections/jewelry', items: []},
-    {id: 'collections', resourceId: null, tags: [], title: 'Collections', type: 'HTTP', url: '/collections', items: []},
+    {
+      id: 'trending',
+      resourceId: null,
+      tags: [],
+      title: 'Trending',
+      type: 'HTTP',
+      url: '/',
+      items: [],
+    },
+    {
+      id: 'watches',
+      resourceId: null,
+      tags: [],
+      title: 'Watches',
+      type: 'HTTP',
+      url: '/collections/watches',
+      items: [],
+    },
+    {
+      id: 'charms',
+      resourceId: null,
+      tags: [],
+      title: 'Charms',
+      type: 'HTTP',
+      url: '/collections/charms',
+      items: [],
+    },
+    {
+      id: 'jewelry',
+      resourceId: null,
+      tags: [],
+      title: 'Jewelry',
+      type: 'HTTP',
+      url: '/collections/jewelry',
+      items: [],
+    },
+    {
+      id: 'collections',
+      resourceId: null,
+      tags: [],
+      title: 'Collections',
+      type: 'HTTP',
+      url: '/collections',
+      items: [],
+    },
   ],
 };
 
@@ -260,16 +309,27 @@ function FavoritesLink() {
     <Link
       to="/favorites"
       aria-label={`Favorites${ids.length ? ` (${ids.length})` : ''}`}
-      className="relative flex h-10 w-10 items-center justify-center text-ink"
+      className="relative flex h-10 w-10 items-center justify-center hover:text-ink"
     >
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
-        <path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 2.8 5 6.2 5c2 0 3.5 1.1 4.3 2.4h3C14.3 6.1 15.8 5 17.8 5c3.4 0 5.3 3.4 3.8 6.8C19.5 16.4 12 21 12 21z" />
-      </svg>
+      <Icon name="heart" size={20} />
       {ids.length > 0 ? (
         <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] text-white">
           {ids.length}
         </span>
       ) : null}
+    </Link>
+  );
+}
+
+function FittingRoomLink() {
+  return (
+    <Link
+      to="/fitting-room"
+      aria-label="Fitting room"
+      className="relative flex h-10 w-10 items-center justify-center hover:text-ink"
+    >
+      <Icon name="hanger" size={20} />
+      
     </Link>
   );
 }
