@@ -164,12 +164,14 @@ function SearchAside() {
                     queries={queries}
                     queriesDatalistId={queriesDatalistId}
                   />
-                  <SearchResultsPredictive.Products products={products} closeSearch={closeSearch} term={term} />
-                  <SearchResultsPredictive.Collections collections={collections} closeSearch={closeSearch} term={term} />
-                  <SearchResultsPredictive.Pages pages={pages} closeSearch={closeSearch} term={term} />
-                  <SearchResultsPredictive.Articles articles={articles} closeSearch={closeSearch} term={term} />
+                  <div className="space-y-10">
+                    <SearchResultsPredictive.Products products={products} closeSearch={closeSearch} term={term} />
+                    <SearchResultsPredictive.Collections collections={collections} closeSearch={closeSearch} term={term} />
+                    <SearchResultsPredictive.Pages pages={pages} closeSearch={closeSearch} term={term} />
+                    <SearchResultsPredictive.Articles articles={articles} closeSearch={closeSearch} term={term} />
+                  </div>
                   <Link
-                    className="mt-8 inline-flex min-h-11 items-center gap-5 border-b border-ink text-xs font-medium uppercase tracking-[0.14em]"
+                    className="mt-10 inline-flex min-h-11 items-center gap-5 border-b border-ink text-xs font-medium uppercase tracking-[0.14em]"
                     onClick={closeSearch}
                     to={`${SEARCH_ENDPOINT}?q=${encodeURIComponent(term.current)}`}
                   >

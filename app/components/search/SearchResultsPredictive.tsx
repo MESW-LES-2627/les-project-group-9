@@ -1,6 +1,6 @@
 import {Link, useFetcher, type Fetcher} from 'react-router';
 import {Image, Money} from '@shopify/hydrogen';
-import React, {useRef, useEffect} from 'react';
+import React, {useEffect, useId, useRef} from 'react';
 import {
   getEmptyPredictiveSearchResult,
   urlWithTrackingParams,
@@ -80,44 +80,78 @@ SearchResultsPredictive.Products = SearchResultsPredictiveProducts;
 SearchResultsPredictive.Queries = SearchResultsPredictiveQueries;
 SearchResultsPredictive.Empty = SearchResultsPredictiveEmpty;
 
+const sectionHeadingClass =
+  'text-xs font-medium uppercase tracking-[0.18em] text-primary';
+
+function PredictiveSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  const headingId = useId();
+
+  return (
+    <section aria-labelledby={headingId}>
+      <h3 id={headingId} className={sectionHeadingClass}>
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
+}
+
+function PredictiveLinkList({
+  title,
+  links,
+  closeSearch,
+}: {
+  title: string;
+  links: Array<{id: string; title: string; url: string}>;
+  closeSearch: () => void;
+}) {
+  if (!links.length) return null;
+
+  return (
+    <PredictiveSection title={title}>
+      <ul className="mt-4 flex flex-col items-start gap-3 font-display text-xl text-primary sm:text-2xl">
+        {links.map((link) => (
+          <li key={link.id}>
+            <Link
+              className="hover:text-ink"
+              onClick={closeSearch}
+              prefetch="intent"
+              to={link.url}
+            >
+              {link.title}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </PredictiveSection>
+  );
+}
+
 function SearchResultsPredictiveArticles({
   term,
   articles,
   closeSearch,
 }: PartialPredictiveSearchResult<'articles'>) {
-  if (!articles.length) return null;
-
   return (
-    <div className="predictive-search-result" key="articles">
-      <h5>Articles</h5>
-      <ul>
-        {articles.map((article) => {
-          const articleUrl = urlWithTrackingParams({
-            baseUrl: `/blogs/${article.blog.handle}/${article.handle}`,
-            trackingParams: article.trackingParameters,
-            term: term.current ?? '',
-          });
-
-          return (
-            <li className="predictive-search-result-item" key={article.id}>
-              <Link onClick={closeSearch} to={articleUrl}>
-                {article.image?.url && (
-                  <Image
-                    alt={article.image.altText ?? ''}
-                    src={article.image.url}
-                    width={50}
-                    height={50}
-                  />
-                )}
-                <div>
-                  <span>{article.title}</span>
-                </div>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </div>
+    <PredictiveLinkList
+      closeSearch={closeSearch}
+      links={articles.map((article) => ({
+        id: article.id,
+        title: article.title,
+        url: urlWithTrackingParams({
+          baseUrl: `/blogs/${article.blog.handle}/${article.handle}`,
+          trackingParams: article.trackingParameters,
+          term: term.current ?? '',
+        }),
+      }))}
+      title="Articles"
+    />
   );
 }
 
@@ -126,39 +160,20 @@ function SearchResultsPredictiveCollections({
   collections,
   closeSearch,
 }: PartialPredictiveSearchResult<'collections'>) {
-  if (!collections.length) return null;
-
   return (
-    <div className="predictive-search-result" key="collections">
-      <h5>Collections</h5>
-      <ul>
-        {collections.map((collection) => {
-          const collectionUrl = urlWithTrackingParams({
-            baseUrl: `/collections/${collection.handle}`,
-            trackingParams: collection.trackingParameters,
-            term: term.current,
-          });
-
-          return (
-            <li className="predictive-search-result-item" key={collection.id}>
-              <Link onClick={closeSearch} to={collectionUrl}>
-                {collection.image?.url && (
-                  <Image
-                    alt={collection.image.altText ?? ''}
-                    src={collection.image.url}
-                    width={50}
-                    height={50}
-                  />
-                )}
-                <div>
-                  <span>{collection.title}</span>
-                </div>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </div>
+    <PredictiveLinkList
+      closeSearch={closeSearch}
+      links={collections.map((collection) => ({
+        id: collection.id,
+        title: collection.title,
+        url: urlWithTrackingParams({
+          baseUrl: `/collections/${collection.handle}`,
+          trackingParams: collection.trackingParameters,
+          term: term.current,
+        }),
+      }))}
+      title="Collections"
+    />
   );
 }
 
@@ -167,31 +182,20 @@ function SearchResultsPredictivePages({
   pages,
   closeSearch,
 }: PartialPredictiveSearchResult<'pages'>) {
-  if (!pages.length) return null;
-
   return (
-    <div className="predictive-search-result" key="pages">
-      <h5>Pages</h5>
-      <ul>
-        {pages.map((page) => {
-          const pageUrl = urlWithTrackingParams({
-            baseUrl: `/pages/${page.handle}`,
-            trackingParams: page.trackingParameters,
-            term: term.current,
-          });
-
-          return (
-            <li className="predictive-search-result-item" key={page.id}>
-              <Link onClick={closeSearch} to={pageUrl}>
-                <div>
-                  <span>{page.title}</span>
-                </div>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </div>
+    <PredictiveLinkList
+      closeSearch={closeSearch}
+      links={pages.map((page) => ({
+        id: page.id,
+        title: page.title,
+        url: urlWithTrackingParams({
+          baseUrl: `/pages/${page.handle}`,
+          trackingParams: page.trackingParameters,
+          term: term.current,
+        }),
+      }))}
+      title="Pages"
+    />
   );
 }
 
@@ -203,9 +207,8 @@ function SearchResultsPredictiveProducts({
   if (!products.length) return null;
 
   return (
-    <div className="predictive-search-result" key="products">
-      <h5>Products</h5>
-      <ul>
+    <PredictiveSection title="Pieces">
+      <ul className="mt-5 grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-4">
         {products.map((product) => {
           const productUrl = urlWithTrackingParams({
             baseUrl: `/products/${product.handle}`,
@@ -215,27 +218,39 @@ function SearchResultsPredictiveProducts({
 
           const price = product?.selectedOrFirstAvailableVariant?.price;
           const image = product?.selectedOrFirstAvailableVariant?.image;
+
           return (
-            <li className="predictive-search-result-item" key={product.id}>
-              <Link to={productUrl} onClick={closeSearch}>
-                {image && (
-                  <Image
-                    alt={image.altText ?? ''}
-                    src={image.url}
-                    width={50}
-                    height={50}
-                  />
-                )}
-                <div>
-                  <p>{product.title}</p>
-                  <small>{price && <Money data={price} />}</small>
+            <li className="min-w-0" key={product.id}>
+              <Link
+                className="group block"
+                onClick={closeSearch}
+                prefetch="intent"
+                to={productUrl}
+              >
+                <div className="aspect-[4/5] overflow-hidden bg-secondary">
+                  {image ? (
+                    <Image
+                      alt={image.altText || product.title}
+                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                      data={image}
+                      sizes="(min-width: 768px) 220px, 45vw"
+                    />
+                  ) : null}
                 </div>
+                <p className="mt-3 truncate font-display text-base leading-tight text-ink group-hover:text-primary">
+                  {product.title}
+                </p>
+                {price ? (
+                  <p className="mt-1 text-sm text-primary">
+                    <Money data={price} />
+                  </p>
+                ) : null}
               </Link>
             </li>
           );
         })}
       </ul>
-    </div>
+    </PredictiveSection>
   );
 }
 

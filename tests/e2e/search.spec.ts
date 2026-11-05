@@ -55,6 +55,68 @@ test('searching from the search page shows matching products', async ({
   await expectProductResults(page);
 });
 
+async function openHeaderSearch(page: Page, term: string) {
+  await page.goto('/');
+  await page.getByRole('banner').getByRole('button', {name: 'Search'}).click();
+
+  const overlay = page.getByRole('dialog', {name: 'Search Jeweliette'});
+
+  await overlay.getByRole('searchbox').fill(term);
+
+  return overlay;
+}
+
+test('header suggestions show products as a grid of cards', async ({page}) => {
+  const term = await searchTermFromStore(page);
+  const overlay = await openHeaderSearch(page, term);
+
+  const pieces = overlay.getByRole('region', {name: 'Pieces'});
+  const cards = pieces.getByRole('link');
+
+  await expect(cards.first()).toBeVisible();
+  await expect(cards.first().getByRole('img')).toBeVisible();
+
+  if ((await cards.count()) > 1) {
+    await expect
+      .poll(async () => {
+        const first = await cards.nth(0).boundingBox();
+        const second = await cards.nth(1).boundingBox();
+
+        return Math.abs(second!.y - first!.y);
+      })
+      .toBeLessThan(1);
+  }
+});
+
+test('clicking a suggestion opens the product and closes the panel', async ({
+  page,
+}) => {
+  const term = await searchTermFromStore(page);
+  const overlay = await openHeaderSearch(page, term);
+
+  const card = overlay.getByRole('region', {name: 'Pieces'}).getByRole('link').first();
+  const path = new URL((await card.getAttribute('href'))!, 'http://x').pathname;
+
+  await card.click();
+
+  await expect(page).toHaveURL((url) => url.pathname === path);
+  await expect(overlay).toBeHidden();
+});
+
+test('"See all results" in the suggestions opens the search page', async ({
+  page,
+}) => {
+  const term = await searchTermFromStore(page);
+  const overlay = await openHeaderSearch(page, term);
+
+  await overlay.getByRole('link', {name: 'See all results'}).click();
+
+  await expect(page).toHaveURL(
+    (url) => url.pathname === '/search' && url.searchParams.get('q') === term,
+  );
+  await expect(overlay).toBeHidden();
+});
+
 test('searching from the header opens the search page with results', async ({
   page,
 }) => {
