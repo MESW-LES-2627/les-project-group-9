@@ -6,6 +6,7 @@ import type {
   OrderQuery,
 } from 'customer-accountapi.generated';
 import {CUSTOMER_ORDER_QUERY} from '~/graphql/customer-account/CustomerOrderQuery';
+import {accountOrderDetail} from '~/lib/account-ui';
 
 export const meta: Route.MetaFunction = ({data}) => {
   return [{title: `Order ${data?.order?.name}`}];
@@ -82,14 +83,14 @@ export default function OrderRoute() {
     fulfillmentStatus,
   } = useLoaderData<typeof loader>();
   return (
-    <div className="account-order">
+    <div className={accountOrderDetail}>
       <h2>Order {order.name}</h2>
       <p>Placed on {new Date(order.processedAt!).toDateString()}</p>
       {order.confirmationNumber && (
         <p>Confirmation: {order.confirmationNumber}</p>
       )}
       <br />
-      <div>
+      <div className="overflow-x-auto">
         <table>
           <thead>
             <tr>

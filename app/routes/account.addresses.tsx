@@ -17,6 +17,7 @@ import {
   DELETE_ADDRESS_MUTATION,
   CREATE_ADDRESS_MUTATION,
 } from '~/graphql/customer-account/CustomerAddressMutations';
+import {accountAddressForm} from '~/lib/account-ui';
 
 export type ActionResponse = {
   addressId?: string | null;
@@ -261,7 +262,7 @@ export default function Addresses() {
   const {defaultAddress, addresses} = customer;
 
   return (
-    <div className="account-addresses">
+    <div className="space-y-6 [&>h2]:font-display [&>h2]:text-2xl [&_legend]:font-display [&_legend]:text-xl">
       <h2>Addresses</h2>
       <br />
       <div>
@@ -377,7 +378,7 @@ export function AddressForm({
   const error = action?.error?.[addressId];
   const isDefaultAddress = defaultAddress?.id === addressId;
   return (
-    <Form id={addressId}>
+    <Form id={addressId} className={accountAddressForm}>
       <fieldset>
         <input type="hidden" name="addressId" defaultValue={addressId} />
         <label htmlFor="firstName">First name*</label>
