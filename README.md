@@ -47,6 +47,9 @@ npm test          # unit and component tests (Vitest)
 npm run test:e2e  # browser tests (Playwright)
 ```
 
+The end-to-end test uses the development store configured in `.env`. In CI the
+e2e job reads the storefront credentials from the `STOREFRONT_DOMAIN` and
+`STOREFRONT_API_TOKEN` repository secrets.
 
 ## Setup for using Customer Account API (`/account` section)
 

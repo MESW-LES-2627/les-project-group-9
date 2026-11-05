@@ -131,7 +131,7 @@ describe('recommendProducts', () => {
   it('excludes products that match an allergy', () => {
     const favorite = traits('favorite', {material: ['gold-plated']});
     const risky = traits('risky', {allergens: ['nickel']});
-    const safe = traits('safe', {allergens: ['latex']});
+    const safe = traits('safe', {allergens: ['cobalt']});
 
     const results = recommendProducts({
       products: [risky, safe],

@@ -26,6 +26,10 @@ vi.mock('~/components/Aside', () => ({
   useAside: () => ({open: vi.fn()}),
 }));
 
+vi.mock('~/lib/profile/useAllergenMatches', () => ({
+  useAllergenMatches: () => ({matches: [], loading: false}),
+}));
+
 vi.mock('@shopify/hydrogen', () => {
   const CartForm = Object.assign(
     ({children}: {children: (fetcher: {state: string}) => React.ReactNode}) =>

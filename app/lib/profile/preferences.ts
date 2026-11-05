@@ -1,13 +1,13 @@
 import type {PreferenceProfile} from './types';
 
-export const ALLERGY_OPTIONS = ['nickel', 'gold-plated', 'latex'] as const;
+export const ALLERGY_OPTIONS = ['nickel', 'zinc', 'cobalt'] as const;
 export const SKIN_TONES = ['fair', 'light', 'medium', 'tan', 'deep'] as const;
 export const UNDERTONES = ['cool', 'warm', 'neutral'] as const;
 
 export const ALLERGY_LABELS: Record<(typeof ALLERGY_OPTIONS)[number], string> = {
   nickel: 'Nickel',
-  'gold-plated': 'Gold-plated',
-  latex: 'Latex',
+  zinc: 'Zinc',
+  cobalt: 'Cobalt',
 };
 
 export function hasRecommendationPreferences(

@@ -1,13 +1,18 @@
 import {render, screen} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import type {MappedProductOptions} from '@shopify/hydrogen';
 import type {ProductFragment} from 'storefrontapi.generated';
-import {ProductForm} from '~/components/ProductForm';
 
-const navigate = vi.fn();
+const mocks = vi.hoisted(() => ({
+  navigate: vi.fn(),
+  open: vi.fn(),
+  requestSubmit: vi.fn(),
+  useAllergenMatches: vi.fn(),
+}));
 
 vi.mock('react-router', () => ({
-  useNavigate: () => navigate,
+  useNavigate: () => mocks.navigate,
   Link: ({
     children,
     ...props
@@ -17,17 +22,27 @@ vi.mock('react-router', () => ({
 }));
 
 vi.mock('~/components/Aside', () => ({
-  useAside: () => ({open: vi.fn()}),
+  useAside: () => ({open: mocks.open}),
+}));
+
+vi.mock('~/lib/profile/useAllergenMatches', () => ({
+  useAllergenMatches: mocks.useAllergenMatches,
 }));
 
 vi.mock('@shopify/hydrogen', () => {
   const CartForm = Object.assign(
-    ({children}: {children: (fetcher: {state: string}) => React.ReactNode}) =>
-      children({state: 'idle'}),
+    ({children}: {children: (fetcher: {state: string}) => React.ReactNode}) => (
+      <form onSubmit={(event) => event.preventDefault()}>
+        {children({state: 'idle'})}
+      </form>
+    ),
     {ACTIONS: {LinesAdd: 'LinesAdd'}},
   );
+
   return {CartForm};
 });
+
+import {ProductForm} from '~/components/ProductForm';
 
 const productOptions = [
   {
@@ -62,47 +77,53 @@ const selectedVariant = {
   availableForSale: true,
 } as ProductFragment['selectedOrFirstAvailableVariant'];
 
-describe('ProductForm', () => {
-  beforeEach(() => {
-    navigate.mockReset();
-  });
+const nickelAllergens = {value: '["nickel"]'};
 
+function renderForm(allergens?: {value: string} | null) {
+  return render(
+    <ProductForm
+      allergens={allergens}
+      productOptions={productOptions}
+      selectedVariant={selectedVariant}
+    />,
+  );
+}
+
+beforeEach(() => {
+  mocks.navigate.mockReset();
+  mocks.open.mockReset();
+  mocks.requestSubmit.mockReset();
+  mocks.useAllergenMatches.mockReset();
+  mocks.useAllergenMatches.mockReturnValue({matches: [], loading: false});
+
+  Object.defineProperty(HTMLFormElement.prototype, 'requestSubmit', {
+    configurable: true,
+    value: mocks.requestSubmit,
+  });
+});
+
+describe('ProductForm swatches', () => {
   it('navigates to the selected color variant when a swatch is clicked', () => {
-    render(
-      <ProductForm
-        productOptions={productOptions}
-        selectedVariant={selectedVariant}
-      />,
-    );
+    renderForm();
 
     screen.getByRole('button', {name: 'Silver'}).click();
 
-    expect(navigate).toHaveBeenCalledWith('?Color=Silver', {
+    expect(mocks.navigate).toHaveBeenCalledWith('?Color=Silver', {
       replace: true,
       preventScrollReset: true,
     });
   });
 
   it('does not navigate when the already selected swatch is clicked', () => {
-    render(
-      <ProductForm
-        productOptions={productOptions}
-        selectedVariant={selectedVariant}
-      />,
-    );
+    renderForm();
 
     screen.getByRole('button', {name: 'Gold'}).click();
 
-    expect(navigate).not.toHaveBeenCalled();
+    expect(mocks.navigate).not.toHaveBeenCalled();
   });
 
   it('marks the selected color swatch as pressed', () => {
-    render(
-      <ProductForm
-        productOptions={productOptions}
-        selectedVariant={selectedVariant}
-      />,
-    );
+    renderForm();
 
     expect(screen.getByRole('button', {name: 'Gold'})).toHaveAttribute(
       'aria-pressed',
@@ -115,12 +136,7 @@ describe('ProductForm', () => {
   });
 
   it('paints each swatch with the color coming from the option', () => {
-    render(
-      <ProductForm
-        productOptions={productOptions}
-        selectedVariant={selectedVariant}
-      />,
-    );
+    renderForm();
 
     expect(screen.getByRole('button', {name: 'Gold'})).toHaveStyle({
       backgroundColor: '#d4af37',
@@ -172,5 +188,69 @@ describe('ProductForm', () => {
     expect(screen.getByRole('button', {name: 'Silver'})).toHaveStyle({
       backgroundImage: 'url(/silver.jpg)',
     });
+  });
+});
+
+describe('ProductForm allergen guard', () => {
+  it('warns before adding a matching allergen and can be cancelled', async () => {
+    const user = userEvent.setup();
+    mocks.useAllergenMatches.mockReturnValue({
+      matches: ['nickel'],
+      loading: false,
+    });
+
+    renderForm(nickelAllergens);
+
+    await user.click(screen.getByRole('button', {name: 'Add to bag'}));
+
+    const dialog = screen.getByRole('dialog');
+
+    expect(dialog).toHaveTextContent(/contains Nickel/i);
+    expect(dialog.closest('form')).toBeNull();
+    expect(dialog).toHaveFocus();
+    expect(mocks.open).not.toHaveBeenCalled();
+    expect(mocks.requestSubmit).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', {name: 'Cancel'}));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(mocks.requestSubmit).not.toHaveBeenCalled();
+  });
+
+  it('adds the item after the shopper confirms the warning', async () => {
+    const user = userEvent.setup();
+    mocks.useAllergenMatches.mockReturnValue({
+      matches: ['nickel'],
+      loading: false,
+    });
+
+    renderForm(nickelAllergens);
+
+    await user.click(screen.getByRole('button', {name: 'Add to bag'}));
+    await user.click(screen.getByRole('button', {name: 'Yes, add to bag'}));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(mocks.requestSubmit).toHaveBeenCalledTimes(1);
+    expect(mocks.open).toHaveBeenCalledWith('cart');
+  });
+
+  it('adds immediately when nothing matches the shopper allergies', async () => {
+    const user = userEvent.setup();
+
+    renderForm(nickelAllergens);
+
+    await user.click(screen.getByRole('button', {name: 'Add to bag'}));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(mocks.open).toHaveBeenCalledWith('cart');
+    expect(mocks.requestSubmit).not.toHaveBeenCalled();
+  });
+
+  it('waits for the profile before allowing add to bag', () => {
+    mocks.useAllergenMatches.mockReturnValue({matches: [], loading: true});
+
+    renderForm(nickelAllergens);
+
+    expect(screen.getByRole('button', {name: 'Add to bag'})).toBeDisabled();
   });
 });

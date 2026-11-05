@@ -1,16 +1,26 @@
 import {Link, useNavigate} from 'react-router';
-import {type MappedProductOptions, type OptimisticCartLineInput, CartForm} from '@shopify/hydrogen';
+import {
+  type MappedProductOptions,
+  type OptimisticCartLineInput,
+  CartForm,
+} from '@shopify/hydrogen';
 import type {ProductFragment} from 'storefrontapi.generated';
 import {useAside} from '~/components/Aside';
+import {AddToBagGuard} from '~/components/AddToBagGuard';
 
 type Props = {
   productOptions: MappedProductOptions[];
   selectedVariant: ProductFragment['selectedOrFirstAvailableVariant'];
+  allergens?: {value: string} | null;
 };
 
 const COLOR_OPTION = /^(colou?r|finish|metal)$/i;
 
-export function ProductForm({productOptions, selectedVariant}: Props) {
+export function ProductForm({
+  productOptions,
+  selectedVariant,
+  allergens,
+}: Props) {
   const navigate = useNavigate();
   const {open} = useAside();
 
@@ -24,7 +34,9 @@ export function ProductForm({productOptions, selectedVariant}: Props) {
         .filter((option) => option.optionValues.length > 1)
         .map((option) => {
           const isColor = COLOR_OPTION.test(option.name);
-          const selectedValue = option.optionValues.find((v) => v.selected)?.name;
+          const selectedValue = option.optionValues.find(
+            (v) => v.selected,
+          )?.name;
 
           return (
             <fieldset key={option.name}>
@@ -53,19 +65,23 @@ export function ProductForm({productOptions, selectedVariant}: Props) {
 
                   const classes = isColor
                     ? `h-8 w-8 rounded-full border bg-cover bg-center ${
-                      selected ? 'ring-1 ring-ink ring-offset-2 border-ink' : 'border-line'
-                    } ${available ? '' : 'opacity-40'}`
+                        selected
+                          ? 'ring-1 ring-ink ring-offset-2 border-ink'
+                          : 'border-line'
+                      } ${available ? '' : 'opacity-40'}`
                     : `min-h-10 min-w-12 border px-4 text-xs uppercase tracking-wider transition-colors ${
-                      selected
-                        ? 'border-ink bg-ink text-white'
-                        : 'border-line bg-paper hover:border-ink'
-                    } ${available ? '' : 'text-ink/40 line-through'}`;
+                        selected
+                          ? 'border-ink bg-ink text-white'
+                          : 'border-line bg-paper hover:border-ink'
+                      } ${available ? '' : 'text-ink/40 line-through'}`;
 
                   const style = isColor
                     ? {
-                      backgroundColor: swatchColor,
-                      backgroundImage: swatchImage ? `url(${swatchImage})` : undefined,
-                    }
+                        backgroundColor: swatchColor,
+                        backgroundImage: swatchImage
+                          ? `url(${swatchImage})`
+                          : undefined,
+                      }
                     : undefined;
 
                   if (isDifferentProduct) {
@@ -114,26 +130,35 @@ export function ProductForm({productOptions, selectedVariant}: Props) {
           );
         })}
 
-      <CartForm route="/cart" action={CartForm.ACTIONS.LinesAdd} inputs={{lines}}>
+      <CartForm
+        route="/cart"
+        action={CartForm.ACTIONS.LinesAdd}
+        inputs={{lines}}
+      >
         {(fetcher) => (
           <>
-            <input
-              name="analytics"
-              type="hidden"
-              value={JSON.stringify({})}
-            />
-            <button
-              type="submit"
-              disabled={!selectedVariant || !selectedVariant.availableForSale || fetcher.state !== 'idle'}
-              onClick={() => open('cart')}
-              className="flex min-h-12 w-full items-center justify-center bg-primary px-6 text-xs font-medium uppercase tracking-widest text-white transition-colors hover:bg-ink disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {!selectedVariant?.availableForSale
-                ? 'Sold out'
-                : fetcher.state !== 'idle'
-                  ? 'Adding…'
-                  : 'Add to bag'}
-            </button>
+            <input name="analytics" type="hidden" value={JSON.stringify({})} />
+            <AddToBagGuard allergens={allergens} onProceed={() => open('cart')}>
+              {({onClick, loading}) => (
+                <button
+                  type="submit"
+                  disabled={
+                    !selectedVariant ||
+                    !selectedVariant.availableForSale ||
+                    fetcher.state !== 'idle' ||
+                    loading
+                  }
+                  onClick={onClick}
+                  className="flex min-h-12 w-full items-center justify-center bg-primary px-6 text-xs font-medium uppercase tracking-widest text-white transition-colors hover:bg-ink disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {!selectedVariant?.availableForSale
+                    ? 'Sold out'
+                    : fetcher.state !== 'idle'
+                      ? 'Adding…'
+                      : 'Add to bag'}
+                </button>
+              )}
+            </AddToBagGuard>
           </>
         )}
       </CartForm>
