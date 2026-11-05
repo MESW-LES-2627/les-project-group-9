@@ -153,7 +153,6 @@ export default function Product() {
               />
             </details>
 
-<<<<<<< HEAD
             {productDetails.length > 0 ? (
               <details className="group py-4">
                 <summary className="flex cursor-pointer list-none items-center justify-between text-xs uppercase tracking-widest [&::-webkit-details-marker]:hidden">
@@ -177,8 +176,6 @@ export default function Product() {
               </details>
             ) : null}
 
-=======
->>>>>>> 8abcb96526cad76abde14f9ff8076be9949146bd
             <details className="group py-4">
               <summary className="flex cursor-pointer list-none items-center justify-between text-[11px] uppercase tracking-widest [&::-webkit-details-marker]:hidden">
                 Shipping
@@ -258,13 +255,10 @@ const PRODUCT_FRAGMENT = `#graphql
     encodedVariantAvailability
     productType
     material: metafield(namespace: "custom", key: "material") { value }
-<<<<<<< HEAD
     metal: metafield(namespace: "custom", key: "metal") { value }
     gemstone: metafield(namespace: "custom", key: "gemstone") { value }
     gemColor: metafield(namespace: "custom", key: "gem_color") { value }
-=======
     allergens: metafield(namespace: "custom", key: "allergens") { value }
->>>>>>> 8abcb96526cad76abde14f9ff8076be9949146bd
     images(first: 10) { nodes { id url altText width height } }
     collections(first: 1) { nodes { title handle } }
     options {
