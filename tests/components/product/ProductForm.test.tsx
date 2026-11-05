@@ -305,7 +305,7 @@ describe('ring size helper', () => {
       />,
     );
 
-    expect(screen.getByRole('button', {name: '? Help'})).toBeInTheDocument();
+    expect(screen.getByRole('button', {name: 'Measurement Guide'})).toBeInTheDocument();
   });
 
   it('hides the helper on products that are not rings', () => {
@@ -317,7 +317,7 @@ describe('ring size helper', () => {
     );
 
     expect(
-      screen.queryByRole('button', {name: '? Help'}),
+      screen.queryByRole('button', {name: 'Measurement Guide'}),
     ).not.toBeInTheDocument();
   });
 
@@ -331,7 +331,7 @@ describe('ring size helper', () => {
     );
 
     expect(
-      screen.queryByRole('button', {name: '? Help'}),
+      screen.queryByRole('button', {name: 'Measurement Guide'}),
     ).not.toBeInTheDocument();
   });
 });

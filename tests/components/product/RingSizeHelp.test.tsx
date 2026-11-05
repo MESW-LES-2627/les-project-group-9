@@ -63,7 +63,7 @@ describe('RingSizeHelp', () => {
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', {name: '? Help'}));
+    await user.click(screen.getByRole('button', {name: 'Measurement Guide'}));
     expect(screen.getByRole('dialog', {name: 'Your ring sizes'})).toBeVisible();
 
     await user.click(screen.getByRole('button', {name: 'Close'}));
@@ -75,7 +75,7 @@ describe('RingSizeHelp', () => {
     loggedIn({'left-ring': '6'});
     renderHelp();
 
-    const trigger = screen.getByRole('button', {name: '? Help'});
+    const trigger = screen.getByRole('button', {name: 'Measurement Guide'});
     await user.click(trigger);
     await user.keyboard('{Escape}');
 
@@ -88,7 +88,7 @@ describe('RingSizeHelp', () => {
     loggedIn({'left-ring': '6', 'right-pinky': '6.5'});
     renderHelp();
 
-    await user.click(screen.getByRole('button', {name: '? Help'}));
+    await user.click(screen.getByRole('button', {name: 'Measurement Guide'}));
 
     const dialog = screen.getByRole('dialog');
     expect(dialog).toHaveTextContent('Left hand');
@@ -103,7 +103,7 @@ describe('RingSizeHelp', () => {
     loggedIn();
     renderHelp();
 
-    await user.click(screen.getByRole('button', {name: '? Help'}));
+    await user.click(screen.getByRole('button', {name: 'Measurement Guide'}));
 
     expect(
       screen.getByText('You have not saved your ring sizes yet.'),

@@ -12,7 +12,7 @@ import {
 const FOCUSABLE = 'button, a[href]';
 
 /**
- * "? Help" button for ring products. Opens a dialog with the shopper's saved
+ * "Measurement Guide" button for ring products. Opens a dialog with the shopper's saved
  * ring sizes, or a prompt to add them. Renders nothing for guests.
  */
 export function RingSizeHelp() {
@@ -75,7 +75,7 @@ export function RingSizeHelp() {
         onClick={() => setOpen(true)}
         className="text-[11px] uppercase tracking-widest text-primary underline underline-offset-4 hover:text-ink"
       >
-        ? Help
+        Measurement Guide
       </button>
 
       {open ? (
