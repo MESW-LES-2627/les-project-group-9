@@ -50,6 +50,14 @@ describe('toProductTraits', () => {
     expect(silver.undertones).toEqual(['cool']);
   });
 
+  it('maps supported product allergens', () => {
+    const traits = toProductTraits(
+      product({allergens: {value: '["nickel", "cobalt"]'}}),
+    );
+
+    expect(traits.allergens).toEqual(['nickel', 'cobalt']);
+  });
+
   it('parses a list metafield with multiple values', () => {
     const traits = toProductTraits(
       product({
