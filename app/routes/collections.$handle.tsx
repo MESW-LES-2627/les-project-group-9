@@ -25,6 +25,8 @@ import {
   JEWELIETTE_PRODUCT_CARD_FRAGMENT,
 } from '~/lib/jeweliette-catalog';
 
+import {PriceIntervals} from '~/components/PriceIntervals';
+
 const SORT_OPTIONS: Record<
   string,
   {
@@ -307,7 +309,55 @@ export default function CollectionPage() {
               method="get"
               preventScrollReset
               onChange={(event) => event.currentTarget.requestSubmit()}
-              className="relative z-10 mt-10 flex items-stretch border-y border-line bg-cream"
+              onClickCapture={(event) => {
+                const target = event.target;
+
+                if (!(target instanceof Element)) return;
+
+                const summary = target.closest('summary');
+                const selectedPanel = summary?.parentElement;
+
+                if (
+                  !summary ||
+                  !(selectedPanel instanceof HTMLDetailsElement)
+                ) {
+                  return;
+                }
+
+                event.currentTarget
+                  .querySelectorAll<HTMLDetailsElement>('details[open]')
+                  .forEach((panel) => {
+                    if (panel !== selectedPanel) {
+                      panel.open = false;
+                    }
+                  });
+              }}
+              onKeyDown={(event) => {
+                if (event.key !== 'Escape') return;
+
+                event.currentTarget
+                  .querySelectorAll<HTMLDetailsElement>('details[open]')
+                  .forEach((panel) => {
+                    panel.open = false;
+                  });
+              }}
+              onBlur={(event) => {
+                const nextFocusedElement = event.relatedTarget;
+
+                if (
+                  nextFocusedElement instanceof Node &&
+                  event.currentTarget.contains(nextFocusedElement)
+                ) {
+                  return;
+                }
+
+                event.currentTarget
+                  .querySelectorAll<HTMLDetailsElement>('details[open]')
+                  .forEach((panel) => {
+                    panel.open = false;
+                  });
+              }}
+              className="relative z-10 mt-10 flex flex-wrap items-stretch border-y border-line bg-cream"
             >
               <p className="flex flex-1 items-center py-4 text-[11px] uppercase tracking-widest text-primary">
                 {nodes.length} {nodes.length === 1 ? 'piece' : 'pieces'}
@@ -332,30 +382,14 @@ export default function CollectionPage() {
 
                   <div className="absolute right-0 top-full z-20 max-h-80 min-w-60 overflow-y-auto border border-line bg-paper p-4 shadow-stack">
                     {filter.type === 'PRICE_RANGE' ? (
-                      <div className="flex items-end gap-3">
-                        <label className="block text-xs">
-                          Min
-                          <input
-                            type="number"
-                            name="priceMin"
-                            min="0"
-                            step="1"
-                            defaultValue={priceMin}
-                            className="mt-1 block h-10 w-24 border border-line bg-white px-2 text-sm"
-                          />
-                        </label>
-                        <label className="block text-xs">
-                          Max
-                          <input
-                            type="number"
-                            name="priceMax"
-                            min="0"
-                            step="1"
-                            defaultValue={priceMax}
-                            className="mt-1 block h-10 w-24 border border-line bg-white px-2 text-sm"
-                          />
-                        </label>
-                      </div>
+                      <PriceIntervals
+                        values={filter.values}
+                        priceMin={priceMin}
+                        priceMax={priceMax}
+                        currencyCode={
+                          nodes[0]?.priceRange.minVariantPrice.currencyCode
+                        }
+                      />
                     ) : (
                       filter.values
                         .filter(
