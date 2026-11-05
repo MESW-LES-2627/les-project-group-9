@@ -2,6 +2,7 @@ import {Suspense} from 'react';
 import {Await, NavLink} from 'react-router';
 import type {FooterQuery, HeaderQuery} from 'storefrontapi.generated';
 import {Icon} from '~/components/Icon';
+import {useAside} from '~/components/Aside';
 
 interface FooterProps {
   footer: Promise<FooterQuery | null>;
@@ -14,6 +15,7 @@ export function Footer({
   header,
   publicStoreDomain,
 }: FooterProps) {
+  const {open} = useAside();
   return (
     <Suspense>
       <Await resolve={footerPromise}>
@@ -113,6 +115,18 @@ function FooterMenu({
           item.url.includes(primaryDomainUrl)
             ? new URL(item.url).pathname
             : item.url;
+        if (url.startsWith('/') && url.split('?')[0] === '/search') {
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => open('search')}
+              className="hover:text-white"
+            >
+              Search
+            </button>
+          );
+        }
         const isExternal = !url.startsWith('/');
 
         return isExternal ? (
