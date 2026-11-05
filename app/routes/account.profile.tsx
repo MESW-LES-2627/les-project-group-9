@@ -10,6 +10,7 @@ import {
 } from 'react-router';
 import type {Route} from './+types/account.profile';
 import {PreferencesForm} from '~/components/PreferencesForm';
+import {RingSizeForm} from '~/components/RingSizeForm';
 
 export type ActionResponse = {
   error: string | null;
@@ -149,6 +150,7 @@ export default function AccountProfile() {
       </section>
 
       <PreferencesForm />
+      <RingSizeForm />
     </div>
   );
 }
