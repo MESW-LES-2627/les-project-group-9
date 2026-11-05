@@ -35,18 +35,21 @@ export function SearchFormPredictive({
   const aside = useAside();
 
   /** Reset the input value and blur the input */
-  function resetInput(event: React.FormEvent<HTMLFormElement>) {
+  function resetInput(
+    event: React.FormEvent<HTMLFormElement>,
+  ) {
     event.preventDefault();
     event.stopPropagation();
-    if (inputRef?.current?.value) {
-      inputRef.current.blur();
-    }
+    goToSearch();
   }
 
   /** Navigate to the search page with the current input value */
   function goToSearch() {
-    const term = inputRef?.current?.value;
-    void navigate(SEARCH_ENDPOINT + (term ? `?q=${term}` : ''));
+    const term = inputRef.current?.value.trim() ?? '';
+    void navigate(
+      SEARCH_ENDPOINT +
+      (term ? `?q=${encodeURIComponent(term)}` : ''),
+    );
     aside.close();
   }
 
@@ -63,6 +66,25 @@ export function SearchFormPredictive({
   useEffect(() => {
     inputRef?.current?.setAttribute('type', 'search');
   }, []);
+
+
+  const previousAsideType = useRef(aside.type);
+
+  useEffect(() => {
+    const wasSearch = previousAsideType.current === 'search';
+    previousAsideType.current = aside.type;
+
+    if (!wasSearch || aside.type === 'search') return;
+
+    if (inputRef.current) {
+      inputRef.current.value = '';
+      inputRef.current.blur();
+    }
+
+    void fetcher.load(
+      `${SEARCH_ENDPOINT}?predictive=true&q=&limit=5`,
+    );
+  }, [aside.type, fetcher.load]);
 
   if (typeof children !== 'function') {
     return null;

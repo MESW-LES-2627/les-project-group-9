@@ -72,6 +72,17 @@ export default function Product() {
 
   const collection = product.collections.nodes[0];
 
+  const productDetails = [
+    {label: 'Type', value: product.productType},
+    {label: 'Material', value: product.material?.value},
+    {label: 'Metal', value: product.metal?.value},
+    {label: 'Gemstone', value: product.gemstone?.value},
+    {label: 'Gem color', value: product.gemColor?.value},
+  ].filter(
+    (item): item is {label: string; value: string} =>
+      typeof item.value === 'string' && item.value.trim().length > 0,
+  );
+
   return (
     <div className="mx-auto max-w-[1280px] px-[4vw] pb-20 pt-6">
       <nav
@@ -141,6 +152,29 @@ export default function Product() {
                 dangerouslySetInnerHTML={{__html: product.descriptionHtml}}
               />
             </details>
+
+            {productDetails.length > 0 ? (
+              <details className="group py-4">
+                <summary className="flex cursor-pointer list-none items-center justify-between text-xs uppercase tracking-widest [&::-webkit-details-marker]:hidden">
+                  Details
+                  <span aria-hidden="true" className="group-open:hidden">
+                    +
+                  </span>
+                  <span aria-hidden="true" className="hidden group-open:inline">
+                    −
+                  </span>
+                </summary>
+
+                <dl className="mt-5 space-y-3 text-sm">
+                  {productDetails.map(({label, value}) => (
+                    <div key={label} className="grid grid-cols-[7rem_minmax(0,1fr)] gap-4">
+                      <dt className="text-primary">{label}</dt>
+                      <dd className="break-words text-ink">{value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </details>
+            ) : null}
 
             <details className="group py-4">
               <summary className="flex cursor-pointer list-none items-center justify-between text-[11px] uppercase tracking-widest [&::-webkit-details-marker]:hidden">
@@ -219,8 +253,11 @@ const PRODUCT_FRAGMENT = `#graphql
     description
     encodedVariantExistence
     encodedVariantAvailability
+    productType
     material: metafield(namespace: "custom", key: "material") { value }
-    allergens: metafield(namespace: "custom", key: "allergens") { value }
+    metal: metafield(namespace: "custom", key: "metal") { value }
+    gemstone: metafield(namespace: "custom", key: "gemstone") { value }
+    gemColor: metafield(namespace: "custom", key: "gem_color") { value }
     images(first: 10) { nodes { id url altText width height } }
     collections(first: 1) { nodes { title handle } }
     options {
