@@ -13,7 +13,7 @@ import {ProductPrice} from '~/components/ProductPrice';
 import {ProductForm} from '~/components/ProductForm';
 import {ProductGallery} from '~/components/ProductGallery';
 import {ProductItem} from '~/components/ProductItem';
-import {AllergenWarning} from '~/components/AllergenWarning';
+import {AllergenBadge} from '~/components/AllergenBadge';
 import {FavoriteButton} from '~/components/FavoriteButton';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 import {JEWELIETTE_PRODUCT_CARD_FRAGMENT} from '~/lib/jeweliette-catalog';
@@ -99,6 +99,8 @@ export default function Product() {
         />
 
         <div className="lg:sticky lg:top-24 lg:self-start">
+          <AllergenBadge allergens={product.allergens} className="mb-3" />
+
           {product.material?.value ? (
             <p className="text-[11px] uppercase tracking-[0.2em] text-primary">
               {product.material.value}
@@ -118,8 +120,6 @@ export default function Product() {
               compareAtPrice={selectedVariant?.compareAtPrice}
             />
           </div>
-
-          <AllergenWarning allergens={product.allergens} />
 
           <div className="mt-8">
             <ProductForm

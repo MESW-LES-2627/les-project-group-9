@@ -1,4 +1,3 @@
-import {useState, type MouseEvent} from 'react';
 import {Link, useNavigate} from 'react-router';
 import {
   type MappedProductOptions,
@@ -7,9 +6,7 @@ import {
 } from '@shopify/hydrogen';
 import type {ProductFragment} from 'storefrontapi.generated';
 import {useAside} from '~/components/Aside';
-import {ConfirmDialog} from '~/components/ConfirmDialog';
-import {ALLERGY_LABELS} from '~/lib/profile/preferences';
-import {useAllergenMatches} from '~/lib/profile/useAllergenMatches';
+import {AddToBagGuard} from '~/components/AddToBagGuard';
 
 type Props = {
   productOptions: MappedProductOptions[];
@@ -26,38 +23,6 @@ export function ProductForm({
 }: Props) {
   const navigate = useNavigate();
   const {open} = useAside();
-  const {matches: allergenMatches, loading: allergenLoading} =
-    useAllergenMatches(allergens);
-  const [warningOpen, setWarningOpen] = useState(false);
-  const [pendingForm, setPendingForm] = useState<HTMLFormElement | null>(null);
-
-  const addToBag = (event: MouseEvent<HTMLButtonElement>) => {
-    if (allergenMatches.length > 0) {
-      event.preventDefault();
-      setPendingForm(event.currentTarget.form);
-      setWarningOpen(true);
-      return;
-    }
-
-    open('cart');
-  };
-
-  const confirmAdd = () => {
-    const form = pendingForm;
-    setPendingForm(null);
-    setWarningOpen(false);
-    open('cart');
-    form?.requestSubmit();
-  };
-
-  const cancelAdd = () => {
-    setPendingForm(null);
-    setWarningOpen(false);
-  };
-
-  const allergenNames = allergenMatches
-    .map((allergen) => ALLERGY_LABELS[allergen])
-    .join(', ');
 
   const lines: OptimisticCartLineInput[] = selectedVariant
     ? [{merchandiseId: selectedVariant.id, quantity: 1, selectedVariant}]
@@ -173,37 +138,30 @@ export function ProductForm({
         {(fetcher) => (
           <>
             <input name="analytics" type="hidden" value={JSON.stringify({})} />
-            <button
-              type="submit"
-              disabled={
-                !selectedVariant ||
-                !selectedVariant.availableForSale ||
-                fetcher.state !== 'idle' ||
-                allergenLoading
-              }
-              onClick={addToBag}
-              className="flex min-h-12 w-full items-center justify-center bg-primary px-6 text-xs font-medium uppercase tracking-widest text-white transition-colors hover:bg-ink disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {!selectedVariant?.availableForSale
-                ? 'Sold out'
-                : fetcher.state !== 'idle'
-                  ? 'Adding…'
-                  : 'Add to bag'}
-            </button>
+            <AddToBagGuard allergens={allergens} onProceed={() => open('cart')}>
+              {({onClick, loading}) => (
+                <button
+                  type="submit"
+                  disabled={
+                    !selectedVariant ||
+                    !selectedVariant.availableForSale ||
+                    fetcher.state !== 'idle' ||
+                    loading
+                  }
+                  onClick={onClick}
+                  className="flex min-h-12 w-full items-center justify-center bg-primary px-6 text-xs font-medium uppercase tracking-widest text-white transition-colors hover:bg-ink disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {!selectedVariant?.availableForSale
+                    ? 'Sold out'
+                    : fetcher.state !== 'idle'
+                      ? 'Adding…'
+                      : 'Add to bag'}
+                </button>
+              )}
+            </AddToBagGuard>
           </>
         )}
       </CartForm>
-
-      <ConfirmDialog
-        confirmLabel="Yes, add to bag"
-        onCancel={cancelAdd}
-        onConfirm={confirmAdd}
-        open={warningOpen}
-        title="Allergy warning"
-      >
-        This piece contains {allergenNames}, which matches your allergy profile.
-        Do you want to add it to your bag anyway?
-      </ConfirmDialog>
     </div>
   );
 }

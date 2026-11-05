@@ -4,14 +4,14 @@ import {CartForm, Image, Money} from '@shopify/hydrogen';
 import type {CatalogImage, CatalogProduct} from '~/lib/jeweliette-catalog';
 import {FavoriteButton} from '~/components/FavoriteButton';
 import {ProductBadge} from '~/components/ProductBadge';
-import {AllergenWarning} from '~/components/AllergenWarning';
+import {AllergenBadge} from '~/components/AllergenBadge';
+import {AddToBagGuard} from '~/components/AddToBagGuard';
 
 type Props = {product: CatalogProduct; loading?: 'eager' | 'lazy'};
 
 const COLOR_OPTION = /^(colou?r|finish|metal)$/i;
 
 export function ProductItem({product, loading = 'lazy'}: Props) {
-
   const [variantImage, setVariantImage] = useState<CatalogImage | null>(null);
 
   const url = `/products/${product.handle}`;
@@ -74,7 +74,10 @@ export function ProductItem({product, loading = 'lazy'}: Props) {
           ) : null}
         </Link>
 
-        <ProductBadge value={product.badge?.value} />
+        <div className="pointer-events-none absolute left-3 top-3 flex flex-col items-start gap-2">
+          <ProductBadge value={product.badge?.value} />
+          <AllergenBadge allergens={product.allergens} />
+        </div>
 
         <FavoriteButton
           productId={product.id}
@@ -90,13 +93,18 @@ export function ProductItem({product, loading = 'lazy'}: Props) {
               inputs={{lines: [{merchandiseId: variant.id, quantity: 1}]}}
             >
               {(fetcher) => (
-                <button
-                  type="submit"
-                  disabled={fetcher.state !== 'idle'}
-                  className={`${buttonBase} bg-primary text-white hover:bg-ink disabled:opacity-60`}
-                >
-                  {fetcher.state !== 'idle' ? 'Adding…' : 'Add to bag'}
-                </button>
+                <AddToBagGuard allergens={product.allergens}>
+                  {({onClick, loading}) => (
+                    <button
+                      type="submit"
+                      disabled={fetcher.state !== 'idle' || loading}
+                      onClick={onClick}
+                      className={`${buttonBase} bg-primary text-white hover:bg-ink disabled:opacity-60`}
+                    >
+                      {fetcher.state !== 'idle' ? 'Adding…' : 'Add to bag'}
+                    </button>
+                  )}
+                </AddToBagGuard>
               )}
             </CartForm>
           ) : (
@@ -132,12 +140,12 @@ export function ProductItem({product, loading = 'lazy'}: Props) {
         </div>
 
         <div className="shrink-0 text-sm text-ink">
-          {isRange ? <span className="mr-1 text-xs text-primary">From</span> : null}
+          {isRange ? (
+            <span className="mr-1 text-xs text-primary">From</span>
+          ) : null}
           <Money data={min} withoutTrailingZeros />
         </div>
       </div>
-
-      <AllergenWarning allergens={product.allergens} compact />
 
       {swatches.length > 0 && colorOption ? (
         <ul
