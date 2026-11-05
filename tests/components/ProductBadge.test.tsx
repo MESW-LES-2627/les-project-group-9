@@ -20,4 +20,10 @@ describe('ProductBadge', () => {
 
     expect(screen.queryByText('Limited Edition')).not.toBeInTheDocument();
   });
+
+  it('supports the warning tone', () => {
+    render(<ProductBadge tone="warning" value="Allergen" />);
+
+    expect(screen.getByText('Allergen')).toHaveClass('bg-amber-200');
+  });
 });

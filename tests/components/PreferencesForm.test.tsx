@@ -28,14 +28,14 @@ describe('PreferencesFields', () => {
       />,
     );
 
-    await user.click(screen.getByLabelText('Gold-plated'));
+    await user.click(screen.getByLabelText('Zinc'));
     await user.selectOptions(screen.getByLabelText('Undertone'), 'cool');
     await user.click(
       screen.getByRole('button', {name: 'Save preferences'}),
     );
 
     expect(onSave).toHaveBeenCalledWith({
-      allergies: ['nickel', 'gold-plated'],
+      allergies: ['nickel', 'zinc'],
       skin: {tone: 'medium', undertone: 'cool'},
     });
     expect(screen.getByText('Preferences saved.')).toBeInTheDocument();
