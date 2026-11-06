@@ -2,13 +2,19 @@ import {describe, expect, it} from 'vitest';
 import {
   readCustomerProfile,
   updateCustomerFavorites,
+  updateCustomerFittingRoom,
   writeCustomerPreferences,
 } from '../../app/lib/profile/customer.server';
 import {
+  normalizePreferencesPatch,
   parsePreferences,
   serializePreferences,
 } from '../../app/lib/profile/preferences';
 import {parseFavorites, serializeFavorites} from '../../app/lib/profile/schema';
+import {
+  parseFittingRoom,
+  serializeFittingRoom,
+} from '../../app/lib/profile/fitting-room';
 import type {PreferenceProfile} from '../../app/lib/profile/types';
 
 const CUSTOMER_ID = 'gid://shopify/Customer/1';
@@ -19,9 +25,11 @@ type Context = Parameters<typeof updateCustomerFavorites>[0];
 
 function contextWith({
   favorites = [],
+  fittingRoom = [],
   preferences = null,
 }: {
   favorites?: string[];
+  fittingRoom?: string[];
   preferences?: PreferenceProfile | null;
 } = {}) {
   const calls: Array<{
@@ -41,6 +49,7 @@ function contextWith({
           customer: {
             id: CUSTOMER_ID,
             favorites: {value: serializeFavorites(favorites)},
+            fittingRoom: {value: serializeFittingRoom(fittingRoom)},
             preferences: preferences
               ? {value: serializePreferences(preferences)}
               : null,
@@ -83,6 +92,24 @@ describe('customer favorites', () => {
       type: 'json',
     });
     expect(parseFavorites(calls[0].metafields[0].value)).toEqual([B, A]);
+  });
+});
+
+describe('customer fitting room', () => {
+  it('writes the next fitting room', async () => {
+    const {context, calls} = contextWith({fittingRoom: [A]});
+
+    const result = await updateCustomerFittingRoom(context, {add: [B]});
+
+    expect(result).toEqual([B, A]);
+    expect(calls).toHaveLength(1);
+    expect(calls[0].metafields[0]).toMatchObject({
+      ownerId: CUSTOMER_ID,
+      namespace: 'custom',
+      key: 'fitting_room',
+      type: 'json',
+    });
+    expect(parseFittingRoom(calls[0].metafields[0].value)).toEqual([B, A]);
   });
 });
 
@@ -130,7 +157,7 @@ describe('customer preferences', () => {
       allergies: ['nickel'],
       skin: {tone: 'medium', undertone: 'warm'},
       preferredMaterials: ['gold-plated'],
-      ringSizes: {'ring-1': '52'},
+      ringSizes: {'left-ring': '6'},
     };
     const {context, calls} = contextWith({preferences: existing});
 
@@ -143,13 +170,38 @@ describe('customer preferences', () => {
       allergies: ['cobalt'],
       skin: {undertone: 'cool'},
       preferredMaterials: ['gold-plated'],
-      ringSizes: {'ring-1': '52'},
+      ringSizes: {'left-ring': '6'},
     });
     expect(parsePreferences(calls[0].metafields[0].value)).toEqual({
       allergies: ['cobalt'],
       skin: {undertone: 'cool'},
       preferredMaterials: ['gold-plated'],
-      ringSizes: {'ring-1': '52'},
+      ringSizes: {'left-ring': '6'},
+    });
+  });
+
+  it('keeps allergies and skin when only ring sizes are saved', async () => {
+    const {context, calls} = contextWith({
+      preferences: {
+        allergies: ['nickel'],
+        skin: {tone: 'medium', undertone: 'warm'},
+      },
+    });
+
+    const result = await writeCustomerPreferences(
+      context,
+      normalizePreferencesPatch({ringSizes: {'left-ring': '6'}}),
+    );
+
+    expect(result).toEqual({
+      allergies: ['nickel'],
+      skin: {tone: 'medium', undertone: 'warm'},
+      ringSizes: {'left-ring': '6'},
+    });
+    expect(parsePreferences(calls[0].metafields[0].value)).toEqual({
+      allergies: ['nickel'],
+      skin: {tone: 'medium', undertone: 'warm'},
+      ringSizes: {'left-ring': '6'},
     });
   });
 });

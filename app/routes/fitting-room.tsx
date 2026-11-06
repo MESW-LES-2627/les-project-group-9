@@ -1,0 +1,231 @@
+import {useEffect, useRef, useState} from 'react';
+import {data, Link, useFetcher} from 'react-router';
+import type {Route} from './+types/fitting-room';
+import {FittingRoomView} from '~/components/fitting-room/FittingRoomView';
+import {useFittingRoom} from '~/lib/fitting-room';
+import {updateCustomerFittingRoom} from '~/lib/profile/customer.server';
+import {MAX_FITTING_ROOM} from '~/lib/profile/fitting-room';
+import {isProductGid} from '~/lib/profile/list-schema';
+import {loadProductsByIds, parseProductIds} from '~/lib/products.server';
+
+export const meta: Route.MetaFunction = () => [
+  {title: 'Fitting room | Jeweliette'},
+  {name: 'robots', content: 'noindex'},
+];
+
+export async function loader({request, context}: Route.LoaderArgs) {
+  const ids = parseProductIds(
+    new URL(request.url).searchParams.get('ids'),
+    MAX_FITTING_ROOM,
+  );
+  const products = await loadProductsByIds(context, ids);
+  return {products};
+}
+
+export async function action({request, context}: Route.ActionArgs) {
+  const loggedIn = await context.customerAccount.isLoggedIn();
+  if (!loggedIn) {
+    return data({error: 'Unauthorized'}, {status: 401});
+  }
+
+  const formData = await request.formData();
+  const productId = formData.get('productId');
+
+  if (typeof productId !== 'string' || !isProductGid(productId)) {
+    return data({error: 'Invalid product'}, {status: 400});
+  }
+
+  const [product] = await loadProductsByIds(context, [productId]);
+  const variant = product?.selectedOrFirstAvailableVariant;
+
+  if (!variant?.availableForSale) {
+    return data({error: 'This piece is sold out'}, {status: 400});
+  }
+
+  try {
+    const result = await context.cart.addLines([
+      {merchandiseId: variant.id, quantity: 1},
+    ]);
+
+    const cartError =
+      result.errors?.[0]?.message ?? result.userErrors?.[0]?.message;
+
+    if (cartError) {
+      return data({error: cartError}, {status: 400});
+    }
+
+    const headers = result.cart?.id
+      ? context.cart.setCartId(result.cart.id)
+      : new Headers();
+
+    try {
+      const fittingRoom = await updateCustomerFittingRoom(context, {
+        remove: [productId],
+      });
+      return data({fittingRoom, cart: result.cart}, {headers});
+    } catch (error) {
+      return data(
+        {
+          error:
+            error instanceof Error
+              ? error.message
+              : 'Could not remove from fitting room',
+        },
+        {status: 400, headers},
+      );
+    }
+  } catch (error) {
+    return data(
+      {
+        error:
+          error instanceof Error ? error.message : 'Could not move to cart',
+      },
+      {status: 400},
+    );
+  }
+}
+
+export default function FittingRoom() {
+  const {ids, ready, isLoggedIn, toggle: toggleFittingRoom, setIds} =
+    useFittingRoom();
+  const fetcher = useFetcher<typeof loader>();
+  const moveFetcher = useFetcher<typeof action>();
+  const key = ids.join(',');
+  const [selected, setSelected] = useState<string[]>([]);
+  const handledMove = useRef<unknown>(null);
+  const movingId =
+    (moveFetcher.formData?.get('productId') as string | null) ?? null;
+
+  useEffect(() => {
+    if (key) {
+      void fetcher.load(`/fitting-room?ids=${encodeURIComponent(key)}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+
+  useEffect(() => {
+    const currentIds = key ? key.split(',') : [];
+
+    setSelected((current) =>
+      Array.from(
+        new Set([
+          ...current.filter((id) => currentIds.includes(id)),
+          ...currentIds,
+        ]),
+      ),
+    );
+  }, [key]);
+
+  const products = (fetcher.data?.products ?? []).filter((product) =>
+    ids.includes(product.id),
+  );
+
+  const toggleSelected = (id: string) => {
+    setSelected((current) =>
+      current.includes(id)
+        ? current.filter((item) => item !== id)
+        : [...current, id],
+    );
+  };
+
+  const moveToCart = (id: string) => {
+    void moveFetcher.submit({productId: id}, {method: 'post'});
+  };
+
+  useEffect(() => {
+    if (moveFetcher.state !== 'idle' || !moveFetcher.data) {
+      return;
+    }
+    if (handledMove.current === moveFetcher.data) return;
+
+    handledMove.current = moveFetcher.data;
+
+    if ('error' in moveFetcher.data) return;
+    if (moveFetcher.data.fittingRoom) {
+      setIds(moveFetcher.data.fittingRoom);
+    }
+  }, [moveFetcher.state, moveFetcher.data, setIds]);
+
+  const moveError =
+    moveFetcher.data && 'error' in moveFetcher.data
+      ? moveFetcher.data.error
+      : null;
+
+  return (
+    <section className="mx-auto max-w-[1500px] px-[4vw] pb-20 pt-10 tablet:pt-14">
+      <header>
+        <p className="text-[11px] uppercase tracking-[0.2em] text-primary">
+          Your selection
+        </p>
+        <h1 className="mt-3 font-display text-[clamp(2.25rem,4vw,3.5rem)] leading-none">
+          Fitting room
+        </h1>
+      </header>
+
+      {!ready ? (
+        <div className="mx-auto mt-14 max-w-md border-y border-line py-14 text-center text-sm text-primary">
+          Loading your fitting room…
+        </div>
+      ) : !isLoggedIn ? (
+        <div className="mx-auto mt-14 max-w-md border-y border-line py-14 text-center">
+          <h2 className="font-display text-2xl">
+            Log in to use the fitting room.
+          </h2>
+          <p className="mt-3 text-sm text-primary">
+            Sign in to keep the pieces you want to try across devices.
+          </p>
+          <Link
+            to="/account/login"
+            className="mt-6 inline-flex min-h-11 items-center bg-primary px-6 text-[11px] uppercase tracking-widest text-white hover:bg-ink"
+          >
+            Log in
+          </Link>
+        </div>
+      ) : ids.length === 0 ? (
+        <div className="mx-auto mt-14 max-w-md border-y border-line py-14 text-center">
+          <h2 className="font-display text-2xl">Your fitting room is empty.</h2>
+          <p className="mt-3 text-sm text-primary">
+            Use the hanger button on any piece to add it here.
+          </p>
+          <Link
+            to="/collections/all"
+            className="mt-6 inline-flex min-h-11 items-center bg-primary px-6 text-[11px] uppercase tracking-widest text-white hover:bg-ink"
+          >
+            Explore the collection
+          </Link>
+        </div>
+      ) : !fetcher.data ? (
+        <div className="mx-auto mt-14 max-w-md border-y border-line py-14 text-center text-sm text-primary">
+          Loading pieces…
+        </div>
+      ) : products.length === 0 ? (
+        <div className="mx-auto mt-14 max-w-md border-y border-line py-14 text-center">
+          <h2 className="font-display text-2xl">
+            These pieces are unavailable.
+          </h2>
+          <p className="mt-3 text-sm text-primary">
+            They may have been removed from the store.
+          </p>
+        </div>
+      ) : (
+        <>
+          {moveError ? (
+            <p role="alert" className="mt-6 text-sm text-red-700">
+              {moveError}
+            </p>
+          ) : null}
+          <FittingRoomView
+            movingId={movingId}
+            onClear={() => setSelected([])}
+            onMoveToCart={moveToCart}
+            onRemove={toggleFittingRoom}
+            onSelectAll={() => setSelected(ids)}
+            onToggle={toggleSelected}
+            products={products}
+            selectedIds={selected}
+          />
+        </>
+      )}
+    </section>
+  );
+}

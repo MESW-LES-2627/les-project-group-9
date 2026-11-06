@@ -15,8 +15,10 @@ import {ProductGallery} from '~/components/product/ProductGallery';
 import {ProductItem} from '~/components/product/ProductItem';
 import {AllergenBadge} from '~/components/product/AllergenBadge';
 import {FavoriteButton} from '~/components/product/FavoriteButton';
+import {FittingRoomButton} from '~/components/product/FittingRoomButton';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 import {JEWELIETTE_PRODUCT_CARD_FRAGMENT} from '~/lib/jeweliette-catalog';
+import {isRingProduct} from '~/lib/profile/ringCategory';
 
 export const meta: Route.MetaFunction = ({data}) => [
   {title: `${data?.product.title ?? 'Product'} | Jeweliette`},
@@ -122,7 +124,10 @@ export default function Product() {
             <h1 className="font-display text-[clamp(1.75rem,3vw,2.5rem)] leading-tight">
               {product.title}
             </h1>
-            <FavoriteButton productId={product.id} title={product.title} />
+            <div className="flex items-center gap-2">
+              <FavoriteButton productId={product.id} title={product.title} />
+              <FittingRoomButton productId={product.id} title={product.title} />
+            </div>
           </div>
 
           <div className="mt-3 text-lg">
@@ -137,6 +142,7 @@ export default function Product() {
               allergens={product.allergens}
               productOptions={productOptions}
               selectedVariant={selectedVariant}
+              isRing={isRingProduct(product)}
             />
           </div>
 
@@ -261,6 +267,7 @@ const PRODUCT_FRAGMENT = `#graphql
     allergens: metafield(namespace: "custom", key: "allergens") { value }
     images(first: 10) { nodes { id url altText width height } }
     collections(first: 1) { nodes { title handle } }
+    category { id name }
     options {
       name
       optionValues {

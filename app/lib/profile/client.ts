@@ -1,5 +1,5 @@
 import type {
-  FavoriteOperation,
+  ListOperation,
   PreferenceProfile,
   ProfileResponse,
 } from './types';
@@ -31,10 +31,11 @@ export function fetchProfile(): Promise<ProfileResponse> {
   });
 }
 
-export function postFavoriteOperation(
-  operation: FavoriteOperation,
-): Promise<{favorites: string[]}> {
-  return request<{favorites: string[]}>('/api/profile/favorites', {
+function postListOperation<T>(
+  url: string,
+  operation: ListOperation,
+): Promise<T> {
+  return request<T>(url, {
     method: 'POST',
     cache: 'no-store',
     headers: {
@@ -45,16 +46,37 @@ export function postFavoriteOperation(
   });
 }
 
+export function postFavoriteOperation(
+  operation: ListOperation,
+): Promise<{favorites: string[]}> {
+  return postListOperation<{favorites: string[]}>(
+    '/api/profile/favorites',
+    operation,
+  );
+}
+
+export function postFittingRoomOperation(
+  operation: ListOperation,
+): Promise<{fittingRoom: string[]}> {
+  return postListOperation<{fittingRoom: string[]}>(
+    '/api/profile/fitting-room',
+    operation,
+  );
+}
+
 export function postPreferences(
   preferences: PreferenceProfile,
 ): Promise<{preferences: PreferenceProfile}> {
-  return request<{preferences: PreferenceProfile}>('/api/profile/preferences', {
-    method: 'POST',
-    cache: 'no-store',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
+  return request<{preferences: PreferenceProfile}>(
+    '/api/profile/preferences',
+    {
+      method: 'POST',
+      cache: 'no-store',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(preferences),
     },
-    body: JSON.stringify(preferences),
-  });
+  );
 }

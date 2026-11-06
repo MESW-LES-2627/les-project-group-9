@@ -503,6 +503,9 @@ export type CustomerProfileQuery = {
     favorites?: CustomerAccountAPI.Maybe<
       Pick<CustomerAccountAPI.Metafield, 'value'>
     >;
+    fittingRoom?: CustomerAccountAPI.Maybe<
+      Pick<CustomerAccountAPI.Metafield, 'value'>
+    >;
     preferences?: CustomerAccountAPI.Maybe<
       Pick<CustomerAccountAPI.Metafield, 'value'>
     >;
@@ -548,7 +551,7 @@ interface GeneratedQueryTypes {
     return: CustomerOrdersQuery;
     variables: CustomerOrdersQueryVariables;
   };
-  '#graphql\n  query CustomerProfile {\n    customer {\n      id\n      favorites: metafield(namespace: "custom", key: "favorites") {\n        value\n      }\n      preferences: metafield(namespace: "custom", key: "preferences") {\n        value\n      }\n    }\n  }\n': {
+  '#graphql\n  query CustomerProfile {\n    customer {\n      id\n      favorites: metafield(namespace: "custom", key: "favorites") {\n        value\n      }\n      fittingRoom: metafield(namespace: "custom", key: "fitting_room") {\n        value\n      }\n      preferences: metafield(namespace: "custom", key: "preferences") {\n        value\n      }\n    }\n  }\n': {
     return: CustomerProfileQuery;
     variables: CustomerProfileQueryVariables;
   };
