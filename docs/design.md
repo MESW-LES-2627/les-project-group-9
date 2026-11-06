@@ -1,4 +1,12 @@
 # Jeweliette — Design Documentation
+#### Beatriz Oziel de Lima - 202510621
+
+- [Iteration 0](#iteration-0)
+- [Iteration 1](#iteration-1)
+
+---
+
+# Iteration 0
 
 ## 1. Project Overview
 
@@ -45,3 +53,48 @@ Jeweliette is an e-commerce application for fashion jewelry. The project explore
 - **TypeScript:** Proposed programming language.
 
 The technology choices and their suitability for the course requirements must be validated with the professors.
+
+---
+
+# Iteration 1
+
+## 1. Domain Model
+
+
+## 2. Component Diagram
+
+## 3. Future Change Scenario
+### Add a new Trending Page
+
+As analyzed for jewerly store, the plans is to introduce a dedicated Trending Page where customers can explore the most produts, the news, and most recent/popular products in Jeweliette.
+
+The page will be on the nav bar and will display the best-selling products (from Shopify), allowing customer to discover popular items without relying on personalized recommendations.
+
+The proposed change would extend this existing functionality by making trending products accessible through a dedicated page.
+
+### Affected Components
+
+Storefront UI - Add a new page (already on the nav bar)
+
+Server Routes (API) - New route to obtain the most selling products and the newest ones
+
+Shopify Platform - Give the products data and all information to identify trends
+
+Recoomendation Engine - It wont be changed, is not the same thing as recommendation page
+
+## 4. Coupling and Cohesion Analysis
+
+### 4.1 Coupling Analysis
+We have already the Recommendation Engine that acts very similar as the future Trending Page - however, it will have differnts responsabilities.
+
+Recommendation Engine: Focuses on generating personalized recommendations based on customer preferences
+
+Trending Page: Focuses on displaying pupular products based on sales data in genereal
+
+Making the Trending Page depend directly on the Recommendation Engine would create unnecessary coupling between two distinct functionalities. If we use Recommendation Engine for the Tranding Page, changes in the recommendation logic could also affect the Tranding Page. Creating a separate Trending Products module would make them more independent, even though both use products from the same Shopify catalog.
+
+### 4.2 Cohesion Analysis
+Creating a separate Trending Products module would give each module a own purpose. The Recommendation Engine would be responsible for personalized recommendations, while Trending Products would show the most popular products. This makes the code more organized and easier to understand and maintain.
+
+## 4.3 Explicit Design Decision
+We will decide to create a separate module instead of adding to Recommendation engines because both functionalities have different purposes and should work independently. Both modules will still use the Shopify product catalog. This approach keeps the code more organized and makes it easier to maintain and update each feature.
