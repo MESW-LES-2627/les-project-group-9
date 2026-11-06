@@ -3,9 +3,10 @@ import type {Route} from './+types/search';
 import {getPaginationVariables, Analytics} from '@shopify/hydrogen';
 import {SearchForm} from '~/components/search/SearchForm';
 import {SearchResults} from '~/components/search/SearchResults';
-import {type RegularSearchReturn, type PredictiveSearchReturn, getEmptyPredictiveSearchResult,} from '~/lib/search';
+import {type RegularSearchReturn, type PredictiveSearchReturn, getEmptyPredictiveSearchResult, readCatalogFilters} from '~/lib/search';
 import type {RegularSearchQuery, PredictiveSearchQuery,} from 'storefrontapi.generated';
 import {JEWELIETTE_PRODUCT_CARD_FRAGMENT,} from '~/lib/jeweliette-catalog';
+import {CatalogFilters} from '~/components/collections/CatalogFilters';
 
 export const meta: Route.MetaFunction = () => {
   return [{title: `Search | Jeweliette`}];
@@ -13,28 +14,47 @@ export const meta: Route.MetaFunction = () => {
 
 export async function loader({request, context}: Route.LoaderArgs) {
   const url = new URL(request.url);
-  const isPredictive = url.searchParams.has('predictive');
-  const searchPromise: Promise<PredictiveSearchReturn | RegularSearchReturn> =
-    isPredictive
-      ? predictiveSearch({request, context})
-      : regularSearch({request, context});
+  if (url.searchParams.has('predictive')) {
+    return predictiveSearch({request, context});
+  }
 
-  searchPromise.catch((error: Error) => {
-    console.error(error);
-    return {term: '', result: null, error: error.message};
-  });
+  const filterState = readCatalogFilters(url.searchParams);
+  const result = await regularSearch({request, context});
 
-  return await searchPromise;
+  return {
+    ...result,
+    filterState,
+  };
 }
 
 /**
  * Renders the /search route
  */
 export default function SearchPage() {
-  const {type, term, result, error} =
-    useLoaderData<typeof loader>();
+  const data = useLoaderData<typeof loader>();
 
-  if (type === 'predictive') return null;
+  // Predictive requests are consumed by the search fetcher.
+  if (data.type === 'predictive') return null;
+
+  const {
+    term,
+    result,
+    error,
+    filterState,
+  } = data;
+
+  const productResults = result.items.products;
+
+  const paginationKey = JSON.stringify([
+    term,
+    filterState.selectedFilters,
+    filterState.priceMin,
+    filterState.priceMax,
+  ]);
+
+  const currencyCode =
+    productResults.nodes[0]
+      ?.priceRange.minVariantPrice.currencyCode;
 
   return (
     <section className="mx-auto max-w-[1280px] px-[4vw] pb-24 pt-12">
@@ -73,9 +93,25 @@ export default function SearchPage() {
       </div>
 
       {error ? (
-        <p role="alert" className="mt-8 text-sm text-red-800">
-          Search is temporarily unavailable. Please try again.
+        <p
+          role="alert"
+          className="mt-8 text-sm text-red-800"
+        >
+          Search is temporarily unavailable. Please try
+          again.
         </p>
+      ) : null}
+
+      {term ? (
+        <CatalogFilters
+          filters={productResults.productFilters}
+          selectedFilters={filterState.selectedFilters}
+          priceMin={filterState.priceMin}
+          priceMax={filterState.priceMax}
+          query={term}
+          clearHref={`/search?q=${encodeURIComponent(term)}`}
+          currencyCode={currencyCode}
+        />
       ) : null}
 
       <div className="mt-12">
@@ -83,20 +119,40 @@ export default function SearchPage() {
           <p className="text-center text-sm text-primary">
             Search for a piece, material or collection.
           </p>
-        ) : !result?.total ? (
+        ) : !result.total ? (
           <SearchResults.Empty />
         ) : (
           <SearchResults result={result} term={term}>
-            {({articles, pages, products, term}) => (
+            {({
+                articles,
+                pages,
+                products,
+                term: searchTerm,
+              }) => (
               <div className="space-y-12">
+                {products.nodes.length === 0 ? (
+                  <div className="border-y border-line py-8 text-center">
+                    <p className="text-sm text-primary">
+                      No products match your search and
+                      selected filters.
+                    </p>
+                  </div>
+                ) : null}
+
                 <SearchResults.Products
+                  key={paginationKey}
                   products={products}
-                  term={term}
+                  term={searchTerm}
                 />
-                <SearchResults.Pages pages={pages} term={term} />
+
+                <SearchResults.Pages
+                  pages={pages}
+                  term={searchTerm}
+                />
+
                 <SearchResults.Articles
                   articles={articles}
-                  term={term}
+                  term={searchTerm}
                 />
               </div>
             )}
@@ -105,7 +161,10 @@ export default function SearchPage() {
       </div>
 
       <Analytics.SearchView
-        data={{searchTerm: term, searchResults: result}}
+        data={{
+          searchTerm: term,
+          searchResults: result,
+        }}
       />
     </section>
   );
@@ -192,49 +251,68 @@ export const SEARCH_QUERY = `#graphql
     $last: Int
     $term: String!
     $startCursor: String
+    $filters: [ProductFilter!]
   ) @inContext(country: $country, language: $language) {
     articles: search(
-      query: $term,
-      types: [ARTICLE],
-      first: $first,
+      query: $term
+      types: [ARTICLE]
+      first: $first
     ) {
       nodes {
-        ...on Article {
+        ... on Article {
           ...SearchArticle
         }
       }
     }
+
     pages: search(
-      query: $term,
-      types: [PAGE],
-      first: $first,
+      query: $term
+      types: [PAGE]
+      first: $first
     ) {
       nodes {
-        ...on Page {
+        ... on Page {
           ...SearchPage
         }
       }
     }
+
     products: search(
-      after: $endCursor,
-      before: $startCursor,
-      first: $first,
-      last: $last,
-      query: $term,
-      sortKey: RELEVANCE,
-      types: [PRODUCT],
-      unavailableProducts: HIDE,
+      after: $endCursor
+      before: $startCursor
+      first: $first
+      last: $last
+      query: $term
+      sortKey: RELEVANCE
+      types: [PRODUCT]
+      unavailableProducts: HIDE
+      productFilters: $filters
     ) {
       nodes {
-        ...on Product {
+        ... on Product {
           ...SearchProduct
         }
       }
+
+      productFilters {
+        id
+        label
+        type
+
+        values {
+          id
+          label
+          count
+          input
+        }
+      }
+
       pageInfo {
         ...PageInfoFragment
       }
     }
   }
+
   ${SEARCH_PRODUCT_FRAGMENT}
   ${SEARCH_PAGE_FRAGMENT}
   ${SEARCH_ARTICLE_FRAGMENT}
@@ -245,41 +323,59 @@ export const SEARCH_QUERY = `#graphql
 /**
  * Regular search fetcher
  */
-async function regularSearch({
-  request,
-  context,
-}: Pick<
+async function regularSearch({request, context}: Pick<
   Route.LoaderArgs,
   'request' | 'context'
 >): Promise<RegularSearchReturn> {
   const {storefront} = context;
   const url = new URL(request.url);
-  const variables = getPaginationVariables(request, {pageBy: 8});
-  const term = String(url.searchParams.get('q') || '');
 
-  // Search articles, pages, and products for the `q` term
+  const paginationVariables = getPaginationVariables(
+    request,
+    {pageBy: 8},
+  );
+
+  const term = String(
+    url.searchParams.get('q') || '',
+  ).trim();
+
+  const filterState = readCatalogFilters(
+    url.searchParams,
+  );
+
   const {
     errors,
     ...items
-  }: {errors?: Array<{message: string}>} & RegularSearchQuery =
-    await storefront.query(SEARCH_QUERY, {
-      variables: {...variables, term},
-    });
+  }: RegularSearchQuery & {
+    errors?: Array<{message: string}>;
+  } = await storefront.query(SEARCH_QUERY, {
+    variables: {
+      ...paginationVariables,
+      term,
+      filters: filterState.filters,
+      language: storefront.i18n.language,
+      country: storefront.i18n.country,
+    },
+  });
 
-  if (!items) {
-    throw new Error('No search data returned from Shopify API');
-  }
-
-  const total = Object.values(items).reduce(
-    (acc: number, {nodes}: {nodes: Array<unknown>}) => acc + nodes.length,
-    0,
-  );
+  const total =
+    items.products.nodes.length +
+    items.pages.nodes.length +
+    items.articles.nodes.length;
 
   const error = errors
-    ? errors.map(({message}: {message: string}) => message).join(', ')
-    : undefined;
+    ?.map(({message}) => message)
+    .join(', ');
 
-  return {type: 'regular', term, error, result: {total, items}};
+  return {
+    type: 'regular',
+    term,
+    error,
+    result: {
+      total,
+      items,
+    },
+  };
 }
 
 /**
