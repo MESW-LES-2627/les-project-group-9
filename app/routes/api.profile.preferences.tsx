@@ -1,7 +1,7 @@
 import {data} from 'react-router';
 import type {Route} from './+types/api.profile.preferences';
 import {writeCustomerPreferences} from '~/lib/profile/customer.server';
-import {normalizePreferences} from '~/lib/profile/preferences';
+import {normalizePreferencesPatch} from '~/lib/profile/preferences';
 
 const NO_STORE = {
   'Cache-Control': 'no-store',
@@ -37,7 +37,7 @@ export async function action({request, context}: Route.ActionArgs) {
   try {
     const preferences = await writeCustomerPreferences(
       context,
-      normalizePreferences(payload),
+      normalizePreferencesPatch(payload),
     );
     return data({preferences}, {headers: NO_STORE});
   } catch (error) {

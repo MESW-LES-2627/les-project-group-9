@@ -18,6 +18,7 @@ import {FavoriteButton} from '~/components/product/FavoriteButton';
 import {FittingRoomButton} from '~/components/product/FittingRoomButton';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 import {JEWELIETTE_PRODUCT_CARD_FRAGMENT} from '~/lib/jeweliette-catalog';
+import {isRingProduct} from '~/lib/profile/ringCategory';
 
 export const meta: Route.MetaFunction = ({data}) => [
   {title: `${data?.product.title ?? 'Product'} | Jeweliette`},
@@ -141,6 +142,7 @@ export default function Product() {
               allergens={product.allergens}
               productOptions={productOptions}
               selectedVariant={selectedVariant}
+              isRing={isRingProduct(product)}
             />
           </div>
 
@@ -265,6 +267,7 @@ const PRODUCT_FRAGMENT = `#graphql
     allergens: metafield(namespace: "custom", key: "allergens") { value }
     images(first: 10) { nodes { id url altText width height } }
     collections(first: 1) { nodes { title handle } }
+    category { id name }
     options {
       name
       optionValues {

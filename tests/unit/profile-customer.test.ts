@@ -6,6 +6,7 @@ import {
   writeCustomerPreferences,
 } from '../../app/lib/profile/customer.server';
 import {
+  normalizePreferencesPatch,
   parsePreferences,
   serializePreferences,
 } from '../../app/lib/profile/preferences';
@@ -156,7 +157,7 @@ describe('customer preferences', () => {
       allergies: ['nickel'],
       skin: {tone: 'medium', undertone: 'warm'},
       preferredMaterials: ['gold-plated'],
-      ringSizes: {'ring-1': '52'},
+      ringSizes: {'left-ring': '6'},
     };
     const {context, calls} = contextWith({preferences: existing});
 
@@ -169,13 +170,38 @@ describe('customer preferences', () => {
       allergies: ['cobalt'],
       skin: {undertone: 'cool'},
       preferredMaterials: ['gold-plated'],
-      ringSizes: {'ring-1': '52'},
+      ringSizes: {'left-ring': '6'},
     });
     expect(parsePreferences(calls[0].metafields[0].value)).toEqual({
       allergies: ['cobalt'],
       skin: {undertone: 'cool'},
       preferredMaterials: ['gold-plated'],
-      ringSizes: {'ring-1': '52'},
+      ringSizes: {'left-ring': '6'},
+    });
+  });
+
+  it('keeps allergies and skin when only ring sizes are saved', async () => {
+    const {context, calls} = contextWith({
+      preferences: {
+        allergies: ['nickel'],
+        skin: {tone: 'medium', undertone: 'warm'},
+      },
+    });
+
+    const result = await writeCustomerPreferences(
+      context,
+      normalizePreferencesPatch({ringSizes: {'left-ring': '6'}}),
+    );
+
+    expect(result).toEqual({
+      allergies: ['nickel'],
+      skin: {tone: 'medium', undertone: 'warm'},
+      ringSizes: {'left-ring': '6'},
+    });
+    expect(parsePreferences(calls[0].metafields[0].value)).toEqual({
+      allergies: ['nickel'],
+      skin: {tone: 'medium', undertone: 'warm'},
+      ringSizes: {'left-ring': '6'},
     });
   });
 });

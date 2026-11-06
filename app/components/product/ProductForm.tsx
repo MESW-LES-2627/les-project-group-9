@@ -7,11 +7,14 @@ import {
 import type {ProductFragment} from 'storefrontapi.generated';
 import {useAside} from '~/components/layout/Aside';
 import {AddToBagGuard} from '~/components/product/AddToBagGuard';
+import {RingSizeHelp} from '~/components/product/RingSizeHelp';
 
 type Props = {
   productOptions: MappedProductOptions[];
   selectedVariant: ProductFragment['selectedOrFirstAvailableVariant'];
   allergens?: {value: string} | null;
+  /** True for products in the "Rings" category. Enables the ring size helper. */
+  isRing?: boolean;
 };
 
 const COLOR_OPTION = /^(colou?r|finish|metal)$/i;
@@ -20,6 +23,7 @@ export function ProductForm({
   productOptions,
   selectedVariant,
   allergens,
+  isRing = false,
 }: Props) {
   const navigate = useNavigate();
   const {open} = useAside();
@@ -126,6 +130,8 @@ export function ProductForm({
                   );
                 })}
               </div>
+
+              {isRing && /^size$/i.test(option.name) ? <RingSizeHelp /> : null}
             </fieldset>
           );
         })}
