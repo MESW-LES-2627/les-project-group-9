@@ -36,6 +36,10 @@ export type CatalogProduct = {
     minVariantPrice: CatalogMoney;
     maxVariantPrice?: CatalogMoney;
   };
+  selectedOrFirstAvailableVariant?: {
+    id: string;
+    availableForSale: boolean;
+  } | null;
   productType?: string;
   material?: {value: string} | null;
   allergens?: {value: string} | null;
