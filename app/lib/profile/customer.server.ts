@@ -6,14 +6,24 @@ import {
   parsePreferences,
   serializePreferences,
 } from './preferences';
-import {applyFavoriteOperation, parseFavorites, serializeFavorites} from './schema';
-import type {FavoriteOperation, PreferenceProfile} from './types';
+import {
+  applyFavoriteOperation,
+  parseFavorites,
+  serializeFavorites,
+} from './schema';
+import {
+  applyFittingRoomOperation,
+  parseFittingRoom,
+  serializeFittingRoom,
+} from './fitting-room';
+import type {ListOperation, PreferenceProfile} from './types';
 
 type Context = Pick<HydrogenRouterContextProvider, 'customerAccount'>;
 
 type CustomerProfile = {
   customerId: string | null;
   favorites: string[];
+  fittingRoom: string[];
   preferences: PreferenceProfile;
 };
 
@@ -31,6 +41,7 @@ export async function readCustomerProfile(context: Context): Promise<CustomerPro
     return {
       customerId: null,
       favorites: [],
+      fittingRoom: [],
       preferences: normalizePreferences(null),
     };
   }
@@ -38,13 +49,14 @@ export async function readCustomerProfile(context: Context): Promise<CustomerPro
   return {
     customerId: customer.id,
     favorites: parseFavorites(customer.favorites?.value ?? null),
+    fittingRoom: parseFittingRoom(customer.fittingRoom?.value ?? null),
     preferences: parsePreferences(customer.preferences?.value ?? null),
   };
 }
 
 export async function updateCustomerFavorites(
   context: Context,
-  operation: FavoriteOperation,
+  operation: ListOperation,
 ): Promise<string[]> {
   const profile = await readCustomerProfile(context);
   if (!profile.customerId) {
@@ -62,6 +74,28 @@ export async function updateCustomerFavorites(
   );
 
   return parseFavorites(saved);
+}
+
+export async function updateCustomerFittingRoom(
+  context: Context,
+  operation: ListOperation,
+): Promise<string[]> {
+  const profile = await readCustomerProfile(context);
+  if (!profile.customerId) {
+    throw new Error('Customer not found');
+  }
+
+  const value = serializeFittingRoom(
+    applyFittingRoomOperation(profile.fittingRoom, operation),
+  );
+  const saved = await writeCustomerMetafield(
+    context,
+    profile.customerId,
+    'fitting_room',
+    value,
+  );
+
+  return parseFittingRoom(saved);
 }
 
 export async function writeCustomerPreferences(

@@ -3,6 +3,7 @@ export type IconName =
   | 'bag'
   | 'close'
   | 'heart'
+  | 'hanger'
   | 'menu'
   | 'search'
   | 'sparkle'
@@ -15,12 +16,7 @@ interface IconProps {
   className?: string;
 }
 
-export function Icon({
-  name,
-  size = 21,
-  filled = false,
-  className,
-}: IconProps) {
+export function Icon({name, size = 21, filled = false, className}: IconProps) {
   const paths: Record<IconName, React.ReactNode> = {
     arrow: <path d="M5 12h14m-5-5 5 5-5 5" />,
     bag: (
@@ -32,6 +28,12 @@ export function Icon({
     close: <path d="m6 6 12 12M18 6 6 18" />,
     heart: (
       <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z" />
+    ),
+    hanger: (
+      <>
+        <path d="M12 8.5V6.3a2 2 0 1 0-4 0" />
+        <path d="M12 8.5 3 16.5c-.9.8-.3 2.7.9 2.7h16.2c1.2 0 1.8-1.9.9-2.7L12 8.5" />
+      </>
     ),
     menu: <path d="M4 7h16M4 12h16M4 17h16" />,
     search: (

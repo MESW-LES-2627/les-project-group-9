@@ -3,6 +3,7 @@ import {Link} from 'react-router';
 import {Image, Money} from '@shopify/hydrogen';
 import {SearchFormPredictive} from '~/components/search/SearchFormPredictive';
 import {SearchResultsPredictive} from '~/components/search/SearchResultsPredictive';
+import {Icon} from '~/components/shared/Icon';
 
 type Suggestion = {title: string; to: string};
 
@@ -70,10 +71,7 @@ export function SearchOverlay({
                 aria-label="Search"
                 className="flex h-10 w-10 shrink-0 items-center justify-center"
               >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
-                  <circle cx="11" cy="11" r="7" />
-                  <path d="m20 20-3.5-3.5" />
-                </svg>
+                <Icon name="search" size={22} />
               </button>
             </div>
           )}

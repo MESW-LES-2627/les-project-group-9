@@ -12,7 +12,7 @@ export async function loader({context}: Route.LoaderArgs) {
 
   if (!loggedIn) {
     return data(
-      {loggedIn: false, favorites: [], preferences: null},
+      {loggedIn: false, favorites: [], fittingRoom: [], preferences: null},
       {headers: NO_STORE},
     );
   }
@@ -24,6 +24,7 @@ export async function loader({context}: Route.LoaderArgs) {
       {
         loggedIn: true,
         favorites: profile.favorites,
+        fittingRoom: profile.fittingRoom,
         preferences: profile.preferences,
       },
       {headers: NO_STORE},

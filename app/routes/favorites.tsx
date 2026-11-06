@@ -4,7 +4,7 @@ import type {Route} from './+types/favorites';
 import {ProductItem} from '~/components/product/ProductItem';
 import {RecommendedProducts} from '~/components/product/RecommendedProducts';
 import {useFavorites} from '~/lib/favorites';
-import {JEWELIETTE_PRODUCT_CARD_FRAGMENT} from '~/lib/jeweliette-catalog';
+import {loadProductsByIds, parseProductIds} from '~/lib/products.server';
 
 export const meta: Route.MetaFunction = () => [
   {title: 'Favorites | Jeweliette'},
@@ -12,23 +12,9 @@ export const meta: Route.MetaFunction = () => [
 ];
 
 export async function loader({request, context}: Route.LoaderArgs) {
-  const raw = new URL(request.url).searchParams.get('ids') ?? '';
-  const ids = raw
-    .split(',')
-    .filter((id) => id.startsWith('gid://shopify/Product/'))
-    .slice(0, 50);
-
-  if (!ids.length) return {products: []};
-
-  const {nodes} = await context.storefront.query(FAVORITES_QUERY, {
-    variables: {ids, language: 'EN'},
-  });
-
-  return {
-    products: nodes.flatMap((node) =>
-      node && node.__typename === 'Product' ? [node] : [],
-    ),
-  };
+  const ids = parseProductIds(new URL(request.url).searchParams.get('ids'));
+  const products = await loadProductsByIds(context, ids);
+  return {products};
 }
 
 export default function Favorites() {
@@ -43,12 +29,16 @@ export default function Favorites() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 
-  const products = (fetcher.data?.products ?? []).filter((p) => ids.includes(p.id));
+  const products = (fetcher.data?.products ?? []).filter((p) =>
+    ids.includes(p.id),
+  );
 
   return (
     <section className="mx-auto max-w-[1400px] px-[4vw] pb-20 pt-10 tablet:pt-14">
       <header className="text-center">
-        <p className="text-[11px] uppercase tracking-[0.2em] text-primary">Your selection</p>
+        <p className="text-[11px] uppercase tracking-[0.2em] text-primary">
+          Your selection
+        </p>
         <h1 className="mt-3 font-display text-[clamp(2.25rem,4vw,3.5rem)] leading-none">
           Favorites
         </h1>
@@ -97,17 +87,3 @@ export default function Favorites() {
     </section>
   );
 }
-
-const FAVORITES_QUERY = `#graphql
-  ${JEWELIETTE_PRODUCT_CARD_FRAGMENT}
-  query JewelietteFavorites(
-    $ids: [ID!]!
-    $country: CountryCode
-    $language: LanguageCode
-  ) @inContext(country: $country, language: $language) {
-    nodes(ids: $ids) {
-      __typename
-      ... on Product { ...JewelietteProductCard }
-    }
-  }
-` as const;
