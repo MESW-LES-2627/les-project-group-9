@@ -43,7 +43,7 @@ Jewliette bridges the gap between digital e-commerce and high-end boutique shopp
 
 ## 6. User Stories
 
-All **75 user stories** are listed below, grouped by epic. 45 are MVP and 30 are Post-MVP.
+All **75 user stories** are listed below, grouped by epic. 57 are MVP and 18 are Post-MVP.
 
 The MVP scope only is in [mvp.md](./mvp.md).
 
@@ -116,9 +116,9 @@ The MVP scope only is in [mvp.md](./mvp.md).
 - [US-041: As a shopper, I want to manage my saved addresses, so that checkout is faster](https://github.com/MESW-LES-2627/les-project-group-9/issues/62) - MVP
 - [US-042: As a shopper, I want to see my order history and order details, so that I can track what I bought](https://github.com/MESW-LES-2627/les-project-group-9/issues/63) - MVP
 
-### E10: Video (#14)
+### E10: Slideshow (#14)
 
-- [US-043: As a shopper, I want to watch a product video on its product page, so that I see the piece in motion](https://github.com/MESW-LES-2627/les-project-group-9/issues/64) - Post-MVP
+- [US-043: As a shopper, I want to view a hero banner slideshow of the store's top-selling products and click on any product, so that I can quickly explore featured items and navigate directly to their product pages](https://github.com/MESW-LES-2627/les-project-group-9/issues/64) - MVP
 
 ### E11: Content (#15)
 
@@ -148,23 +148,23 @@ The MVP scope only is in [mvp.md](./mvp.md).
 
 ### E15: Feedback and ratings (#19)
 
-- [US-058: As a shopper, I want to give a product a star rating after I buy it, so that other shoppers know what I think](https://github.com/MESW-LES-2627/les-project-group-9/issues/79) - Post-MVP
-- [US-059: As a shopper, I want to write a comment with my rating, so that I can explain my experience](https://github.com/MESW-LES-2627/les-project-group-9/issues/80) - Post-MVP
-- [US-060: As a shopper, I want to read other shoppers' ratings and comments on a product page, so that I can decide with more confidence](https://github.com/MESW-LES-2627/les-project-group-9/issues/81) - Post-MVP
+- [US-058: As a shopper, I want to give a product a star rating after I buy it, so that other shoppers know what I think](https://github.com/MESW-LES-2627/les-project-group-9/issues/79) - MVP
+- [US-059: As a shopper, I want to write a comment with my rating, so that I can explain my experience](https://github.com/MESW-LES-2627/les-project-group-9/issues/80) - MVP
+- [US-060: As a shopper, I want to read other shoppers' ratings and comments on a product page, so that I can decide with more confidence](https://github.com/MESW-LES-2627/les-project-group-9/issues/81) - MVP
 - [US-061: As a shopper, I want to sort and filter reviews, so that I find the ones that matter to me](https://github.com/MESW-LES-2627/les-project-group-9/issues/82) - Post-MVP
 - [US-062: As a store admin, I want to approve or hide reviews before they are shown, so that the store stays appropriate](https://github.com/MESW-LES-2627/les-project-group-9/issues/83) - Post-MVP
 - [US-063: As a shopper, I want to send feedback about the store, so that the team can improve it](https://github.com/MESW-LES-2627/les-project-group-9/issues/84) - Post-MVP
 
 ### E16: Preferences profile (#20)
 
-- [US-064: As a shopper, I want to list my allergies, so that the store can warn me about pieces that may irritate my skin](https://github.com/MESW-LES-2627/les-project-group-9/issues/85) - Post-MVP
-- [US-065: As a shopper, I want to set my skin color and undertone, so that the try-on and suggestions fit me](https://github.com/MESW-LES-2627/les-project-group-9/issues/86) - Post-MVP
-- [US-066: As a shopper, I want to save my finger sizes, so that I can pick a ring size without guessing](https://github.com/MESW-LES-2627/les-project-group-9/issues/87) - Post-MVP
-- [US-067: As a shopper, I want to choose my preferred colors and materials, so that the store shows pieces I like](https://github.com/MESW-LES-2627/les-project-group-9/issues/88) - Post-MVP
-- [US-068: As a shopper, I want to edit or delete my preferences at any time, so that they always match what I want](https://github.com/MESW-LES-2627/les-project-group-9/issues/89) - Post-MVP
-- [US-069: As a shopper, I want to see suggested pieces that fit my preferences, so that I find what suits me faster](https://github.com/MESW-LES-2627/les-project-group-9/issues/90) - Post-MVP
-- [US-070: As a shopper, I want to be warned when a piece may contain one of my allergens, so that I can avoid it](https://github.com/MESW-LES-2627/les-project-group-9/issues/91) - Post-MVP
-- [US-071: As a shopper, I want to export or delete my personal preferences, so that I control my data](https://github.com/MESW-LES-2627/les-project-group-9/issues/92) - Post-MVP
+- [US-064: As a shopper, I want to list my allergies, so that the store can warn me about pieces that may irritate my skin](https://github.com/MESW-LES-2627/les-project-group-9/issues/85) - MVP
+- [US-065: As a shopper, I want to set my skin color and undertone, so that the try-on and suggestions fit me](https://github.com/MESW-LES-2627/les-project-group-9/issues/86) - MVP
+- [US-066: As a shopper, I want to save my finger sizes, so that I can pick a ring size without guessing](https://github.com/MESW-LES-2627/les-project-group-9/issues/87) - MVP
+- [US-067: As a shopper, I want to choose my preferred colors and materials, so that the store shows pieces I like](https://github.com/MESW-LES-2627/les-project-group-9/issues/88) - MVP
+- [US-068: As a shopper, I want to edit or delete my preferences at any time, so that they always match what I want](https://github.com/MESW-LES-2627/les-project-group-9/issues/89) - MVP
+- [US-069: As a shopper, I want to see suggested pieces that fit my preferences, so that I find what suits me faster](https://github.com/MESW-LES-2627/les-project-group-9/issues/90) - MVP
+- [US-070: As a shopper, I want to be warned when a piece may contain one of my allergens, so that I can avoid it](https://github.com/MESW-LES-2627/les-project-group-9/issues/91) - MVP
+- [US-071: As a shopper, I want to export or delete my personal preferences, so that I control my data](https://github.com/MESW-LES-2627/les-project-group-9/issues/92) - MVP
 
 ### E17: Chatbot (#21)
 

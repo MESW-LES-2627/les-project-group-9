@@ -1,7 +1,7 @@
 import {useState} from 'react';
 import {Link} from 'react-router';
 import {CartForm, Image, Money} from '@shopify/hydrogen';
-import type {CatalogImage, CatalogProduct} from '~/lib/jeweliette-catalog';
+import {type CatalogImage, type CatalogProduct, formatMetafieldValue} from '~/lib/jeweliette-catalog';
 import {FavoriteButton} from '~/components/product/FavoriteButton';
 import {ProductBadge} from '~/components/product/ProductBadge';
 import {AllergenBadge} from '~/components/product/AllergenBadge';
@@ -29,7 +29,7 @@ export function ProductItem({product, loading = 'lazy'}: Props) {
   const min = product.priceRange.minVariantPrice;
   const max = product.priceRange.maxVariantPrice;
   const isRange = max !== undefined && max.amount !== min.amount;
-  const material = product.material?.value || product.productType || null;
+  const material = formatMetafieldValue(product.material?.value) || product.productType || null;
   const variants = product.variants?.nodes ?? [];
   const variant = variants.length === 1 ? variants[0] : null;
   const hasMultipleVariants = variants.length > 1;

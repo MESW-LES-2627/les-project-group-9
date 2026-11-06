@@ -16,8 +16,8 @@ Previous tag: `iter-0`
 | | |
 | This tag (`iter-1`) | <https://github.com/MESW-LES-2627/les-project-group-9/tree/iter-1> |
 | | |
-| Production | none yet |
-| Staging | none yet |
+| Production | [Last depoly in main](https://01m6sb3mjzxak74zxj4mkfa14f-a09dc7c5b255caddc4c9.myshopify.dev) |
+| Staging | [Last deploy](https://01m6sbdcfadcbqds0edk2x4hr9-40b7bbb96c8b22547cd9.myshopify.dev) |
 | | |
 | CI/CD Pipeline | <https://github.com/MESW-LES-2627/les-project-group-9/actions> |
 | | |
