@@ -14,7 +14,7 @@ npx playwright install chromium
 ## Test layout
 
 | Folder | Kind | Tool |
-|---|---|---|
+| --- | --- | --- |
 | `tests/unit` | Unit tests for `app/lib` and API routes | Vitest (node) |
 | `tests/components/<page>` | Component tests, grouped like `app/components/<page>` | Vitest + React Testing Library (jsdom) |
 | `tests/e2e` | End-to-end tests of the shopper flows | Playwright (Chromium) |
@@ -34,7 +34,7 @@ npm run test:watch
 Component tests cover:
 
 | Folder | Components |
-|---|---|
+| --- | --- |
 | `account` | `PreferencesForm` |
 | `cart` | `CartLineItem`, `CartSummary` |
 | `layout` | `MockShopNotice` |
@@ -52,7 +52,7 @@ Playwright builds the app and starts it with `npm run preview` on port 3000. If 
 
 The tests run against the store in `.env`. To run them like CI does, set:
 
-```
+```dotenv
 PUBLIC_STORE_DOMAIN=mock.shop
 ```
 
@@ -64,7 +64,7 @@ npx playwright test --ui                     # step through tests in a browser
 ```
 
 | File | Flows |
-|---|---|
+| --- | --- |
 | `home.spec.ts` | Home loads; hero banner opens a collection; every featured product opens; the header logo goes back home |
 | `collection.spec.ts` | `/collections` opens a collection; a collection opens a product; home → collection → product |
 | `swatch.spec.ts` | Selecting a product option updates the selected variant |
