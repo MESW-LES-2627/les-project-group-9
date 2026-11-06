@@ -60,8 +60,20 @@ The technology choices and their suitability for the course requirements must be
 
 ## 1. Domain Model
 
+<img width="930" height="657" alt="Jeweliette - Iteration 1 - Domain model" src="https://github.com/user-attachments/assets/2f42789c-7975-40a0-afcd-42d4b61933a8" />
+
+### Main Domain Classes
+`Customer`
+`Product`
+`PreferenceProfile`
+`FittingRoom`
+`ProductTraits`
+`Recommendation`
 
 ## 2. Component Diagram
+
+<img width="482" height="644" alt="Jeweliette - Iteration 1 - Component Diagram" src="https://github.com/user-attachments/assets/e7b73483-165b-483e-9db7-74262fd4e017" />
+
 
 ## 3. Future Change Scenario
 ### Add a new Trending Page
