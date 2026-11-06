@@ -1,36 +1,26 @@
-# CLAIM — Iteration X
+# CLAIM — Iteration 1
 
-Team:&nbsp;
-Tag: `iter-X`
-Previous tag: `iter-(X-1)`
-
-This file lives on the tagged commit at `docs/iterations/X/CLAIM.md`. The review opens this file. We do not hunt the repository. A dead link scores that line at most 4\.&nbsp;
-
-Iteration 0 is a readiness review. An ugly claim does not cap the mark if the slice runs. From Iteration 1, a missing tag or a missing CLAIM.md caps the team mark at 10\.
+Team: 9
+Tag: `iter-1`
+Previous tag: `iter-0`
 
 ---
 
 ## Required permalinks
 
-Use links that work on tag `iter-X`. If something does not exist yet, write `none yet` — do not paste a link that 404s.
-
 | What | Link |
 | :---- | :---- |
-| MVP&nbsp; | URL |
-| Vision | URL |
-| Definition of Done | URL |
+| MVP | <https://github.com/MESW-LES-2627/les-project-group-9/blob/iter-1/docs/iterations/1/mvp.md> |
+| Vision | <https://github.com/MESW-LES-2627/les-project-group-9/blob/iter-1/docs/iterations/1/vision.md> |
+| Definition of Done | <https://github.com/MESW-LES-2627/les-project-group-9/blob/iter-1/docs/dod.md> |
 | | |
-| This tag (`iter-X`) | URL |
+| This tag (`iter-1`) | <https://github.com/MESW-LES-2627/les-project-group-9/tree/iter-1> |
 | | |
-| Production | URL |
-| Staging | URL |
+| Production | none yet |
+| Staging | none yet |
 | | |
-| CI/CD Pipeline | URL |
+| CI/CD Pipeline | <https://github.com/MESW-LES-2627/les-project-group-9/actions> |
 | | |
-| Stories in this increment | URL |
-| Retrospective | URL |
-| AI log | URL |
-
-&nbsp;
-
-&nbsp;
+| Stories in this increment | <https://github.com/orgs/MESW-LES-2627/projects/19/views/1?sliceBy%5Bvalue%5D=MVP&filterQuery=label:type:user-story+iteration:"Iteration+1"> |
+| Retrospective | <https://github.com/MESW-LES-2627/les-project-group-9/blob/iter-1/docs/iterations/1/retrospective.md> |
+| AI log | <https://github.com/MESW-LES-2627/les-project-group-9/blob/iter-1/docs/iterations/1/ai-log.md> |
