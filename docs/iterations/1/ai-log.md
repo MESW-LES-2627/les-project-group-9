@@ -1,0 +1,10 @@
+# AI log - Iteration 1
+
+| Task | LLM | Prompt sent |
+| ---- | --- | ----------- |
+| Write the bug reports for this sprint (Definition of Done, expected vs. actual behavior, steps to reproduce, etc.) and use the proposed steps to guide the fixes. | Perplexity AI (with Claude Sonnet 5.5 Thinking) | I found a bug in our Hydrogen jewelry store. Here is what happens and the relevant code. Write a bug report with a short description, steps to reproduce, expected vs. actual behavior and a Definition of Done, and suggest the steps to fix it. |
+| Write the pull request descriptions for the bug fixes. | Perplexity AI (with Claude Sonnet 5.5 Thinking) | Based on this bug report and the changes I made, write a pull request description with a summary of the changes, the related issue and how to test it. |
+| Expand the automated tests: we wrote the main flow and asked the AI to add tests for smaller interactions. | Claude Opus 5.5 | Here is the test I wrote for the main flow of this feature. Add tests that cover the smaller interactions (e.g. removing an item, moving it to the cart, empty states), following the same structure and conventions. |
+| Review the changes and write the pull request descriptions for the features. | Claude Opus 5.5 | Analyze the changes on this branch compared to main and write a pull request description: summary, what changed, related user story and how to test it. |
+| Understand how Shopify metafields work and how to use them in the storefront. | Shopify AI | How do metafields work in Shopify? How do I create them for products and read them through the Storefront API in a Hydrogen app? |
+| Define the system architecture and the best approach to implement the user stories. | Deepseek v4.1 Flash | Here is the user story and our current Hydrogen project structure. Explain which architecture and approach is best to implement it (routes, components, data loading and Shopify API usage) and the steps to follow. |
