@@ -17,7 +17,7 @@ import {AllergenBadge} from '~/components/product/AllergenBadge';
 import {FavoriteButton} from '~/components/product/FavoriteButton';
 import {FittingRoomButton} from '~/components/product/FittingRoomButton';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
-import {JEWELIETTE_PRODUCT_CARD_FRAGMENT} from '~/lib/jeweliette-catalog';
+import {JEWELIETTE_PRODUCT_CARD_FRAGMENT, formatMetafieldValue} from '~/lib/jeweliette-catalog';
 import {isRingProduct} from '~/lib/profile/ringCategory';
 
 export const meta: Route.MetaFunction = ({data}) => [
