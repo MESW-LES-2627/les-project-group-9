@@ -4,7 +4,10 @@ import type {CatalogImage, CatalogProduct} from '~/lib/jeweliette-catalog';
 type FittingRoomViewProps = {
   products: CatalogProduct[];
   selectedIds: string[];
+  movingId: string | null;
   onToggle: (id: string) => void;
+  onRemove: (id: string) => void;
+  onMoveToCart: (id: string) => void;
   onSelectAll: () => void;
   onClear: () => void;
 };
@@ -16,7 +19,10 @@ function productImage(product: CatalogProduct): CatalogImage | null {
 export function FittingRoomView({
   products,
   selectedIds,
+  movingId,
   onToggle,
+  onRemove,
+  onMoveToCart,
   onSelectAll,
   onClear,
 }: FittingRoomViewProps) {
@@ -52,11 +58,14 @@ export function FittingRoomView({
           {products.map((product) => {
             const image = productImage(product);
             const checked = selectedIds.includes(product.id);
+            const variant = product.selectedOrFirstAvailableVariant;
+            const available = variant?.availableForSale ?? false;
+            const moving = movingId === product.id;
 
             return (
-              <li key={product.id}>
+              <li key={product.id} className="py-4">
                 <label
-                  className={`flex cursor-pointer items-center gap-4 py-4 transition-opacity ${
+                  className={`flex cursor-pointer items-center gap-4 transition-opacity ${
                     checked ? 'opacity-100' : 'opacity-60'
                   }`}
                 >
@@ -95,6 +104,26 @@ export function FittingRoomView({
                     </span>
                   </span>
                 </label>
+                <div className="mt-3 flex items-center gap-4 pl-8 text-[11px] uppercase tracking-widest text-primary">
+                  <button
+                    type="button"
+                    aria-label={`Remove ${product.title} from fitting room`}
+                    disabled={movingId !== null}
+                    onClick={() => onRemove(product.id)}
+                    className="underline underline-offset-4 transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Remove
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={`Move ${product.title} to cart`}
+                    disabled={!available || movingId !== null}
+                    onClick={() => onMoveToCart(product.id)}
+                    className="underline underline-offset-4 transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {moving ? 'Moving…' : available ? 'Move to cart' : 'Sold out'}
+                  </button>
+                </div>
               </li>
             );
           })}

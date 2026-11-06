@@ -1,9 +1,11 @@
-import {useEffect, useState} from 'react';
-import {Link, useFetcher} from 'react-router';
+import {useEffect, useRef, useState} from 'react';
+import {data, Link, useFetcher} from 'react-router';
 import type {Route} from './+types/fitting-room';
 import {FittingRoomView} from '~/components/fitting-room/FittingRoomView';
 import {useFittingRoom} from '~/lib/fitting-room';
+import {updateCustomerFittingRoom} from '~/lib/profile/customer.server';
 import {MAX_FITTING_ROOM} from '~/lib/profile/fitting-room';
+import {isProductGid} from '~/lib/profile/list-schema';
 import {loadProductsByIds, parseProductIds} from '~/lib/products.server';
 
 export const meta: Route.MetaFunction = () => [
@@ -20,11 +22,79 @@ export async function loader({request, context}: Route.LoaderArgs) {
   return {products};
 }
 
+export async function action({request, context}: Route.ActionArgs) {
+  const loggedIn = await context.customerAccount.isLoggedIn();
+  if (!loggedIn) {
+    return data({error: 'Unauthorized'}, {status: 401});
+  }
+
+  const formData = await request.formData();
+  const productId = formData.get('productId');
+
+  if (typeof productId !== 'string' || !isProductGid(productId)) {
+    return data({error: 'Invalid product'}, {status: 400});
+  }
+
+  const [product] = await loadProductsByIds(context, [productId]);
+  const variant = product?.selectedOrFirstAvailableVariant;
+
+  if (!variant?.availableForSale) {
+    return data({error: 'This piece is sold out'}, {status: 400});
+  }
+
+  try {
+    const result = await context.cart.addLines([
+      {merchandiseId: variant.id, quantity: 1},
+    ]);
+
+    const cartError =
+      result.errors?.[0]?.message ?? result.userErrors?.[0]?.message;
+
+    if (cartError) {
+      return data({error: cartError}, {status: 400});
+    }
+
+    const headers = result.cart?.id
+      ? context.cart.setCartId(result.cart.id)
+      : new Headers();
+
+    try {
+      const fittingRoom = await updateCustomerFittingRoom(context, {
+        remove: [productId],
+      });
+      return data({fittingRoom, cart: result.cart}, {headers});
+    } catch (error) {
+      return data(
+        {
+          error:
+            error instanceof Error
+              ? error.message
+              : 'Could not remove from fitting room',
+        },
+        {status: 400, headers},
+      );
+    }
+  } catch (error) {
+    return data(
+      {
+        error:
+          error instanceof Error ? error.message : 'Could not move to cart',
+      },
+      {status: 400},
+    );
+  }
+}
+
 export default function FittingRoom() {
-  const {ids, ready, isLoggedIn} = useFittingRoom();
+  const {ids, ready, isLoggedIn, toggle: toggleFittingRoom, setIds} =
+    useFittingRoom();
   const fetcher = useFetcher<typeof loader>();
+  const moveFetcher = useFetcher<typeof action>();
   const key = ids.join(',');
   const [selected, setSelected] = useState<string[]>([]);
+  const handledMove = useRef<unknown>(null);
+  const movingId =
+    (moveFetcher.formData?.get('productId') as string | null) ?? null;
 
   useEffect(() => {
     if (key) {
@@ -50,13 +120,36 @@ export default function FittingRoom() {
     ids.includes(product.id),
   );
 
-  const toggle = (id: string) => {
+  const toggleSelected = (id: string) => {
     setSelected((current) =>
       current.includes(id)
         ? current.filter((item) => item !== id)
         : [...current, id],
     );
   };
+
+  const moveToCart = (id: string) => {
+    void moveFetcher.submit({productId: id}, {method: 'post'});
+  };
+
+  useEffect(() => {
+    if (moveFetcher.state !== 'idle' || !moveFetcher.data) {
+      return;
+    }
+    if (handledMove.current === moveFetcher.data) return;
+
+    handledMove.current = moveFetcher.data;
+
+    if ('error' in moveFetcher.data) return;
+    if (moveFetcher.data.fittingRoom) {
+      setIds(moveFetcher.data.fittingRoom);
+    }
+  }, [moveFetcher.state, moveFetcher.data, setIds]);
+
+  const moveError =
+    moveFetcher.data && 'error' in moveFetcher.data
+      ? moveFetcher.data.error
+      : null;
 
   return (
     <section className="mx-auto max-w-[1500px] px-[4vw] pb-20 pt-10 tablet:pt-14">
@@ -115,13 +208,23 @@ export default function FittingRoom() {
           </p>
         </div>
       ) : (
-        <FittingRoomView
-          onClear={() => setSelected([])}
-          onSelectAll={() => setSelected(ids)}
-          onToggle={toggle}
-          products={products}
-          selectedIds={selected}
-        />
+        <>
+          {moveError ? (
+            <p role="alert" className="mt-6 text-sm text-red-700">
+              {moveError}
+            </p>
+          ) : null}
+          <FittingRoomView
+            movingId={movingId}
+            onClear={() => setSelected([])}
+            onMoveToCart={moveToCart}
+            onRemove={toggleFittingRoom}
+            onSelectAll={() => setSelected(ids)}
+            onToggle={toggleSelected}
+            products={products}
+            selectedIds={selected}
+          />
+        </>
       )}
     </section>
   );

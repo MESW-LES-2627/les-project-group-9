@@ -37,6 +37,7 @@ type ProfileContextValue = ProfileState & {
   toggleFavorite: (id: string) => void;
   hasFittingRoomItem: (id: string) => boolean;
   toggleFittingRoom: (id: string) => void;
+  setFittingRoom: (ids: string[]) => void;
   savePreferences: (preferences: PreferenceProfile) => Promise<void>;
 };
 
@@ -156,6 +157,14 @@ export function ProfileProvider({children}: {children: ReactNode}) {
     [toggleList],
   );
 
+  const setFittingRoom = useCallback(
+    (ids: string[]) => {
+      const current = stateRef.current;
+      commit({...current, fittingRoom: ids});
+    },
+    [commit],
+  );
+
   const savePreferences = useCallback(
     async (preferences: PreferenceProfile) => {
       const current = stateRef.current;
@@ -209,6 +218,7 @@ export function ProfileProvider({children}: {children: ReactNode}) {
       toggleFavorite,
       hasFittingRoomItem,
       toggleFittingRoom,
+      setFittingRoom,
       savePreferences,
     }),
     [
@@ -217,6 +227,7 @@ export function ProfileProvider({children}: {children: ReactNode}) {
       toggleFavorite,
       hasFittingRoomItem,
       toggleFittingRoom,
+      setFittingRoom,
       savePreferences,
     ],
   );
