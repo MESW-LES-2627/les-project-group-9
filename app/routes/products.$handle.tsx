@@ -18,10 +18,12 @@ import {FavoriteButton} from '~/components/product/FavoriteButton';
 import {FittingRoomButton} from '~/components/product/FittingRoomButton';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 import {
+  JEWELIETTE_MATERIAL_METAFIELD_FRAGMENT,
   JEWELIETTE_PRODUCT_CARD_FRAGMENT,
   formatMetafieldValue,
 } from '~/lib/jeweliette-catalog';
-import {parseMaterials} from '~/lib/materials';
+import {materialsForColor, parseProductMaterials} from '~/lib/materials';
+import {isColorOption} from '~/lib/options';
 import {isRingProduct} from '~/lib/profile/ringCategory';
 
 export const meta: Route.MetaFunction = ({data}) => [
@@ -80,7 +82,18 @@ export default function Product() {
   });
 
   const collection = product.collections.nodes[0];
-  const materials = parseMaterials(product.materials);
+  const materials = parseProductMaterials(product);
+  const colorOption = product.options?.find((option) =>
+    isColorOption(option.name),
+  );
+  const selectedColor = selectedVariant?.selectedOptions?.find((option) =>
+    isColorOption(option.name),
+  )?.value;
+  const visibleMaterials = materialsForColor(
+    materials,
+    colorOption?.optionValues.map((value) => value.name) ?? [],
+    selectedColor,
+  );
 
   const productDetails = [
     {label: 'Type', value: product.productType},
@@ -214,7 +227,7 @@ export default function Product() {
               </p>
             </details>
 
-            {materials.length > 0 ? (
+            {visibleMaterials.length > 0 ? (
               <details className="group py-4">
                 <summary className="flex cursor-pointer list-none items-center justify-between text-[11px] uppercase tracking-widest [&::-webkit-details-marker]:hidden">
                   Materials
@@ -226,7 +239,7 @@ export default function Product() {
                   </span>
                 </summary>
                 <ul className="mt-4 space-y-1 leading-7 text-primary">
-                  {materials.map((material) => (
+                  {visibleMaterials.map((material) => (
                     <li key={material.handle}>{material.label}</li>
                   ))}
                 </ul>
@@ -300,15 +313,11 @@ const PRODUCT_FRAGMENT = `#graphql
     encodedVariantExistence
     encodedVariantAvailability
     productType
-    materials: metafield(namespace: "shopify", key: "jewelry-material") {
-      references(first: 10) {
-        nodes {
-          ... on Metaobject {
-            handle
-            fields { key value }
-          }
-        }
-      }
+    jewelryMaterial: metafield(namespace: "shopify", key: "jewelry-material") {
+      ...JewelietteMaterialMetafield
+    }
+    watchMaterial: metafield(namespace: "shopify", key: "watch-material") {
+      ...JewelietteMaterialMetafield
     }
     metal: metafield(namespace: "custom", key: "metal") { value }
     gemstone: metafield(namespace: "custom", key: "gemstone") { value }
@@ -332,6 +341,7 @@ const PRODUCT_FRAGMENT = `#graphql
     seo { description title }
   }
   ${PRODUCT_VARIANT_FRAGMENT}
+  ${JEWELIETTE_MATERIAL_METAFIELD_FRAGMENT}
 ` as const;
 
 const PRODUCT_QUERY = `#graphql

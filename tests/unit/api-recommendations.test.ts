@@ -11,7 +11,6 @@ function product(id: string, metal: string, title: string) {
     title,
     handle: title.toLowerCase().replace(/\s+/g, '-'),
     productType: 'Ring',
-    materials: null,
     metal: {value: metal},
     gemstone: null,
     gemColor: null,

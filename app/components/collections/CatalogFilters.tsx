@@ -32,6 +32,7 @@ const labels: Record<string, string> = {
   'filter.p.product_type': 'Product type',
   'filter.p.vendor': 'Brand',
   'filter.p.m.shopify.jewelry-material': 'Material',
+  'filter.p.m.shopify.watch-material': 'Material',
   'filter.p.m.custom.metal': 'Metal',
   'filter.p.m.custom.gem_color': 'Gem color',
 };

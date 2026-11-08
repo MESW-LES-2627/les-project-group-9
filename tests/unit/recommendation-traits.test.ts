@@ -24,7 +24,7 @@ describe('toProductTraits', () => {
           id: 'gid://shopify/TaxonomyCategory/aa-6-6',
           name: 'Brincos',
         },
-        materials: {
+        jewelryMaterial: {
           references: {
             nodes: [
               {

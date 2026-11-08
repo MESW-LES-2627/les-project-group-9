@@ -1,6 +1,6 @@
 import {parseProductAllergens} from '~/lib/allergens';
 import type {CatalogProductWithTraits} from '~/lib/jeweliette-catalog';
-import {parseMaterials} from '~/lib/materials';
+import {parseProductMaterials} from '~/lib/materials';
 import {
   normalizeValue,
   parseListMetafield,
@@ -31,7 +31,7 @@ export function toProductTraits(
         normalizeValue(collection.handle),
       ) ?? [],
     category: product.category?.id ? [normalizeValue(product.category.id)] : [],
-    material: parseMaterials(product.materials).map(
+    material: parseProductMaterials(product).map(
       (material) => material.handle,
     ),
     metal,

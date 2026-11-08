@@ -1,6 +1,5 @@
 import {Image, Money} from '@shopify/hydrogen';
 import type {CatalogImage, CatalogProduct} from '~/lib/jeweliette-catalog';
-import {materialLabels} from '~/lib/materials';
 
 type FittingRoomViewProps = {
   products: CatalogProduct[];
@@ -58,7 +57,6 @@ export function FittingRoomView({
         <ul className="divide-y divide-line">
           {products.map((product) => {
             const image = productImage(product);
-            const material = materialLabels(product.materials).join(', ');
             const checked = selectedIds.includes(product.id);
             const variant = product.selectedOrFirstAvailableVariant;
             const available = variant?.availableForSale ?? false;
@@ -93,11 +91,6 @@ export function FittingRoomView({
                     <span className="block truncate font-display text-lg text-ink">
                       {product.title}
                     </span>
-                    {material ? (
-                      <span className="mt-1 block text-[11px] uppercase tracking-wider text-primary">
-                        {material}
-                      </span>
-                    ) : null}
                     <span className="mt-1 block text-sm text-primary">
                       <Money
                         data={product.priceRange.minVariantPrice}
