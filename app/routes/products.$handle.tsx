@@ -17,12 +17,19 @@ import {AllergenBadge} from '~/components/product/AllergenBadge';
 import {FavoriteButton} from '~/components/product/FavoriteButton';
 import {FittingRoomButton} from '~/components/product/FittingRoomButton';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
-import {JEWELIETTE_PRODUCT_CARD_FRAGMENT, formatMetafieldValue} from '~/lib/jeweliette-catalog';
+import {
+  JEWELIETTE_PRODUCT_CARD_FRAGMENT,
+  formatMetafieldValue,
+} from '~/lib/jeweliette-catalog';
+import {parseMaterials} from '~/lib/materials';
 import {isRingProduct} from '~/lib/profile/ringCategory';
 
 export const meta: Route.MetaFunction = ({data}) => [
   {title: `${data?.product.title ?? 'Product'} | Jeweliette`},
-  {name: 'description', content: data?.product.seo.description ?? data?.product.description ?? ''},
+  {
+    name: 'description',
+    content: data?.product.seo.description ?? data?.product.description ?? '',
+  },
   {rel: 'canonical', href: `/products/${data?.product.handle}`},
 ];
 
@@ -73,10 +80,10 @@ export default function Product() {
   });
 
   const collection = product.collections.nodes[0];
+  const materials = parseMaterials(product.materials);
 
   const productDetails = [
     {label: 'Type', value: product.productType},
-    {label: 'Material', value: product.material?.value},
     {label: 'Metal', value: product.metal?.value},
     {label: 'Gemstone', value: product.gemstone?.value},
     {label: 'Gem color', value: product.gemColor?.value},
@@ -93,17 +100,24 @@ export default function Product() {
         aria-label="Breadcrumb"
         className="mb-6 flex flex-wrap gap-2 text-[11px] uppercase tracking-widest text-primary"
       >
-        <Link to="/" className="hover:text-ink">Home</Link>
+        <Link to="/" className="hover:text-ink">
+          Home
+        </Link>
         {collection ? (
           <>
             <span aria-hidden="true">/</span>
-            <Link to={`/collections/${collection.handle}`} className="hover:text-ink">
+            <Link
+              to={`/collections/${collection.handle}`}
+              className="hover:text-ink"
+            >
               {collection.title}
             </Link>
           </>
         ) : null}
         <span aria-hidden="true">/</span>
-        <span className="text-ink" aria-current="page">{product.title}</span>
+        <span className="text-ink" aria-current="page">
+          {product.title}
+        </span>
       </nav>
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-14">
@@ -115,12 +129,6 @@ export default function Product() {
 
         <div className="lg:sticky lg:top-24 lg:self-start">
           <AllergenBadge allergens={product.allergens} className="mb-3" />
-
-          {product.material?.value ? (
-            <p className="text-[11px] uppercase tracking-[0.2em] text-primary">
-              {formatMetafieldValue(product.material.value)}
-            </p>
-          ) : null}
 
           <div className="mt-3 flex items-start justify-between gap-4">
             <h1 className="font-display text-[clamp(1.75rem,3vw,2.5rem)] leading-tight">
@@ -152,8 +160,12 @@ export default function Product() {
             <details open className="group py-4">
               <summary className="flex cursor-pointer list-none items-center justify-between text-[11px] uppercase tracking-widest [&::-webkit-details-marker]:hidden">
                 Description
-                <span aria-hidden="true" className="group-open:hidden">+</span>
-                <span aria-hidden="true" className="hidden group-open:inline">−</span>
+                <span aria-hidden="true" className="group-open:hidden">
+                  +
+                </span>
+                <span aria-hidden="true" className="hidden group-open:inline">
+                  −
+                </span>
               </summary>
               <div
                 className="prose-sm mt-4 leading-7 text-primary [&_p]:mb-3"
@@ -175,7 +187,10 @@ export default function Product() {
 
                 <dl className="mt-5 space-y-3 text-sm">
                   {productDetails.map(({label, value}) => (
-                    <div key={label} className="grid grid-cols-[7rem_minmax(0,1fr)] gap-4">
+                    <div
+                      key={label}
+                      className="grid grid-cols-[7rem_minmax(0,1fr)] gap-4"
+                    >
                       <dt className="text-primary">{label}</dt>
                       <dd className="break-words text-ink">{value}</dd>
                     </div>
@@ -187,13 +202,36 @@ export default function Product() {
             <details className="group py-4">
               <summary className="flex cursor-pointer list-none items-center justify-between text-[11px] uppercase tracking-widest [&::-webkit-details-marker]:hidden">
                 Shipping
-                <span aria-hidden="true" className="group-open:hidden">+</span>
-                <span aria-hidden="true" className="hidden group-open:inline">−</span>
+                <span aria-hidden="true" className="group-open:hidden">
+                  +
+                </span>
+                <span aria-hidden="true" className="hidden group-open:inline">
+                  −
+                </span>
               </summary>
               <p className="mt-4 leading-7 text-primary">
                 Shipping options and taxes are calculated at checkout.
               </p>
             </details>
+
+            {materials.length > 0 ? (
+              <details className="group py-4">
+                <summary className="flex cursor-pointer list-none items-center justify-between text-[11px] uppercase tracking-widest [&::-webkit-details-marker]:hidden">
+                  Materials
+                  <span aria-hidden="true" className="group-open:hidden">
+                    +
+                  </span>
+                  <span aria-hidden="true" className="hidden group-open:inline">
+                    −
+                  </span>
+                </summary>
+                <ul className="mt-4 space-y-1 leading-7 text-primary">
+                  {materials.map((material) => (
+                    <li key={material.handle}>{material.label}</li>
+                  ))}
+                </ul>
+              </details>
+            ) : null}
           </div>
         </div>
       </div>
@@ -262,7 +300,16 @@ const PRODUCT_FRAGMENT = `#graphql
     encodedVariantExistence
     encodedVariantAvailability
     productType
-    material: metafield(namespace: "custom", key: "material") { value }
+    materials: metafield(namespace: "shopify", key: "jewelry-material") {
+      references(first: 10) {
+        nodes {
+          ... on Metaobject {
+            handle
+            fields { key value }
+          }
+        }
+      }
+    }
     metal: metafield(namespace: "custom", key: "metal") { value }
     gemstone: metafield(namespace: "custom", key: "gemstone") { value }
     gemColor: metafield(namespace: "custom", key: "gem_color") { value }

@@ -1,4 +1,5 @@
 import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
+import type {CatalogMaterialsMetafield} from './materials';
 
 export type CatalogMoney = {amount: string; currencyCode: CurrencyCode};
 
@@ -41,7 +42,7 @@ export type CatalogProduct = {
     availableForSale: boolean;
   } | null;
   productType?: string;
-  material?: {value: string} | null;
+  materials?: CatalogMaterialsMetafield;
   allergens?: {value: string} | null;
   badge?: {value: string} | null;
   variants?: {
@@ -68,7 +69,16 @@ export const JEWELIETTE_PRODUCT_CARD_FRAGMENT = `#graphql
     title
     handle
     productType
-    material: metafield(namespace: "custom", key: "material") { value }
+    materials: metafield(namespace: "shopify", key: "jewelry-material") {
+      references(first: 10) {
+        nodes {
+          ... on Metaobject {
+            handle
+            fields { key value }
+          }
+        }
+      }
+    }
     allergens: metafield(namespace: "custom", key: "allergens") { value }
     badge: metafield(namespace: "custom", key: "product_badge") { value }
     featuredImage { id url altText width height }

@@ -24,7 +24,16 @@ describe('toProductTraits', () => {
           id: 'gid://shopify/TaxonomyCategory/aa-6-6',
           name: 'Brincos',
         },
-        material: {value: 'gold plated'},
+        materials: {
+          references: {
+            nodes: [
+              {
+                handle: 'gold-plated',
+                fields: [{key: 'label', value: 'Gold-plated'}],
+              },
+            ],
+          },
+        },
         metal: {value: 'gold'},
         gemstone: {value: '["zirconia"]'},
         gemColor: {value: '["white"]'},
@@ -32,9 +41,7 @@ describe('toProductTraits', () => {
       }),
     );
 
-    expect(traits.category).toEqual([
-      'gid-shopify-taxonomycategory-aa-6-6',
-    ]);
+    expect(traits.category).toEqual(['gid-shopify-taxonomycategory-aa-6-6']);
     expect(traits.material).toEqual(['gold-plated']);
     expect(traits.metal).toEqual(['gold']);
     expect(traits.gemstones).toEqual(['zirconia']);
