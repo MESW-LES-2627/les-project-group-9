@@ -377,11 +377,20 @@ export type FooterQuery = {
   >;
 };
 
+export type JewelietteMaterialMetafieldFragment = {
+  references?: StorefrontAPI.Maybe<{
+    nodes: Array<
+      Pick<StorefrontAPI.Metaobject, 'handle'> & {
+        fields: Array<Pick<StorefrontAPI.MetaobjectField, 'key' | 'value'>>;
+      }
+    >;
+  }>;
+};
+
 export type JewelietteProductCardFragment = Pick<
   StorefrontAPI.Product,
   'id' | 'title' | 'handle' | 'productType'
 > & {
-  material?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
   allergens?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
   badge?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
   featuredImage?: StorefrontAPI.Maybe<
@@ -432,6 +441,24 @@ export type JewelietteRecommendationProductFragment = Pick<
   StorefrontAPI.Product,
   'id' | 'title' | 'handle' | 'productType'
 > & {
+  jewelryMaterial?: StorefrontAPI.Maybe<{
+    references?: StorefrontAPI.Maybe<{
+      nodes: Array<
+        Pick<StorefrontAPI.Metaobject, 'handle'> & {
+          fields: Array<Pick<StorefrontAPI.MetaobjectField, 'key' | 'value'>>;
+        }
+      >;
+    }>;
+  }>;
+  watchMaterial?: StorefrontAPI.Maybe<{
+    references?: StorefrontAPI.Maybe<{
+      nodes: Array<
+        Pick<StorefrontAPI.Metaobject, 'handle'> & {
+          fields: Array<Pick<StorefrontAPI.MetaobjectField, 'key' | 'value'>>;
+        }
+      >;
+    }>;
+  }>;
   category?: StorefrontAPI.Maybe<
     Pick<StorefrontAPI.TaxonomyCategory, 'id' | 'name'>
   >;
@@ -439,7 +466,6 @@ export type JewelietteRecommendationProductFragment = Pick<
   gemstone?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
   gemColor?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
   collections: {nodes: Array<Pick<StorefrontAPI.Collection, 'handle'>>};
-  material?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
   allergens?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
   badge?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
   featuredImage?: StorefrontAPI.Maybe<
@@ -543,9 +569,6 @@ export type JewelietteProductsByIdsQuery = {
           StorefrontAPI.Product,
           'id' | 'title' | 'handle' | 'productType'
         > & {
-            material?: StorefrontAPI.Maybe<
-              Pick<StorefrontAPI.Metafield, 'value'>
-            >;
             allergens?: StorefrontAPI.Maybe<
               Pick<StorefrontAPI.Metafield, 'value'>
             >;
@@ -622,6 +645,28 @@ export type JewelietteRecommendationCandidatesQuery = {
   products: {
     nodes: Array<
       Pick<StorefrontAPI.Product, 'id' | 'title' | 'handle' | 'productType'> & {
+        jewelryMaterial?: StorefrontAPI.Maybe<{
+          references?: StorefrontAPI.Maybe<{
+            nodes: Array<
+              Pick<StorefrontAPI.Metaobject, 'handle'> & {
+                fields: Array<
+                  Pick<StorefrontAPI.MetaobjectField, 'key' | 'value'>
+                >;
+              }
+            >;
+          }>;
+        }>;
+        watchMaterial?: StorefrontAPI.Maybe<{
+          references?: StorefrontAPI.Maybe<{
+            nodes: Array<
+              Pick<StorefrontAPI.Metaobject, 'handle'> & {
+                fields: Array<
+                  Pick<StorefrontAPI.MetaobjectField, 'key' | 'value'>
+                >;
+              }
+            >;
+          }>;
+        }>;
         category?: StorefrontAPI.Maybe<
           Pick<StorefrontAPI.TaxonomyCategory, 'id' | 'name'>
         >;
@@ -629,7 +674,6 @@ export type JewelietteRecommendationCandidatesQuery = {
         gemstone?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
         gemColor?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
         collections: {nodes: Array<Pick<StorefrontAPI.Collection, 'handle'>>};
-        material?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
         allergens?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
         badge?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
         featuredImage?: StorefrontAPI.Maybe<
@@ -704,7 +748,6 @@ export type JewelietteHomeCollectionFragment = Pick<
   products: {
     nodes: Array<
       Pick<StorefrontAPI.Product, 'id' | 'title' | 'handle' | 'productType'> & {
-        material?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
         allergens?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
         badge?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
         featuredImage?: StorefrontAPI.Maybe<
@@ -804,9 +847,6 @@ export type JewelietteHomeQuery = {
                       StorefrontAPI.Product,
                       'id' | 'title' | 'handle' | 'productType'
                     > & {
-                      material?: StorefrontAPI.Maybe<
-                        Pick<StorefrontAPI.Metafield, 'value'>
-                      >;
                       allergens?: StorefrontAPI.Maybe<
                         Pick<StorefrontAPI.Metafield, 'value'>
                       >;
@@ -906,9 +946,6 @@ export type JewelietteHomeQuery = {
               StorefrontAPI.Product,
               'id' | 'title' | 'handle' | 'productType'
             > & {
-              material?: StorefrontAPI.Maybe<
-                Pick<StorefrontAPI.Metafield, 'value'>
-              >;
               allergens?: StorefrontAPI.Maybe<
                 Pick<StorefrontAPI.Metafield, 'value'>
               >;
@@ -984,7 +1021,6 @@ export type JewelietteHomeQuery = {
   products: {
     nodes: Array<
       Pick<StorefrontAPI.Product, 'id' | 'title' | 'handle' | 'productType'> & {
-        material?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
         allergens?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
         badge?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
         featuredImage?: StorefrontAPI.Maybe<
@@ -1217,9 +1253,6 @@ export type CollectionQuery = {
             StorefrontAPI.Product,
             'id' | 'title' | 'handle' | 'productType'
           > & {
-            material?: StorefrontAPI.Maybe<
-              Pick<StorefrontAPI.Metafield, 'value'>
-            >;
             allergens?: StorefrontAPI.Maybe<
               Pick<StorefrontAPI.Metafield, 'value'>
             >;
@@ -1360,7 +1393,6 @@ export type CatalogQuery = {
   products: {
     nodes: Array<
       Pick<StorefrontAPI.Product, 'id' | 'title' | 'handle' | 'productType'> & {
-        material?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
         allergens?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
         badge?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
         featuredImage?: StorefrontAPI.Maybe<
@@ -1539,7 +1571,24 @@ export type ProductFragment = Pick<
   | 'encodedVariantAvailability'
   | 'productType'
 > & {
-  material?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+  jewelryMaterial?: StorefrontAPI.Maybe<{
+    references?: StorefrontAPI.Maybe<{
+      nodes: Array<
+        Pick<StorefrontAPI.Metaobject, 'handle'> & {
+          fields: Array<Pick<StorefrontAPI.MetaobjectField, 'key' | 'value'>>;
+        }
+      >;
+    }>;
+  }>;
+  watchMaterial?: StorefrontAPI.Maybe<{
+    references?: StorefrontAPI.Maybe<{
+      nodes: Array<
+        Pick<StorefrontAPI.Metaobject, 'handle'> & {
+          fields: Array<Pick<StorefrontAPI.MetaobjectField, 'key' | 'value'>>;
+        }
+      >;
+    }>;
+  }>;
   metal?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
   gemstone?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
   gemColor?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
@@ -1670,7 +1719,28 @@ export type ProductQuery = {
       | 'encodedVariantAvailability'
       | 'productType'
     > & {
-      material?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+      jewelryMaterial?: StorefrontAPI.Maybe<{
+        references?: StorefrontAPI.Maybe<{
+          nodes: Array<
+            Pick<StorefrontAPI.Metaobject, 'handle'> & {
+              fields: Array<
+                Pick<StorefrontAPI.MetaobjectField, 'key' | 'value'>
+              >;
+            }
+          >;
+        }>;
+      }>;
+      watchMaterial?: StorefrontAPI.Maybe<{
+        references?: StorefrontAPI.Maybe<{
+          nodes: Array<
+            Pick<StorefrontAPI.Metaobject, 'handle'> & {
+              fields: Array<
+                Pick<StorefrontAPI.MetaobjectField, 'key' | 'value'>
+              >;
+            }
+          >;
+        }>;
+      }>;
       metal?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
       gemstone?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
       gemColor?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
@@ -1793,7 +1863,6 @@ export type JewelietteRecommendationsQuery = {
   productRecommendations?: StorefrontAPI.Maybe<
     Array<
       Pick<StorefrontAPI.Product, 'id' | 'title' | 'handle' | 'productType'> & {
-        material?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
         allergens?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
         badge?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
         featuredImage?: StorefrontAPI.Maybe<
@@ -1883,7 +1952,6 @@ export type SearchProductFragment = {__typename: 'Product'} & Pick<
         product: Pick<StorefrontAPI.Product, 'handle' | 'title'>;
       }
     >;
-    material?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
     allergens?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
     badge?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
     featuredImage?: StorefrontAPI.Maybe<
@@ -2005,9 +2073,6 @@ export type RegularSearchQuery = {
               >;
               product: Pick<StorefrontAPI.Product, 'handle' | 'title'>;
             }
-          >;
-          material?: StorefrontAPI.Maybe<
-            Pick<StorefrontAPI.Metafield, 'value'>
           >;
           allergens?: StorefrontAPI.Maybe<
             Pick<StorefrontAPI.Metafield, 'value'>
@@ -2205,11 +2270,11 @@ interface GeneratedQueryTypes {
     return: FooterQuery;
     variables: FooterQueryVariables;
   };
-  '#graphql\n  #graphql\n  fragment JewelietteProductCard on Product {\n    id\n    title\n    handle\n    productType\n    material: metafield(namespace: "custom", key: "material") { value }\n    allergens: metafield(namespace: "custom", key: "allergens") { value }\n    badge: metafield(namespace: "custom", key: "product_badge") { value }\n    featuredImage { id url altText width height }\n    images(first: 2) { nodes { id url altText width height } }\n    options {\n      name\n      optionValues {\n        name\n        swatch { color image { previewImage { url } } }\n        firstSelectableVariant {\n          id\n          availableForSale\n          image { id url altText width height }\n        }\n      }\n    }\n    priceRange {\n      minVariantPrice { amount currencyCode }\n      maxVariantPrice { amount currencyCode }\n    }\n    selectedOrFirstAvailableVariant { id availableForSale }\n  }\n\n  query JewelietteProductsByIds(\n    $ids: [ID!]!\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    nodes(ids: $ids) {\n      __typename\n      ... on Product { ...JewelietteProductCard }\n    }\n  }\n': {
+  '#graphql\n  #graphql\n  fragment JewelietteProductCard on Product {\n    id\n    title\n    handle\n    productType\n    allergens: metafield(namespace: "custom", key: "allergens") { value }\n    badge: metafield(namespace: "custom", key: "product_badge") { value }\n    featuredImage { id url altText width height }\n    images(first: 2) { nodes { id url altText width height } }\n    options {\n      name\n      optionValues {\n        name\n        swatch { color image { previewImage { url } } }\n        firstSelectableVariant {\n          id\n          availableForSale\n          image { id url altText width height }\n        }\n      }\n    }\n    priceRange {\n      minVariantPrice { amount currencyCode }\n      maxVariantPrice { amount currencyCode }\n    }\n    selectedOrFirstAvailableVariant { id availableForSale }\n  }\n\n  query JewelietteProductsByIds(\n    $ids: [ID!]!\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    nodes(ids: $ids) {\n      __typename\n      ... on Product { ...JewelietteProductCard }\n    }\n  }\n': {
     return: JewelietteProductsByIdsQuery;
     variables: JewelietteProductsByIdsQueryVariables;
   };
-  '#graphql\n  #graphql\n  fragment JewelietteRecommendationProduct on Product {\n    ...JewelietteProductCard\n    category { id name }\n    metal: metafield(namespace: "custom", key: "metal") { value }\n    gemstone: metafield(namespace: "custom", key: "gemstone") { value }\n    gemColor: metafield(namespace: "custom", key: "gem_color") { value }\n    collections(first: 10) { nodes { handle } }\n  }\n  #graphql\n  fragment JewelietteProductCard on Product {\n    id\n    title\n    handle\n    productType\n    material: metafield(namespace: "custom", key: "material") { value }\n    allergens: metafield(namespace: "custom", key: "allergens") { value }\n    badge: metafield(namespace: "custom", key: "product_badge") { value }\n    featuredImage { id url altText width height }\n    images(first: 2) { nodes { id url altText width height } }\n    options {\n      name\n      optionValues {\n        name\n        swatch { color image { previewImage { url } } }\n        firstSelectableVariant {\n          id\n          availableForSale\n          image { id url altText width height }\n        }\n      }\n    }\n    priceRange {\n      minVariantPrice { amount currencyCode }\n      maxVariantPrice { amount currencyCode }\n    }\n    selectedOrFirstAvailableVariant { id availableForSale }\n  }\n\n\n  query JewelietteRecommendationCandidates(\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    products(first: 250, sortKey: BEST_SELLING) {\n      nodes {\n        ...JewelietteRecommendationProduct\n      }\n    }\n  }\n': {
+  '#graphql\n  #graphql\n  fragment JewelietteRecommendationProduct on Product {\n    ...JewelietteProductCard\n    jewelryMaterial: metafield(namespace: "shopify", key: "jewelry-material") {\n      ...JewelietteMaterialMetafield\n    }\n    watchMaterial: metafield(namespace: "shopify", key: "watch-material") {\n      ...JewelietteMaterialMetafield\n    }\n    category { id name }\n    metal: metafield(namespace: "custom", key: "metal") { value }\n    gemstone: metafield(namespace: "custom", key: "gemstone") { value }\n    gemColor: metafield(namespace: "custom", key: "gem_color") { value }\n    collections(first: 10) { nodes { handle } }\n  }\n  #graphql\n  fragment JewelietteProductCard on Product {\n    id\n    title\n    handle\n    productType\n    allergens: metafield(namespace: "custom", key: "allergens") { value }\n    badge: metafield(namespace: "custom", key: "product_badge") { value }\n    featuredImage { id url altText width height }\n    images(first: 2) { nodes { id url altText width height } }\n    options {\n      name\n      optionValues {\n        name\n        swatch { color image { previewImage { url } } }\n        firstSelectableVariant {\n          id\n          availableForSale\n          image { id url altText width height }\n        }\n      }\n    }\n    priceRange {\n      minVariantPrice { amount currencyCode }\n      maxVariantPrice { amount currencyCode }\n    }\n    selectedOrFirstAvailableVariant { id availableForSale }\n  }\n\n  #graphql\n  fragment JewelietteMaterialMetafield on Metafield {\n    references(first: 10) {\n      nodes {\n        ... on Metaobject {\n          handle\n          fields { key value }\n        }\n      }\n    }\n  }\n\n\n  query JewelietteRecommendationCandidates(\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    products(first: 250, sortKey: BEST_SELLING) {\n      nodes {\n        ...JewelietteRecommendationProduct\n      }\n    }\n  }\n': {
     return: JewelietteRecommendationCandidatesQuery;
     variables: JewelietteRecommendationCandidatesQueryVariables;
   };
@@ -2217,7 +2282,7 @@ interface GeneratedQueryTypes {
     return: HeaderQuery;
     variables: HeaderQueryVariables;
   };
-  '#graphql\n  #graphql\n  fragment JewelietteProductCard on Product {\n    id\n    title\n    handle\n    productType\n    material: metafield(namespace: "custom", key: "material") { value }\n    allergens: metafield(namespace: "custom", key: "allergens") { value }\n    badge: metafield(namespace: "custom", key: "product_badge") { value }\n    featuredImage { id url altText width height }\n    images(first: 2) { nodes { id url altText width height } }\n    options {\n      name\n      optionValues {\n        name\n        swatch { color image { previewImage { url } } }\n        firstSelectableVariant {\n          id\n          availableForSale\n          image { id url altText width height }\n        }\n      }\n    }\n    priceRange {\n      minVariantPrice { amount currencyCode }\n      maxVariantPrice { amount currencyCode }\n    }\n    selectedOrFirstAvailableVariant { id availableForSale }\n  }\n\n\n  fragment JewelietteHomeCollection on Collection {\n    id\n    title\n    handle\n    description\n\n    image {\n      id\n      url\n      altText\n      width\n      height\n    }\n\n    products(first: 4) {\n      nodes {\n        ...JewelietteProductCard\n      }\n    }\n  }\n\n  query JewelietteHome(\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    contentMenu: menu(handle: "home-content") {\n      items {\n        title\n\n        resource {\n          __typename\n\n          ... on Collection {\n            ...JewelietteHomeCollection\n          }\n        }\n      }\n    }\n\n    collections(first: 8, sortKey: TITLE) {\n      nodes {\n        ...JewelietteHomeCollection\n      }\n    }\n\n    products(first: 4, sortKey: BEST_SELLING) {\n      nodes {\n        ...JewelietteProductCard\n      }\n    }\n  }\n': {
+  '#graphql\n  #graphql\n  fragment JewelietteProductCard on Product {\n    id\n    title\n    handle\n    productType\n    allergens: metafield(namespace: "custom", key: "allergens") { value }\n    badge: metafield(namespace: "custom", key: "product_badge") { value }\n    featuredImage { id url altText width height }\n    images(first: 2) { nodes { id url altText width height } }\n    options {\n      name\n      optionValues {\n        name\n        swatch { color image { previewImage { url } } }\n        firstSelectableVariant {\n          id\n          availableForSale\n          image { id url altText width height }\n        }\n      }\n    }\n    priceRange {\n      minVariantPrice { amount currencyCode }\n      maxVariantPrice { amount currencyCode }\n    }\n    selectedOrFirstAvailableVariant { id availableForSale }\n  }\n\n\n  fragment JewelietteHomeCollection on Collection {\n    id\n    title\n    handle\n    description\n\n    image {\n      id\n      url\n      altText\n      width\n      height\n    }\n\n    products(first: 4) {\n      nodes {\n        ...JewelietteProductCard\n      }\n    }\n  }\n\n  query JewelietteHome(\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    contentMenu: menu(handle: "home-content") {\n      items {\n        title\n\n        resource {\n          __typename\n\n          ... on Collection {\n            ...JewelietteHomeCollection\n          }\n        }\n      }\n    }\n\n    collections(first: 8, sortKey: TITLE) {\n      nodes {\n        ...JewelietteHomeCollection\n      }\n    }\n\n    products(first: 4, sortKey: BEST_SELLING) {\n      nodes {\n        ...JewelietteProductCard\n      }\n    }\n  }\n': {
     return: JewelietteHomeQuery;
     variables: JewelietteHomeQueryVariables;
   };
@@ -2233,7 +2298,7 @@ interface GeneratedQueryTypes {
     return: BlogsQuery;
     variables: BlogsQueryVariables;
   };
-  '#graphql\n  #graphql\n  fragment JewelietteProductCard on Product {\n    id\n    title\n    handle\n    productType\n    material: metafield(namespace: "custom", key: "material") { value }\n    allergens: metafield(namespace: "custom", key: "allergens") { value }\n    badge: metafield(namespace: "custom", key: "product_badge") { value }\n    featuredImage { id url altText width height }\n    images(first: 2) { nodes { id url altText width height } }\n    options {\n      name\n      optionValues {\n        name\n        swatch { color image { previewImage { url } } }\n        firstSelectableVariant {\n          id\n          availableForSale\n          image { id url altText width height }\n        }\n      }\n    }\n    priceRange {\n      minVariantPrice { amount currencyCode }\n      maxVariantPrice { amount currencyCode }\n    }\n    selectedOrFirstAvailableVariant { id availableForSale }\n  }\n\n\n  query Collection(\n    $handle: String!\n    $country: CountryCode\n    $language: LanguageCode\n    $first: Int\n    $last: Int\n    $startCursor: String\n    $endCursor: String\n    $filters: [ProductFilter!]\n    $sortKey: ProductCollectionSortKeys\n    $reverse: Boolean\n  ) @inContext(country: $country, language: $language) {\n    collection(handle: $handle) {\n      id\n      handle\n      title\n      description\n\n      products(\n        first: $first\n        last: $last\n        before: $startCursor\n        after: $endCursor\n        filters: $filters\n        sortKey: $sortKey\n        reverse: $reverse\n      ) {\n        nodes {\n          ...JewelietteProductCard\n        }\n\n        filters {\n          id\n          label\n          type\n          values {\n            id\n            label\n            count\n            input\n          }\n        }\n\n        pageInfo {\n          hasPreviousPage\n          hasNextPage\n          endCursor\n          startCursor\n        }\n      }\n    }\n  }\n': {
+  '#graphql\n  #graphql\n  fragment JewelietteProductCard on Product {\n    id\n    title\n    handle\n    productType\n    allergens: metafield(namespace: "custom", key: "allergens") { value }\n    badge: metafield(namespace: "custom", key: "product_badge") { value }\n    featuredImage { id url altText width height }\n    images(first: 2) { nodes { id url altText width height } }\n    options {\n      name\n      optionValues {\n        name\n        swatch { color image { previewImage { url } } }\n        firstSelectableVariant {\n          id\n          availableForSale\n          image { id url altText width height }\n        }\n      }\n    }\n    priceRange {\n      minVariantPrice { amount currencyCode }\n      maxVariantPrice { amount currencyCode }\n    }\n    selectedOrFirstAvailableVariant { id availableForSale }\n  }\n\n\n  query Collection(\n    $handle: String!\n    $country: CountryCode\n    $language: LanguageCode\n    $first: Int\n    $last: Int\n    $startCursor: String\n    $endCursor: String\n    $filters: [ProductFilter!]\n    $sortKey: ProductCollectionSortKeys\n    $reverse: Boolean\n  ) @inContext(country: $country, language: $language) {\n    collection(handle: $handle) {\n      id\n      handle\n      title\n      description\n\n      products(\n        first: $first\n        last: $last\n        before: $startCursor\n        after: $endCursor\n        filters: $filters\n        sortKey: $sortKey\n        reverse: $reverse\n      ) {\n        nodes {\n          ...JewelietteProductCard\n        }\n\n        filters {\n          id\n          label\n          type\n          values {\n            id\n            label\n            count\n            input\n          }\n        }\n\n        pageInfo {\n          hasPreviousPage\n          hasNextPage\n          endCursor\n          startCursor\n        }\n      }\n    }\n  }\n': {
     return: CollectionQuery;
     variables: CollectionQueryVariables;
   };
@@ -2241,7 +2306,7 @@ interface GeneratedQueryTypes {
     return: StoreCollectionsQuery;
     variables: StoreCollectionsQueryVariables;
   };
-  '#graphql\n  #graphql\n  fragment JewelietteProductCard on Product {\n    id\n    title\n    handle\n    productType\n    material: metafield(namespace: "custom", key: "material") { value }\n    allergens: metafield(namespace: "custom", key: "allergens") { value }\n    badge: metafield(namespace: "custom", key: "product_badge") { value }\n    featuredImage { id url altText width height }\n    images(first: 2) { nodes { id url altText width height } }\n    options {\n      name\n      optionValues {\n        name\n        swatch { color image { previewImage { url } } }\n        firstSelectableVariant {\n          id\n          availableForSale\n          image { id url altText width height }\n        }\n      }\n    }\n    priceRange {\n      minVariantPrice { amount currencyCode }\n      maxVariantPrice { amount currencyCode }\n    }\n    selectedOrFirstAvailableVariant { id availableForSale }\n  }\n\n\n  query Catalog(\n    $country: CountryCode\n    $language: LanguageCode\n    $first: Int\n    $last: Int\n    $startCursor: String\n    $endCursor: String\n  ) @inContext(country: $country, language: $language) {\n    products(\n      first: $first\n      last: $last\n      before: $startCursor\n      after: $endCursor\n    ) {\n      nodes {\n        ...JewelietteProductCard\n      }\n      pageInfo {\n        hasPreviousPage\n        hasNextPage\n        startCursor\n        endCursor\n      }\n    }\n  }\n': {
+  '#graphql\n  #graphql\n  fragment JewelietteProductCard on Product {\n    id\n    title\n    handle\n    productType\n    allergens: metafield(namespace: "custom", key: "allergens") { value }\n    badge: metafield(namespace: "custom", key: "product_badge") { value }\n    featuredImage { id url altText width height }\n    images(first: 2) { nodes { id url altText width height } }\n    options {\n      name\n      optionValues {\n        name\n        swatch { color image { previewImage { url } } }\n        firstSelectableVariant {\n          id\n          availableForSale\n          image { id url altText width height }\n        }\n      }\n    }\n    priceRange {\n      minVariantPrice { amount currencyCode }\n      maxVariantPrice { amount currencyCode }\n    }\n    selectedOrFirstAvailableVariant { id availableForSale }\n  }\n\n\n  query Catalog(\n    $country: CountryCode\n    $language: LanguageCode\n    $first: Int\n    $last: Int\n    $startCursor: String\n    $endCursor: String\n  ) @inContext(country: $country, language: $language) {\n    products(\n      first: $first\n      last: $last\n      before: $startCursor\n      after: $endCursor\n    ) {\n      nodes {\n        ...JewelietteProductCard\n      }\n      pageInfo {\n        hasPreviousPage\n        hasNextPage\n        startCursor\n        endCursor\n      }\n    }\n  }\n': {
     return: CatalogQuery;
     variables: CatalogQueryVariables;
   };
@@ -2257,15 +2322,15 @@ interface GeneratedQueryTypes {
     return: PoliciesQuery;
     variables: PoliciesQueryVariables;
   };
-  '#graphql\n  query Product(\n    $country: CountryCode\n    $handle: String!\n    $language: LanguageCode\n    $selectedOptions: [SelectedOptionInput!]!\n  ) @inContext(country: $country, language: $language) {\n    product(handle: $handle) { ...Product }\n  }\n  #graphql\n  fragment Product on Product {\n    id\n    title\n    vendor\n    handle\n    descriptionHtml\n    description\n    encodedVariantExistence\n    encodedVariantAvailability\n    productType\n    material: metafield(namespace: "custom", key: "material") { value }\n    metal: metafield(namespace: "custom", key: "metal") { value }\n    gemstone: metafield(namespace: "custom", key: "gemstone") { value }\n    gemColor: metafield(namespace: "custom", key: "gem_color") { value }\n    allergens: metafield(namespace: "custom", key: "allergens") { value }\n    images(first: 10) { nodes { id url altText width height } }\n    collections(first: 1) { nodes { title handle } }\n    category { id name }\n    options {\n      name\n      optionValues {\n        name\n        firstSelectableVariant { ...ProductVariant }\n        swatch { color image { previewImage { url } } }\n      }\n    }\n    selectedOrFirstAvailableVariant(selectedOptions: $selectedOptions, ignoreUnknownOptions: true, caseInsensitiveMatch: true) {\n      ...ProductVariant\n    }\n    adjacentVariants(selectedOptions: $selectedOptions) { ...ProductVariant }\n    seo { description title }\n  }\n  #graphql\n  fragment ProductVariant on ProductVariant {\n    availableForSale\n    compareAtPrice { amount currencyCode }\n    id\n    image { __typename id url altText width height }\n    price { amount currencyCode }\n    product { title handle }\n    selectedOptions { name value }\n    sku\n    title\n    unitPrice { amount currencyCode }\n  }\n\n\n': {
+  '#graphql\n  query Product(\n    $country: CountryCode\n    $handle: String!\n    $language: LanguageCode\n    $selectedOptions: [SelectedOptionInput!]!\n  ) @inContext(country: $country, language: $language) {\n    product(handle: $handle) { ...Product }\n  }\n  #graphql\n  fragment Product on Product {\n    id\n    title\n    vendor\n    handle\n    descriptionHtml\n    description\n    encodedVariantExistence\n    encodedVariantAvailability\n    productType\n    jewelryMaterial: metafield(namespace: "shopify", key: "jewelry-material") {\n      ...JewelietteMaterialMetafield\n    }\n    watchMaterial: metafield(namespace: "shopify", key: "watch-material") {\n      ...JewelietteMaterialMetafield\n    }\n    metal: metafield(namespace: "custom", key: "metal") { value }\n    gemstone: metafield(namespace: "custom", key: "gemstone") { value }\n    gemColor: metafield(namespace: "custom", key: "gem_color") { value }\n    allergens: metafield(namespace: "custom", key: "allergens") { value }\n    images(first: 10) { nodes { id url altText width height } }\n    collections(first: 1) { nodes { title handle } }\n    category { id name }\n    options {\n      name\n      optionValues {\n        name\n        firstSelectableVariant { ...ProductVariant }\n        swatch { color image { previewImage { url } } }\n      }\n    }\n    selectedOrFirstAvailableVariant(selectedOptions: $selectedOptions, ignoreUnknownOptions: true, caseInsensitiveMatch: true) {\n      ...ProductVariant\n    }\n    adjacentVariants(selectedOptions: $selectedOptions) { ...ProductVariant }\n    seo { description title }\n  }\n  #graphql\n  fragment ProductVariant on ProductVariant {\n    availableForSale\n    compareAtPrice { amount currencyCode }\n    id\n    image { __typename id url altText width height }\n    price { amount currencyCode }\n    product { title handle }\n    selectedOptions { name value }\n    sku\n    title\n    unitPrice { amount currencyCode }\n  }\n\n  #graphql\n  fragment JewelietteMaterialMetafield on Metafield {\n    references(first: 10) {\n      nodes {\n        ... on Metaobject {\n          handle\n          fields { key value }\n        }\n      }\n    }\n  }\n\n\n': {
     return: ProductQuery;
     variables: ProductQueryVariables;
   };
-  '#graphql\n  #graphql\n  fragment JewelietteProductCard on Product {\n    id\n    title\n    handle\n    productType\n    material: metafield(namespace: "custom", key: "material") { value }\n    allergens: metafield(namespace: "custom", key: "allergens") { value }\n    badge: metafield(namespace: "custom", key: "product_badge") { value }\n    featuredImage { id url altText width height }\n    images(first: 2) { nodes { id url altText width height } }\n    options {\n      name\n      optionValues {\n        name\n        swatch { color image { previewImage { url } } }\n        firstSelectableVariant {\n          id\n          availableForSale\n          image { id url altText width height }\n        }\n      }\n    }\n    priceRange {\n      minVariantPrice { amount currencyCode }\n      maxVariantPrice { amount currencyCode }\n    }\n    selectedOrFirstAvailableVariant { id availableForSale }\n  }\n\n  query JewelietteRecommendations(\n    $productId: ID!\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    productRecommendations(productId: $productId) {\n      ...JewelietteProductCard\n    }\n  }\n': {
+  '#graphql\n  #graphql\n  fragment JewelietteProductCard on Product {\n    id\n    title\n    handle\n    productType\n    allergens: metafield(namespace: "custom", key: "allergens") { value }\n    badge: metafield(namespace: "custom", key: "product_badge") { value }\n    featuredImage { id url altText width height }\n    images(first: 2) { nodes { id url altText width height } }\n    options {\n      name\n      optionValues {\n        name\n        swatch { color image { previewImage { url } } }\n        firstSelectableVariant {\n          id\n          availableForSale\n          image { id url altText width height }\n        }\n      }\n    }\n    priceRange {\n      minVariantPrice { amount currencyCode }\n      maxVariantPrice { amount currencyCode }\n    }\n    selectedOrFirstAvailableVariant { id availableForSale }\n  }\n\n  query JewelietteRecommendations(\n    $productId: ID!\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    productRecommendations(productId: $productId) {\n      ...JewelietteProductCard\n    }\n  }\n': {
     return: JewelietteRecommendationsQuery;
     variables: JewelietteRecommendationsQueryVariables;
   };
-  '#graphql\n  query RegularSearch(\n    $country: CountryCode\n    $endCursor: String\n    $first: Int\n    $language: LanguageCode\n    $last: Int\n    $term: String!\n    $startCursor: String\n    $filters: [ProductFilter!]\n  ) @inContext(country: $country, language: $language) {\n    articles: search(\n      query: $term\n      types: [ARTICLE]\n      first: $first\n    ) {\n      nodes {\n        ... on Article {\n          ...SearchArticle\n        }\n      }\n    }\n\n    pages: search(\n      query: $term\n      types: [PAGE]\n      first: $first\n    ) {\n      nodes {\n        ... on Page {\n          ...SearchPage\n        }\n      }\n    }\n\n    products: search(\n      after: $endCursor\n      before: $startCursor\n      first: $first\n      last: $last\n      query: $term\n      sortKey: RELEVANCE\n      types: [PRODUCT]\n      unavailableProducts: HIDE\n      productFilters: $filters\n    ) {\n      nodes {\n        ... on Product {\n          ...SearchProduct\n        }\n      }\n\n      productFilters {\n        id\n        label\n        type\n\n        values {\n          id\n          label\n          count\n          input\n        }\n      }\n\n      pageInfo {\n        ...PageInfoFragment\n      }\n    }\n  }\n\n  #graphql\n  fragment SearchProduct on Product {\n    ...JewelietteProductCard\n    __typename\n    handle\n    id\n    publishedAt\n    title\n    trackingParameters\n    vendor\n    selectedOrFirstAvailableVariant {\n      id\n      image {\n        url\n        altText\n        width\n        height\n      }\n      price {\n        amount\n        currencyCode\n      }\n      compareAtPrice {\n        amount\n        currencyCode\n      }\n      selectedOptions {\n        name\n        value\n      }\n      product {\n        handle\n        title\n      }\n    }\n  }\n\n  #graphql\n  fragment SearchPage on Page {\n     __typename\n     handle\n    id\n    title\n    trackingParameters\n  }\n\n  #graphql\n  fragment SearchArticle on Article {\n    __typename\n    handle\n    id\n    title\n    trackingParameters\n  }\n\n  #graphql\n  fragment PageInfoFragment on PageInfo {\n    hasNextPage\n    hasPreviousPage\n    startCursor\n    endCursor\n  }\n\n  #graphql\n  fragment JewelietteProductCard on Product {\n    id\n    title\n    handle\n    productType\n    material: metafield(namespace: "custom", key: "material") { value }\n    allergens: metafield(namespace: "custom", key: "allergens") { value }\n    badge: metafield(namespace: "custom", key: "product_badge") { value }\n    featuredImage { id url altText width height }\n    images(first: 2) { nodes { id url altText width height } }\n    options {\n      name\n      optionValues {\n        name\n        swatch { color image { previewImage { url } } }\n        firstSelectableVariant {\n          id\n          availableForSale\n          image { id url altText width height }\n        }\n      }\n    }\n    priceRange {\n      minVariantPrice { amount currencyCode }\n      maxVariantPrice { amount currencyCode }\n    }\n    selectedOrFirstAvailableVariant { id availableForSale }\n  }\n\n': {
+  '#graphql\n  query RegularSearch(\n    $country: CountryCode\n    $endCursor: String\n    $first: Int\n    $language: LanguageCode\n    $last: Int\n    $term: String!\n    $startCursor: String\n    $filters: [ProductFilter!]\n  ) @inContext(country: $country, language: $language) {\n    articles: search(\n      query: $term\n      types: [ARTICLE]\n      first: $first\n    ) {\n      nodes {\n        ... on Article {\n          ...SearchArticle\n        }\n      }\n    }\n\n    pages: search(\n      query: $term\n      types: [PAGE]\n      first: $first\n    ) {\n      nodes {\n        ... on Page {\n          ...SearchPage\n        }\n      }\n    }\n\n    products: search(\n      after: $endCursor\n      before: $startCursor\n      first: $first\n      last: $last\n      query: $term\n      sortKey: RELEVANCE\n      types: [PRODUCT]\n      unavailableProducts: HIDE\n      productFilters: $filters\n    ) {\n      nodes {\n        ... on Product {\n          ...SearchProduct\n        }\n      }\n\n      productFilters {\n        id\n        label\n        type\n\n        values {\n          id\n          label\n          count\n          input\n        }\n      }\n\n      pageInfo {\n        ...PageInfoFragment\n      }\n    }\n  }\n\n  #graphql\n  fragment SearchProduct on Product {\n    ...JewelietteProductCard\n    __typename\n    handle\n    id\n    publishedAt\n    title\n    trackingParameters\n    vendor\n    selectedOrFirstAvailableVariant {\n      id\n      image {\n        url\n        altText\n        width\n        height\n      }\n      price {\n        amount\n        currencyCode\n      }\n      compareAtPrice {\n        amount\n        currencyCode\n      }\n      selectedOptions {\n        name\n        value\n      }\n      product {\n        handle\n        title\n      }\n    }\n  }\n\n  #graphql\n  fragment SearchPage on Page {\n     __typename\n     handle\n    id\n    title\n    trackingParameters\n  }\n\n  #graphql\n  fragment SearchArticle on Article {\n    __typename\n    handle\n    id\n    title\n    trackingParameters\n  }\n\n  #graphql\n  fragment PageInfoFragment on PageInfo {\n    hasNextPage\n    hasPreviousPage\n    startCursor\n    endCursor\n  }\n\n  #graphql\n  fragment JewelietteProductCard on Product {\n    id\n    title\n    handle\n    productType\n    allergens: metafield(namespace: "custom", key: "allergens") { value }\n    badge: metafield(namespace: "custom", key: "product_badge") { value }\n    featuredImage { id url altText width height }\n    images(first: 2) { nodes { id url altText width height } }\n    options {\n      name\n      optionValues {\n        name\n        swatch { color image { previewImage { url } } }\n        firstSelectableVariant {\n          id\n          availableForSale\n          image { id url altText width height }\n        }\n      }\n    }\n    priceRange {\n      minVariantPrice { amount currencyCode }\n      maxVariantPrice { amount currencyCode }\n    }\n    selectedOrFirstAvailableVariant { id availableForSale }\n  }\n\n': {
     return: RegularSearchQuery;
     variables: RegularSearchQueryVariables;
   };

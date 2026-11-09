@@ -18,7 +18,7 @@ function dedupe(values: string[]): string[] {
   return Array.from(new Set(values.filter(Boolean)));
 }
 
-/** Comma-separated text metafield, e.g. `material: "gold plated, silver"`. */
+/** Comma-separated text metafield, e.g. `metal: "gold, silver"`. */
 export function parseTextMetafield(value?: string | null): string[] {
   if (!value) return [];
   return dedupe(value.split(',').map(normalizeValue).filter(Boolean));

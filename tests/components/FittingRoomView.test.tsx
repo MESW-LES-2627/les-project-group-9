@@ -18,7 +18,6 @@ const products: CatalogProduct[] = [
     handle: 'gold-ring',
     priceRange: {minVariantPrice: {amount: '89.0', currencyCode: 'EUR'}},
     featuredImage: {url: '/gold.jpg', altText: 'Gold ring'},
-    material: {value: 'gold-plated'},
     selectedOrFirstAvailableVariant: {
       id: 'gid://shopify/ProductVariant/1',
       availableForSale: true,

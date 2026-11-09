@@ -8,6 +8,7 @@ import type {ProductFragment} from 'storefrontapi.generated';
 import {useAside} from '~/components/layout/Aside';
 import {AddToBagGuard} from '~/components/product/AddToBagGuard';
 import {RingSizeHelp} from '~/components/product/RingSizeHelp';
+import {isColorOption} from '~/lib/options';
 
 type Props = {
   productOptions: MappedProductOptions[];
@@ -16,8 +17,6 @@ type Props = {
   /** True for products in the "Rings" category. Enables the ring size helper. */
   isRing?: boolean;
 };
-
-const COLOR_OPTION = /^(colou?r|finish|metal)$/i;
 
 export function ProductForm({
   productOptions,
@@ -37,7 +36,7 @@ export function ProductForm({
       {productOptions
         .filter((option) => option.optionValues.length > 1)
         .map((option) => {
-          const isColor = COLOR_OPTION.test(option.name);
+          const isColor = isColorOption(option.name);
           const selectedValue = option.optionValues.find(
             (v) => v.selected,
           )?.name;

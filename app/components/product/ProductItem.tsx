@@ -1,7 +1,8 @@
 import {useState} from 'react';
 import {Link} from 'react-router';
 import {CartForm, Image, Money} from '@shopify/hydrogen';
-import {type CatalogImage, type CatalogProduct, formatMetafieldValue} from '~/lib/jeweliette-catalog';
+import {type CatalogImage, type CatalogProduct} from '~/lib/jeweliette-catalog';
+import {isColorOption} from '~/lib/options';
 import {FavoriteButton} from '~/components/product/FavoriteButton';
 import {ProductBadge} from '~/components/product/ProductBadge';
 import {AllergenBadge} from '~/components/product/AllergenBadge';
@@ -9,13 +10,11 @@ import {AddToBagGuard} from '~/components/product/AddToBagGuard';
 
 type Props = {product: CatalogProduct; loading?: 'eager' | 'lazy'};
 
-const COLOR_OPTION = /^(colou?r|finish|metal)$/i;
-
 export function ProductItem({product, loading = 'lazy'}: Props) {
   const [variantImage, setVariantImage] = useState<CatalogImage | null>(null);
 
   const url = `/products/${product.handle}`;
-  const colorOption = product.options?.find((o) => COLOR_OPTION.test(o.name));
+  const colorOption = product.options?.find((o) => isColorOption(o.name));
   const swatches =
     colorOption && colorOption.optionValues.length > 1
       ? colorOption.optionValues
@@ -29,7 +28,6 @@ export function ProductItem({product, loading = 'lazy'}: Props) {
   const min = product.priceRange.minVariantPrice;
   const max = product.priceRange.maxVariantPrice;
   const isRange = max !== undefined && max.amount !== min.amount;
-  const material = formatMetafieldValue(product.material?.value) || product.productType || null;
   const variants = product.variants?.nodes ?? [];
   const variant = variants.length === 1 ? variants[0] : null;
   const hasMultipleVariants = variants.length > 1;
@@ -132,11 +130,6 @@ export function ProductItem({product, loading = 'lazy'}: Props) {
           >
             {product.title}
           </Link>
-          {material ? (
-            <p className="mt-1 text-[11px] uppercase tracking-wider text-primary">
-              {material}
-            </p>
-          ) : null}
         </div>
 
         <div className="shrink-0 text-sm text-ink">

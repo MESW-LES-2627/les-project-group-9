@@ -11,7 +11,7 @@ import {
   useRouteLoaderData,
 } from 'react-router';
 import type {Route} from './+types/root';
-import favicon from '~/assets/favicon.svg';
+import logo from '~/assets/logo.svg';
 import tailwindCss from '~/styles/tailwind.css?url';
 import {PageLayout} from '~/components/layout/PageLayout';
 import {ProfileProvider} from '~/lib/profile/ProfileProvider';
@@ -38,7 +38,7 @@ export function links() {
       rel: 'stylesheet',
       href: 'https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap',
     },
-    {rel: 'icon', type: 'image/svg+xml', href: favicon},
+    {rel: 'icon', type: 'image/svg+xml', href: logo},
   ];
 }
 

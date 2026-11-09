@@ -1,8 +1,5 @@
 import {Form, Link} from 'react-router';
-import {
-  parseFilterObject,
-  serializeFilterInput,
-} from '~/lib/search';
+import {parseFilterObject, serializeFilterInput} from '~/lib/search';
 import {PriceRange} from './PriceRange';
 
 type Filter = {
@@ -34,24 +31,24 @@ const labels: Record<string, string> = {
   'filter.v.price': 'Price',
   'filter.p.product_type': 'Product type',
   'filter.p.vendor': 'Brand',
-  'filter.p.m.custom.material': 'Material',
+  'filter.p.m.shopify.jewelry-material': 'Material',
+  'filter.p.m.shopify.watch-material': 'Material',
   'filter.p.m.custom.metal': 'Metal',
   'filter.p.m.custom.gem_color': 'Gem color',
 };
 
 export function CatalogFilters({
-                                 filters,
-                                 selectedFilters,
-                                 priceMin,
-                                 priceMax,
-                                 clearHref,
-                                 query,
-                                 currencyCode,
-                                 sort,
-                                 sortOptions = [],
-                               }: Props) {
-  const active =
-    selectedFilters.length > 0 || priceMin || priceMax;
+  filters,
+  selectedFilters,
+  priceMin,
+  priceMax,
+  clearHref,
+  query,
+  currencyCode,
+  sort,
+  sortOptions = [],
+}: Props) {
+  const active = selectedFilters.length > 0 || priceMin || priceMax;
 
   const summaryClass =
     'flex min-h-12 cursor-pointer list-none items-center gap-3 px-4 text-xs uppercase tracking-widest';
@@ -63,21 +60,14 @@ export function CatalogFilters({
     .map((filter) => ({
       ...filter,
       values: filter.values.filter(
-        (value) =>
-          parseFilterObject(value.input).available !== false,
+        (value) => parseFilterObject(value.input).available !== false,
       ),
     }))
     .filter((filter) => filter.values.length > 0);
 
   return (
     <Form
-      key={JSON.stringify([
-        query,
-        sort,
-        selectedFilters,
-        priceMin,
-        priceMax,
-      ])}
+      key={JSON.stringify([query, sort, selectedFilters, priceMin, priceMax])}
       method="get"
       preventScrollReset
       className="relative z-10 my-8 flex flex-wrap items-center justify-end border-y border-line"
@@ -86,10 +76,7 @@ export function CatalogFilters({
 
         if (!(target instanceof HTMLInputElement)) return;
 
-        if (
-          target.type === 'checkbox' ||
-          target.type === 'radio'
-        ) {
+        if (target.type === 'checkbox' || target.type === 'radio') {
           event.currentTarget.requestSubmit();
         }
       }}
@@ -114,9 +101,7 @@ export function CatalogFilters({
         }
 
         event.currentTarget
-          .querySelectorAll<HTMLDetailsElement>(
-            'details[open]',
-          )
+          .querySelectorAll<HTMLDetailsElement>('details[open]')
           .forEach((panel) => {
             if (panel !== selected) panel.open = false;
           });
@@ -136,10 +121,7 @@ export function CatalogFilters({
       ) : null}
 
       {visibleFilters.map((filter) => (
-        <details
-          key={filter.id}
-          className="relative border-l border-line"
-        >
+        <details key={filter.id} className="relative border-l border-line">
           <summary className={summaryClass}>
             {labels[filter.id] ?? filter.label}
             <span aria-hidden="true">+</span>
@@ -173,14 +155,10 @@ export function CatalogFilters({
                     />
 
                     <span>
-                      {parseFilterObject(value.input)
-                        .available === true
+                      {parseFilterObject(value.input).available === true
                         ? 'In stock'
-                        : value.label}
-                      {' '}
-                      <span className="text-primary">
-                        ({value.count})
-                      </span>
+                        : value.label}{' '}
+                      <span className="text-primary">({value.count})</span>
                     </span>
                   </label>
                 );

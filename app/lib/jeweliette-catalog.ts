@@ -1,4 +1,5 @@
 import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
+import type {CatalogMaterialsFields} from './materials';
 
 export type CatalogMoney = {amount: string; currencyCode: CurrencyCode};
 
@@ -41,7 +42,6 @@ export type CatalogProduct = {
     availableForSale: boolean;
   } | null;
   productType?: string;
-  material?: {value: string} | null;
   allergens?: {value: string} | null;
   badge?: {value: string} | null;
   variants?: {
@@ -52,15 +52,29 @@ export type CatalogProduct = {
   };
 };
 
-export type CatalogProductWithTraits = CatalogProduct & {
-  category?: {id: string; name: string} | null;
-  metal?: {value: string} | null;
-  gemstone?: {value: string} | null;
-  gemColor?: {value: string} | null;
-  collections?: {
-    nodes: Array<{handle: string}>;
+export type CatalogProductWithTraits = CatalogProduct &
+  CatalogMaterialsFields & {
+    category?: {id: string; name: string} | null;
+    metal?: {value: string} | null;
+    gemstone?: {value: string} | null;
+    gemColor?: {value: string} | null;
+    collections?: {
+      nodes: Array<{handle: string}>;
+    };
   };
-};
+
+export const JEWELIETTE_MATERIAL_METAFIELD_FRAGMENT = `#graphql
+  fragment JewelietteMaterialMetafield on Metafield {
+    references(first: 10) {
+      nodes {
+        ... on Metaobject {
+          handle
+          fields { key value }
+        }
+      }
+    }
+  }
+` as const;
 
 export const JEWELIETTE_PRODUCT_CARD_FRAGMENT = `#graphql
   fragment JewelietteProductCard on Product {
@@ -68,7 +82,6 @@ export const JEWELIETTE_PRODUCT_CARD_FRAGMENT = `#graphql
     title
     handle
     productType
-    material: metafield(namespace: "custom", key: "material") { value }
     allergens: metafield(namespace: "custom", key: "allergens") { value }
     badge: metafield(namespace: "custom", key: "product_badge") { value }
     featuredImage { id url altText width height }
@@ -96,6 +109,12 @@ export const JEWELIETTE_PRODUCT_CARD_FRAGMENT = `#graphql
 export const JEWELIETTE_RECOMMENDATION_PRODUCT_FRAGMENT = `#graphql
   fragment JewelietteRecommendationProduct on Product {
     ...JewelietteProductCard
+    jewelryMaterial: metafield(namespace: "shopify", key: "jewelry-material") {
+      ...JewelietteMaterialMetafield
+    }
+    watchMaterial: metafield(namespace: "shopify", key: "watch-material") {
+      ...JewelietteMaterialMetafield
+    }
     category { id name }
     metal: metafield(namespace: "custom", key: "metal") { value }
     gemstone: metafield(namespace: "custom", key: "gemstone") { value }
@@ -103,6 +122,7 @@ export const JEWELIETTE_RECOMMENDATION_PRODUCT_FRAGMENT = `#graphql
     collections(first: 10) { nodes { handle } }
   }
   ${JEWELIETTE_PRODUCT_CARD_FRAGMENT}
+  ${JEWELIETTE_MATERIAL_METAFIELD_FRAGMENT}
 ` as const;
 
 export function formatMetafieldValue(
