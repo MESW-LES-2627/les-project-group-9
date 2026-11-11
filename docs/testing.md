@@ -40,7 +40,7 @@ Watch mode:
 npm run test:watch
 ```
 
-Unit tests (`tests/unit`) cover the `app/lib` modules (allergens, i18n, materials, metafields, order filters, profile schema/preferences/customer, recommendation engine and traits, redirect, ring category, search filters, variants, fitting room) and the API/form routes (`api.profile*`, `api.recommendations`, `locale`, fitting-room move to cart). `response.test.ts` checks the worker's response finishing (`app/lib/response.server.ts`): the language and session cookies both survive on one response, plus the `Vary` merging. Localization: `messages.test.ts` (every key in EN, PT and FR, no empty messages, identical placeholders, plural shapes and valid plural categories, glossary terms, French no-break spacing), `i18n-format.test.ts` (money, dates and lists per locale with hand-written expectations; server and `meta` translators) and `translation-fallback.test.ts` (a PT request that gets English Shopify content renders it without error, with no hardcoded language in the query).
+Unit tests (`tests/unit`) cover the `app/lib` modules (allergens, i18n, materials, metafields, order filters, profile schema/preferences/customer, recommendation engine and traits, redirect, ring category, search filters, variants, fitting room) and the API/form routes (`api.profile*`, `api.recommendations`, `locale`, fitting-room move to cart). `response.test.ts` checks the worker's response finishing (`app/lib/response.server.ts`): the language and session cookies both survive on one response, plus the `Vary` merging. Localization: `messages.test.ts` (every key in EN, PT and FR, no empty messages, identical placeholders, plural shapes and valid plural categories, glossary terms, French no-break spacing), `i18n-format.test.ts` (money, dates and lists per locale with hand-written expectations; server and `meta` translators) `translation-fallback.test.ts` (a PT request that gets English Shopify content renders it without error, with no hardcoded language in the query) and `locale-propagation.test.ts` (every GraphQL operation passes `$language` through `@inContext`; Hydrogen's real storefront client sends the resolved language and caches each language separately).
 
 Component tests cover:
 
@@ -49,6 +49,7 @@ Component tests cover:
 | *(top level)* | `FittingRoomButton`, `FittingRoomView` |
 | `account` | `PreferencesForm`, `RingSizeForm` |
 | `cart` | `CartLineItem`, `CartSummary` |
+| `collections` | `CatalogFilters`: app-named filter labels in EN, PT and FR; other filters keep the Shopify label |
 | `layout` | `LanguageSelector` dropdown (closed trigger with the localized current language in EN/PT/FR, EN/PT/FR options with flags, names, `lang` and `aria-current`, posting path, query and hash, arrow keys/Home/End/Escape with focus return, keyboard choice, outside click and focus-out closing, inline layout), `MockShopNotice` |
 | `i18n` | `LocalizedComponents`: `ProductItem` and `FittingRoomView` in EN, PT and FR (labels, plurals, try-on placeholder, price format) with untranslated catalog content |
 | `product` | `AddToCartButton`, `AllergenBadge`, `FavoriteButton`, `ProductBadge`, `ProductForm`, `ProductGallery`, `ProductItem`, `ProductPrice`, `RecommendedProducts`, `RingSizeHelp`, swatch gallery |
@@ -56,6 +57,17 @@ Component tests cover:
 | `shared` | `ConfirmDialog` |
 
 `AddToCartButton` and `MockShopNotice` are tested but not currently used by the app (see [architecture.md → Known issues](architecture.md#known-issues)).
+
+### What the localization tests do and do not prove
+
+| Layer | Tests | Proves |
+| --- | --- | --- |
+| Dictionaries and UI | `messages.test.ts`, `i18n-format.test.ts`, component tests in `i18n`, `layout`, `collections`, `product`, E2E `localized-flows.spec.ts` and `language.spec.ts` | Every key exists in EN/PT/FR; interface text, prices, dates and plurals follow the active language. |
+| Locale sent to Shopify | `i18n.test.ts`, `locale-propagation.test.ts` | Cookie and `Accept-Language` resolve to the right language code; every GraphQL operation uses `@inContext(language: $language)`; no code hardcodes a language; Hydrogen sends the resolved language with country `US` and keeps a separate cache entry per language. |
+| Localized Shopify fixtures | `LocalizedComponents.test.tsx`, `CatalogFilters.test.tsx` | Components render the content Shopify returns (any language) without replacing it. |
+| English fallback | `translation-fallback.test.ts` | A PT request that receives English content renders it without error (mocked responses). |
+| Live Shopify translations | None automated | Needs PT/FR published in Shopify; follow [i18n.md → Read-only verification](i18n.md#read-only-verification). `<html lang>` changing is **not** evidence that catalog content is translated. |
+| CI installation | GitHub Actions `e2e` job | Only that the hosted runner could install Chromium and its system packages; see [Continuous integration](#continuous-integration). |
 
 ## End-to-end tests
 
