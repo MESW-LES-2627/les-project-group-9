@@ -1,7 +1,7 @@
 import {Form, Link} from 'react-router';
 import {parseFilterObject, serializeFilterInput} from '~/lib/search';
 import {PriceRange} from './PriceRange';
-import {useTranslation} from '~/lib/i18n';
+import {useTranslation, type MessageKey} from '~/lib/i18n';
 
 type Filter = {
   id: string;
@@ -27,15 +27,20 @@ type Props = {
   sortOptions?: Array<{value: string; label: string}>;
 };
 
-const labels: Record<string, string> = {
-  'filter.v.availability': 'Availability',
-  'filter.v.price': 'Price',
-  'filter.p.product_type': 'Product type',
-  'filter.p.vendor': 'Brand',
-  'filter.p.m.shopify.jewelry-material': 'Material',
-  'filter.p.m.shopify.watch-material': 'Material',
-  'filter.p.m.custom.metal': 'Metal',
-  'filter.p.m.custom.gem_color': 'Gem color',
+/**
+ * Filter IDs whose label the app supplies instead of Shopify's (Shopify's
+ * default labels for these are generic or mention metafield names). Any other
+ * filter shows the label Shopify returns for the request's language.
+ */
+const FILTER_LABEL_KEYS: Record<string, MessageKey> = {
+  'filter.v.availability': 'filters.label.availability',
+  'filter.v.price': 'filters.label.price',
+  'filter.p.product_type': 'filters.label.productType',
+  'filter.p.vendor': 'filters.label.brand',
+  'filter.p.m.shopify.jewelry-material': 'filters.label.material',
+  'filter.p.m.shopify.watch-material': 'filters.label.material',
+  'filter.p.m.custom.metal': 'filters.label.metal',
+  'filter.p.m.custom.gem_color': 'filters.label.gemColor',
 };
 
 export function CatalogFilters({
@@ -125,7 +130,9 @@ export function CatalogFilters({
       {visibleFilters.map((filter) => (
         <details key={filter.id} className="relative border-l border-line">
           <summary className={summaryClass}>
-            {labels[filter.id] ?? filter.label}
+            {FILTER_LABEL_KEYS[filter.id]
+              ? t(FILTER_LABEL_KEYS[filter.id])
+              : filter.label}
             <span aria-hidden="true">+</span>
           </summary>
 
