@@ -1,6 +1,16 @@
 import type {I18nBase} from '@shopify/hydrogen';
 import {useRouteLoaderData} from 'react-router';
 import type {RootLoader} from '~/root';
+import {
+  en,
+  type MessageKey,
+  type Messages,
+  type PluralMessage,
+} from '~/lib/messages/en';
+import {fr} from '~/lib/messages/fr';
+import {pt} from '~/lib/messages/pt';
+
+export type {MessageKey} from '~/lib/messages/en';
 
 /** Flags available to the language selector (`LanguageSelector.tsx`). */
 export type FlagKey = 'us' | 'pt' | 'fr';
@@ -244,104 +254,8 @@ export function toAppLocale(i18n: I18nBase): AppLocale {
   };
 }
 
-/*
- * UI messages. US-046 only covers the language selector and shared
- * navigation; US-047 extends this dictionary to the rest of the interface.
- * `en` defines the key set and each message's shape; every other language
- * must provide every key with the same shape.
- *
- * A message is a string or, when it depends on a `count` value, an object of
- * Intl.PluralRules categories (`other` required). Plural forms are chosen in
- * `createTranslator` only; components just pass `{count}`.
- */
-type PluralMessage = Partial<Record<Intl.LDMLPluralRule, string>> & {
-  other: string;
-};
-
-const en = {
-  'language.label': 'Language',
-  'language.current': 'Current language: {language}',
-  'nav.skipToContent': 'Skip to content',
-  'nav.main': 'Main navigation',
-  'nav.mobile': 'Mobile menu',
-  'nav.accountActions': 'Account actions',
-  'nav.home': 'Home',
-  'nav.homeOf': '{shop} — home',
-  'nav.openMenu': 'Open menu',
-  'nav.menu': 'Menu',
-  'nav.search': 'Search',
-  'nav.account': 'Account',
-  'nav.myAccount': 'My account',
-  'nav.favorites': 'Favorites',
-  'nav.fittingRoom': 'Fitting room',
-  'nav.shoppingBag': 'Shopping bag',
-  'nav.openCart': {
-    one: 'Open cart with {count} item',
-    other: 'Open cart with {count} items',
-  },
-  'nav.close': 'Close',
-  'nav.closePanel': 'Close panel',
-} as const satisfies Record<string, string | PluralMessage>;
-
-export type MessageKey = keyof typeof en;
-type Messages = {
-  [Key in MessageKey]: (typeof en)[Key] extends string ? string : PluralMessage;
-};
-
-const MESSAGES: Record<LocaleCode, Messages> = {
-  en,
-  pt: {
-    'language.label': 'Idioma',
-    'language.current': 'Idioma atual: {language}',
-    'nav.skipToContent': 'Saltar para o conteúdo',
-    'nav.main': 'Navegação principal',
-    'nav.mobile': 'Menu de navegação',
-    'nav.accountActions': 'Ações da conta',
-    'nav.home': 'Início',
-    'nav.homeOf': '{shop} — página inicial',
-    'nav.openMenu': 'Abrir menu',
-    'nav.menu': 'Menu',
-    'nav.search': 'Pesquisar',
-    'nav.account': 'Conta',
-    'nav.myAccount': 'A minha conta',
-    'nav.favorites': 'Favoritos',
-    'nav.fittingRoom': 'Provador',
-    'nav.shoppingBag': 'Saco de compras',
-    'nav.openCart': {
-      one: 'Abrir saco de compras com {count} artigo',
-      other: 'Abrir saco de compras com {count} artigos',
-    },
-    'nav.close': 'Fechar',
-    'nav.closePanel': 'Fechar painel',
-  },
-  fr: {
-    'language.label': 'Langue',
-    // French typography: no-break space before the colon.
-    'language.current': 'Langue actuelle : {language}',
-    'nav.skipToContent': 'Aller au contenu',
-    'nav.main': 'Navigation principale',
-    'nav.mobile': 'Menu de navigation',
-    'nav.accountActions': 'Actions du compte',
-    'nav.home': 'Accueil',
-    'nav.homeOf': '{shop} — accueil',
-    'nav.openMenu': 'Ouvrir le menu',
-    'nav.menu': 'Menu',
-    'nav.search': 'Rechercher',
-    'nav.account': 'Compte',
-    'nav.myAccount': 'Mon compte',
-    'nav.favorites': 'Favoris',
-    'nav.fittingRoom': 'Cabine d’essayage',
-    'nav.shoppingBag': 'Panier',
-    // CLDR French: `one` covers 0 and 1, `many` large round numbers (1 000 000).
-    'nav.openCart': {
-      one: 'Ouvrir le panier ({count} article)',
-      many: 'Ouvrir le panier ({count} d’articles)',
-      other: 'Ouvrir le panier ({count} articles)',
-    },
-    'nav.close': 'Fermer',
-    'nav.closePanel': 'Fermer le panneau',
-  },
-};
+/** UI messages per language (`app/lib/messages/`); English is the fallback. */
+const MESSAGES: Record<LocaleCode, Messages> = {en, pt, fr};
 
 export type Translate = (
   key: MessageKey,
