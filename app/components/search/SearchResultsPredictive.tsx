@@ -7,6 +7,7 @@ import {
   type PredictiveSearchReturn,
 } from '~/lib/search';
 import {useAside} from '~/components/layout/Aside';
+import {useTranslation} from '~/lib/i18n';
 
 type PredictiveSearchItems = PredictiveSearchReturn['result']['items'];
 
@@ -138,6 +139,7 @@ function SearchResultsPredictiveArticles({
   articles,
   closeSearch,
 }: PartialPredictiveSearchResult<'articles'>) {
+  const t = useTranslation();
   return (
     <PredictiveLinkList
       closeSearch={closeSearch}
@@ -150,7 +152,7 @@ function SearchResultsPredictiveArticles({
           term: term.current ?? '',
         }),
       }))}
-      title="Articles"
+      title={t('search.articles')}
     />
   );
 }
@@ -160,6 +162,7 @@ function SearchResultsPredictiveCollections({
   collections,
   closeSearch,
 }: PartialPredictiveSearchResult<'collections'>) {
+  const t = useTranslation();
   return (
     <PredictiveLinkList
       closeSearch={closeSearch}
@@ -172,7 +175,7 @@ function SearchResultsPredictiveCollections({
           term: term.current,
         }),
       }))}
-      title="Collections"
+      title={t('common.collections')}
     />
   );
 }
@@ -182,6 +185,7 @@ function SearchResultsPredictivePages({
   pages,
   closeSearch,
 }: PartialPredictiveSearchResult<'pages'>) {
+  const t = useTranslation();
   return (
     <PredictiveLinkList
       closeSearch={closeSearch}
@@ -194,7 +198,7 @@ function SearchResultsPredictivePages({
           term: term.current,
         }),
       }))}
-      title="Pages"
+      title={t('search.pages')}
     />
   );
 }
@@ -204,10 +208,11 @@ function SearchResultsPredictiveProducts({
   products,
   closeSearch,
 }: PartialPredictiveSearchResult<'products'>) {
+  const t = useTranslation();
   if (!products.length) return null;
 
   return (
-    <PredictiveSection title="Pieces">
+    <PredictiveSection title={t('search.pieces')}>
       <ul className="mt-5 grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-4">
         {products.map((product) => {
           const productUrl = urlWithTrackingParams({
@@ -278,15 +283,12 @@ function SearchResultsPredictiveEmpty({
 }: {
   term: React.MutableRefObject<string>;
 }) {
+  const t = useTranslation();
   if (!term.current) {
     return null;
   }
 
-  return (
-    <p>
-      No results found for <q>{term.current}</q>
-    </p>
-  );
+  return <p>{t('search.noResultsFor', {term: term.current})}</p>;
 }
 
 /**

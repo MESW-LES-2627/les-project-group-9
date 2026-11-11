@@ -36,6 +36,62 @@ export const en = {
   },
   'nav.close': 'Close',
   'nav.closePanel': 'Close panel',
+
+  // Shared
+  'common.allPieces': 'All pieces',
+  'common.collections': 'Collections',
+  'common.loading': 'Loading…',
+  'common.loadPrevious': 'Load previous',
+  'common.loadMore': 'Load more',
+  'common.closeDialog': 'Close dialog',
+
+  // Layout: announcement bar and fallback header menu
+  'layout.announcement': 'Free shipping on orders over €100',
+  'layout.tagline': 'Made to last',
+  'menu.trending': 'Trending',
+  'menu.watches': 'Watches',
+  'menu.charms': 'Charms',
+  'menu.jewelry': 'Jewelry',
+
+  // Footer
+  'footer.tagline': 'Modern jewelry to layer, gift and keep.',
+  'footer.discover': 'Discover',
+  'footer.information': 'Information',
+  'footer.newsletterTitle': 'Stories in your inbox',
+  'footer.newsletterText': 'News, style guides and early access.',
+  'footer.email': 'Email address',
+  'footer.newsletterSoon': 'Newsletter coming soon',
+  'footer.subscribe': 'Subscribe to newsletter',
+  'footer.signature': 'Designed to be kept',
+  'policy.privacy': 'Privacy policy',
+  'policy.refund': 'Refund policy',
+  'policy.shipping': 'Shipping policy',
+  'policy.terms': 'Terms of service',
+
+  // Search
+  'search.title': 'Search Jeweliette',
+  'search.placeholder': 'What are you looking for?',
+  'search.inputLabel': 'Search products',
+  'search.seeAll': 'See all results',
+  'search.searching': 'Searching…',
+  'search.explore': 'Explore',
+  'search.noResults': 'No results',
+  'search.tryAnotherTerm': 'Try another term for “{term}”.',
+  'search.noResultsFor': 'No results found for “{term}”',
+  'search.unavailable': 'Search is temporarily unavailable. Please try again.',
+  'search.prompt': 'Search for a piece, material or collection.',
+  'search.noFilteredProducts':
+    'No products match your search and selected filters.',
+  'search.articles': 'Articles',
+  'search.pages': 'Pages',
+  'search.pieces': 'Pieces',
+  'search.tryAnotherProduct': 'Try another product name, material or color.',
+
+  // Cart (shared layout)
+  'cart.loading': 'Loading cart',
+
+  // Shared (dialogs)
+  'common.cancel': 'Cancel',
 } as const satisfies Record<string, string | PluralMessage>;
 
 export type MessageKey = keyof typeof en;

@@ -81,8 +81,9 @@ function CartAside({cart}: {cart: PageLayoutProps['cart']}) {
 }
 
 function CartSkeleton() {
+  const t = useTranslation();
   return (
-    <div aria-label="Loading cart" className="animate-pulse space-y-5">
+    <div aria-label={t('cart.loading')} className="animate-pulse space-y-5">
       {[0, 1].map((item) => (
         <div className="flex gap-4" key={item}>
           <div className="h-28 w-24 bg-secondary/60" />
@@ -98,9 +99,10 @@ function CartSkeleton() {
 
 function SearchAside() {
   const queriesDatalistId = useId();
+  const t = useTranslation();
 
   return (
-    <Aside type="search" heading="Search Jeweliette">
+    <Aside type="search" heading={t('search.title')}>
       <div className="mx-auto max-w-[940px] px-5 py-10 sm:px-8 sm:py-16">
         <SearchFormPredictive className="flex items-center border-b border-primary pb-3">
           {({fetchResults, goToSearch, inputRef}) => (
@@ -113,12 +115,12 @@ function SearchAside() {
                 name="q"
                 onChange={fetchResults}
                 onFocus={fetchResults}
-                placeholder="What are you looking for?"
+                placeholder={t('search.placeholder')}
                 ref={inputRef}
                 type="search"
               />
               <button
-                aria-label="See all results"
+                aria-label={t('search.seeAll')}
                 className="grid size-11 shrink-0 place-items-center text-primary hover:text-ink"
                 onClick={goToSearch}
                 type="button"
@@ -135,19 +137,19 @@ function SearchAside() {
               const {articles, collections, pages, products, queries} = items;
 
               if (state === 'loading' && term.current) {
-                return <p className="text-sm text-primary">Searching…</p>;
+                return <p className="text-sm text-primary">{t('search.searching')}</p>;
               }
 
               if (!term.current) {
                 return (
                   <div>
                     <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
-                      Explore
+                      {t('search.explore')}
                     </p>
                     <div className="mt-5 flex flex-wrap gap-x-8 gap-y-3 font-display text-xl text-primary sm:text-2xl">
-                      <Link onClick={closeSearch} to="/collections/all">All pieces</Link>
-                      <Link onClick={closeSearch} to="/collections/jewelry">Jewelry</Link>
-                      <Link onClick={closeSearch} to="/collections">Collections</Link>
+                      <Link onClick={closeSearch} to="/collections/all">{t('common.allPieces')}</Link>
+                      <Link onClick={closeSearch} to="/collections/jewelry">{t('menu.jewelry')}</Link>
+                      <Link onClick={closeSearch} to="/collections">{t('common.collections')}</Link>
                     </div>
                   </div>
                 );
@@ -156,9 +158,9 @@ function SearchAside() {
               if (!total) {
                 return (
                   <div className="py-12 text-center">
-                    <p className="font-display text-3xl text-primary">No results</p>
+                    <p className="font-display text-3xl text-primary">{t('search.noResults')}</p>
                     <p className="mt-3 text-sm text-primary/70">
-                      Try another term for <q>{term.current}</q>.
+                      {t('search.tryAnotherTerm', {term: term.current})}
                     </p>
                   </div>
                 );
@@ -181,7 +183,7 @@ function SearchAside() {
                     onClick={closeSearch}
                     to={`${SEARCH_ENDPOINT}?q=${encodeURIComponent(term.current)}`}
                   >
-                    See all results <Icon name="arrow" size={16} />
+                    {t('search.seeAll')} <Icon name="arrow" size={16} />
                   </Link>
                 </>
               );

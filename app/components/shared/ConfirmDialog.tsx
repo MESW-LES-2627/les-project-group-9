@@ -1,5 +1,6 @@
 import {createPortal} from 'react-dom';
 import {useEffect, useId, useRef, type ReactNode} from 'react';
+import {useTranslation} from '~/lib/i18n';
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -18,11 +19,12 @@ export function ConfirmDialog({
   open,
   title,
   confirmLabel,
-  cancelLabel = 'Cancel',
+  cancelLabel,
   onConfirm,
   onCancel,
   children,
 }: ConfirmDialogProps) {
+  const t = useTranslation();
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const onCancelRef = useRef(onCancel);
@@ -89,7 +91,7 @@ export function ConfirmDialog({
   return createPortal(
     <div className="fixed inset-0 z-[100] grid place-items-center overflow-y-auto p-4">
       <button
-        aria-label="Close dialog"
+        aria-label={t('common.closeDialog')}
         className="absolute inset-0 h-full w-full cursor-default bg-ink/40"
         onClick={onCancel}
         tabIndex={-1}
@@ -113,7 +115,7 @@ export function ConfirmDialog({
             onClick={onCancel}
             type="button"
           >
-            {cancelLabel}
+            {cancelLabel ?? t('common.cancel')}
           </button>
           <button
             className="min-h-10 bg-primary px-4 text-xs uppercase tracking-widest text-white hover:bg-ink"

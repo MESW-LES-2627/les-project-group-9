@@ -11,7 +11,7 @@ import {LanguageSelector} from '~/components/layout/LanguageSelector';
 import {Icon} from '~/components/shared/Icon';
 import {useFavorites} from '~/lib/favorites';
 import {useFittingRoom} from '~/lib/fitting-room';
-import {useTranslation} from '~/lib/i18n';
+import {useTranslation, type Translate} from '~/lib/i18n';
 
 interface HeaderProps {
   header: HeaderQuery;
@@ -45,8 +45,8 @@ export function Header({
   return (
     <>
       <div className="flex h-6 items-center justify-center bg-primary px-4 text-center text-xs uppercase tracking-[0.16em] text-white">
-        <span>Free shipping on orders over €100</span>
-        <span className="hidden sm:inline"> · Made to last</span>
+        <span>{t('layout.announcement')}</span>
+        <span className="hidden sm:inline"> · {t('layout.tagline')}</span>
       </div>
       <header className="sticky top-0 z-50 grid h-[66px] grid-cols-[44px_1fr_auto] items-center border-b border-line bg-paper px-4 xl:grid-cols-[minmax(140px,1fr)_auto_minmax(140px,1fr)] xl:px-[3vw]">
         <div className="xl:hidden">
@@ -112,7 +112,7 @@ export function HeaderMenu({
           <Icon name="arrow" size={18} />
         </NavLink>
       )}
-      {(menu || FALLBACK_HEADER_MENU).items.map((item, index) => {
+      {(menu || fallbackHeaderMenu(t)).items.map((item, index) => {
         if (!item.url) return null;
         const url =
           item.url.includes('myshopify.com') ||
@@ -264,56 +264,59 @@ function CartBanner() {
   return <CartBadge count={cart?.totalQuantity ?? 0} />;
 }
 
-const FALLBACK_HEADER_MENU = {
-  id: 'fallback-header-menu',
-  items: [
-    {
-      id: 'trending',
-      resourceId: null,
-      tags: [],
-      title: 'Trending',
-      type: 'HTTP',
-      url: '/',
-      items: [],
-    },
-    {
-      id: 'watches',
-      resourceId: null,
-      tags: [],
-      title: 'Watches',
-      type: 'HTTP',
-      url: '/collections/watches',
-      items: [],
-    },
-    {
-      id: 'charms',
-      resourceId: null,
-      tags: [],
-      title: 'Charms',
-      type: 'HTTP',
-      url: '/collections/charms',
-      items: [],
-    },
-    {
-      id: 'jewelry',
-      resourceId: null,
-      tags: [],
-      title: 'Jewelry',
-      type: 'HTTP',
-      url: '/collections/jewelry',
-      items: [],
-    },
-    {
-      id: 'collections',
-      resourceId: null,
-      tags: [],
-      title: 'Collections',
-      type: 'HTTP',
-      url: '/collections',
-      items: [],
-    },
-  ],
-};
+/** Used when Shopify returns no `main-menu`; titles come from the dictionary. */
+function fallbackHeaderMenu(t: Translate) {
+  return {
+    id: 'fallback-header-menu',
+    items: [
+      {
+        id: 'trending',
+        resourceId: null,
+        tags: [],
+        title: t('menu.trending'),
+        type: 'HTTP',
+        url: '/',
+        items: [],
+      },
+      {
+        id: 'watches',
+        resourceId: null,
+        tags: [],
+        title: t('menu.watches'),
+        type: 'HTTP',
+        url: '/collections/watches',
+        items: [],
+      },
+      {
+        id: 'charms',
+        resourceId: null,
+        tags: [],
+        title: t('menu.charms'),
+        type: 'HTTP',
+        url: '/collections/charms',
+        items: [],
+      },
+      {
+        id: 'jewelry',
+        resourceId: null,
+        tags: [],
+        title: t('menu.jewelry'),
+        type: 'HTTP',
+        url: '/collections/jewelry',
+        items: [],
+      },
+      {
+        id: 'collections',
+        resourceId: null,
+        tags: [],
+        title: t('common.collections'),
+        type: 'HTTP',
+        url: '/collections',
+        items: [],
+      },
+    ],
+  };
+}
 
 function FavoritesLink() {
   const {ids} = useFavorites();
