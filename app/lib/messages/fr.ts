@@ -86,4 +86,146 @@ export const fr: Messages = {
 
   // Shared (dialogs)
   'common.cancel': 'Annuler',
+
+  // Home page
+  'home.eyebrow': 'Les nouveaux bijoux de famille',
+  'home.titleStart': 'Portez votre',
+  'home.titleEmphasis': 'histoire.',
+  'home.intro':
+    'Trouvez les pièces qui vous ressemblent. Découvrez de nouveaux favoris, composez vos superpositions du quotidien et faites de chaque détail le vôtre.',
+  'home.exploreCollection': 'Découvrir la collection',
+  'home.exploreTitle': 'Découvrir {title}',
+  'home.exploreAll': 'Découvrir toutes les pièces',
+  'home.heroAlt': 'Découvrir la collection Jeweliette',
+  'home.edit': 'L’essentiel Jeweliette',
+  'home.editFallback': 'Discrètement inoubliable',
+  'home.madeToLayer': 'Conçu pour être superposé',
+  'home.everydayFavorites': 'Vos favoris du quotidien',
+  'home.uniquelyYours': 'Unique, comme vous',
+  'home.selection': 'La sélection Jeweliette',
+  'home.coveted': 'Les plus convoités',
+  'home.viewAll': 'Voir toutes les pièces',
+  'home.emptyTitle': 'De nouveaux favoris arrivent bientôt.',
+  'home.emptyText': 'Découvrez les collections disponibles ci-dessous.',
+  'home.storyAlt': 'Détails de la collection Jeweliette',
+  'home.makeItYours': 'Faites-la vôtre',
+  'home.oneOfOne': 'Unique, tout comme vous.',
+  'home.storyText':
+    'Commencez par une pièce que vous aimez. Ajoutez les détails qui la rendent unique.',
+  'home.discoverCollection': 'Découvrir la collection',
+  'home.exploreCollections': 'Découvrir les collections',
+  'home.detailsTitle': 'Des détails soignés',
+  'home.detailsText':
+    'Découvrez les matières et finitions indiquées sur chaque fiche produit.',
+  'home.layerText':
+    'Trouvez des pièces à porter ensemble, ou un nouveau favori à porter seul.',
+  'home.selectionText':
+    'Choisissez vos options avant d’ajouter une pièce à votre panier.',
+
+  // Catalog, filters and sorting
+  'common.yourSelection': 'Votre sélection',
+  'catalog.nextFavorite': 'Trouvez votre prochain coup de cœur',
+  'catalog.collectionsEyebrow': 'Collections Jeweliette',
+  'catalog.allEyebrow': 'La collection Jeweliette',
+  'catalog.allIntro':
+    'Trouvez votre prochain coup de cœur. Découvrez des pièces à porter, à superposer et à faire vôtres.',
+  'catalog.piecesLoaded': {
+    one: '{count} pièce chargée',
+    other: '{count} pièces chargées',
+  },
+  'catalog.noPieces': 'Aucune pièce trouvée.',
+  'catalog.noPiecesHint': 'Essayez une autre sélection ou effacez vos filtres.',
+  'catalog.sort.featured': 'En vedette',
+  'catalog.sort.bestselling': 'Meilleures ventes',
+  'catalog.sort.newest': 'Nouveautés',
+  'catalog.sort.priceAsc': 'Prix croissant',
+  'catalog.sort.priceDesc': 'Prix décroissant',
+  'filters.clear': 'Effacer les filtres',
+  'filters.sortBy': 'Trier par',
+  'filters.inStock': 'En stock',
+  'price.noRange': 'Aucune fourchette de prix disponible.',
+  'price.minLabel': 'Prix minimum',
+  'price.maxLabel': 'Prix maximum',
+  'price.min': 'Minimum',
+  'price.max': 'Maximum',
+  'price.invalid': 'Saisissez un prix minimum et un prix maximum valides.',
+  'price.apply': 'Appliquer le prix',
+
+  // Product cards and product page
+  'product.view': 'Voir {title}',
+  'product.addToBag': 'Ajouter au panier',
+  'product.adding': 'Ajout en cours…',
+  'product.chooseOptions': 'Choisir les options',
+  'product.soldOut': 'Épuisé',
+  'product.viewPiece': 'Voir la pièce',
+  'product.from': 'À partir de',
+  'product.optionSoldOut': '{name} (épuisé)',
+  'product.noImage': 'Aucune image disponible',
+  'product.showImage': 'Afficher l’image {index} sur {total}',
+  'product.price': 'Prix',
+  'product.allergenBadge': 'Allergène',
+  'product.favoriteRemove': 'Retirer {title} des favoris',
+  'product.favoriteAdd': 'Ajouter {title} aux favoris',
+  'product.favoriteLogin': 'Connectez-vous pour ajouter {title} à vos favoris',
+  'product.fittingRoomRemove': 'Retirer {title} de la cabine d’essayage',
+  'product.fittingRoomAdd': 'Ajouter {title} à la cabine d’essayage',
+  'product.fittingRoomLogin':
+    'Connectez-vous pour ajouter {title} à la cabine d’essayage',
+  'product.breadcrumb': 'Fil d’Ariane',
+  'product.description': 'Description',
+  'product.details': 'Détails',
+  'product.shipping': 'Livraison',
+  'product.shippingText':
+    'Les options de livraison et les taxes sont calculées lors du paiement.',
+  'product.materials': 'Matières',
+  'product.related': 'Vous aimerez aussi',
+  'product.detail.type': 'Type',
+  'product.detail.metal': 'Métal',
+  'product.detail.gemstone': 'Pierre',
+  'product.detail.gemColor': 'Couleur de la pierre',
+
+  // Allergens and the allergy warning
+  'allergen.nickel': 'Nickel',
+  'allergen.zinc': 'Zinc',
+  'allergen.cobalt': 'Cobalt',
+  'allergy.title': 'Alerte allergie',
+  'allergy.confirm': 'Oui, ajouter au panier',
+  'allergy.message':
+    'Cette pièce contient les allergènes suivants : {allergens}. Ils figurent dans votre profil d’allergies. Voulez-vous quand même l’ajouter à votre panier ?',
+
+  // Ring sizes
+  'ring.guide': 'Guide des tailles',
+  'ring.yourSizes': 'Vos tailles de bague',
+  'ring.noSizes': 'Vous n’avez pas encore enregistré vos tailles de bague.',
+  'ring.addSizes': 'Ajouter mes tailles',
+  'ring.hand.left': 'Main gauche',
+  'ring.hand.right': 'Main droite',
+  'ring.finger.thumb': 'Pouce',
+  'ring.finger.index': 'Index',
+  'ring.finger.middle': 'Majeur',
+  'ring.finger.ring': 'Annulaire',
+  'ring.finger.pinky': 'Auriculaire',
+  'ring.fingerSize': '{finger} : {size}',
+
+  // Recommendations
+  'recommendation.eyebrowFavorites': 'Parce que vous avez aimé ces pièces',
+  'recommendation.eyebrowPreferences': 'Selon vos préférences',
+  'recommendation.titlePreferences': 'Sélectionnées pour vous',
+  'recommendation.reason.allergy': 'Allergie',
+  'recommendation.reason.preferredMaterials':
+    'Correspond à vos matières préférées',
+  'recommendation.reason.preferredColors':
+    'Correspond à vos couleurs préférées',
+  'recommendation.reason.preferredGemstones':
+    'Correspond à vos pierres préférées',
+  'recommendation.reason.skinTone': 'Assorti à votre carnation',
+  'recommendation.reason.undertone': 'Assorti à votre sous-ton',
+  'recommendation.reason.sameMaterial': 'Même matière : {value}',
+  'recommendation.reason.sameMetal': 'Même métal : {value}',
+  'recommendation.reason.similarCategory': 'Catégorie de bijou similaire',
+  'recommendation.reason.sameCollection': 'De la même collection',
+  'recommendation.reason.sameGemstone': 'Même pierre : {value}',
+  'recommendation.reason.sameGemColor': 'Même couleur de pierre : {value}',
+  'recommendation.reason.similarFavorite': 'Semblable à vos favoris',
+  'recommendation.reason.popular': 'Pièce populaire',
 };

@@ -3,6 +3,7 @@ import type {Route} from './+types/collections._index';
 import {getPaginationVariables, Image} from '@shopify/hydrogen';
 import type {CollectionFragment} from 'storefrontapi.generated';
 import {PaginatedResourceSection} from '~/components/shared/PaginatedResourceSection';
+import {useTranslation} from '~/lib/i18n';
 
 export async function loader(args: Route.LoaderArgs) {
   // Start fetching non-critical data without blocking time to first byte
@@ -44,16 +45,17 @@ function loadDeferredData({context}: Route.LoaderArgs) {
 
 export default function Collections() {
   const {collections} = useLoaderData<typeof loader>();
+  const t = useTranslation();
 
   return (
     <section className="mx-auto max-w-[1400px] px-[4vw] pb-20 pt-12">
       <header className="mb-12 text-center">
         <p className="text-xs uppercase tracking-[0.2em] text-primary">
-          Find your next favorite
+          {t('catalog.nextFavorite')}
         </p>
 
         <h1 className="mt-4 font-display text-[clamp(2.5rem,5vw,4rem)] leading-none">
-          Collections
+          {t('common.collections')}
         </h1>
       </header>
 

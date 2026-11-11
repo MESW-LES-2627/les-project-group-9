@@ -53,7 +53,7 @@ describe('RecommendedProducts', () => {
     });
     mocks.data = {
       products: [{id: 'gid://shopify/Product/1'}],
-      reasons: {'gid://shopify/Product/1': ['Matches your undertone']},
+      reasons: {'gid://shopify/Product/1': [{code: 'undertone'}]},
     };
 
     render(<RecommendedProducts />);

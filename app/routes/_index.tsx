@@ -3,6 +3,7 @@ import {Image} from '@shopify/hydrogen';
 import type {Route} from './+types/_index';
 import {ProductItem} from '~/components/product/ProductItem';
 import {RecommendedProducts} from '~/components/product/RecommendedProducts';
+import {useTranslation} from '~/lib/i18n';
 import {
   JEWELIETTE_PRODUCT_CARD_FRAGMENT,
 } from '~/lib/jeweliette-catalog';
@@ -59,6 +60,7 @@ export default function Homepage() {
     fallbackProducts,
     collections,
   } = useLoaderData<typeof loader>();
+  const t = useTranslation();
 
   const heroUrl = hero
     ? `/collections/${hero.handle}`
@@ -84,17 +86,16 @@ export default function Homepage() {
       <section className="grid bg-secondary tablet:min-h-[min(620px,calc(100svh-90px))] tablet:grid-cols-[43%_57%]">
         <div className="order-2 flex flex-col items-start justify-center px-[5vw] py-16 tablet:order-1 tablet:py-24">
           <p className="text-xs font-medium uppercase tracking-[0.2em] text-primary">
-            The new heirlooms
+            {t('home.eyebrow')}
           </p>
 
           <h1 className="mt-6 max-w-[8ch] font-display text-[clamp(2.75rem,5vw,4.5rem)] font-medium leading-[0.9] tracking-[-0.05em] text-ink">
-            Wear your <em className="text-primary">story.</em>
+            {t('home.titleStart')}{' '}
+            <em className="text-primary">{t('home.titleEmphasis')}</em>
           </h1>
 
           <p className="mt-8 max-w-[38ch] text-base leading-7 text-primary">
-            Find the pieces that feel like you. Discover new
-            favorites, create your everyday layers and make
-            every detail your own.
+            {t('home.intro')}
           </p>
 
           <Link
@@ -102,7 +103,7 @@ export default function Homepage() {
             prefetch="intent"
             className="mt-9 inline-flex min-h-[50px] items-center justify-between gap-10 bg-primary px-6 text-xs font-medium uppercase tracking-widest text-white transition-colors hover:bg-ink"
           >
-            Explore the collection
+            {t('home.exploreCollection')}
             <span aria-hidden="true">↗</span>
           </Link>
         </div>
@@ -112,8 +113,8 @@ export default function Homepage() {
           prefetch="intent"
           aria-label={
             hero
-              ? `Explore ${hero.title}`
-              : 'Explore all pieces'
+              ? t('home.exploreTitle', {title: hero.title})
+              : t('home.exploreAll')
           }
           className="group relative order-1 block min-h-[48svh] overflow-hidden bg-primary/10 tablet:order-2"
         >
@@ -123,7 +124,7 @@ export default function Homepage() {
               alt={
                 heroImage.altText ||
                 hero?.title ||
-                'Explore the Jeweliette collection'
+                t('home.heroAlt')
               }
               loading="eager"
               sizes="(min-width: 800px) 57vw, 100vw"
@@ -133,22 +134,22 @@ export default function Homepage() {
 
           <div className="absolute bottom-6 left-6 max-w-[80%] bg-paper/90 px-6 py-5 text-primary backdrop-blur-md">
             <p className="text-xs uppercase tracking-widest">
-              The Jeweliette edit
+              {t('home.edit')}
             </p>
 
             <p className="mt-2 font-display text-2xl">
-              {hero?.title || 'Quietly unforgettable'}
+              {hero?.title || t('home.editFallback')}
             </p>
           </div>
         </Link>
       </section>
 
       <div className="flex min-h-14 flex-wrap items-center justify-around gap-4 bg-primary px-6 py-4 text-xs uppercase tracking-[0.18em] text-white">
-        <span>Made to layer</span>
+        <span>{t('home.madeToLayer')}</span>
         <span aria-hidden="true">✦</span>
-        <span>Your everyday favorites</span>
+        <span>{t('home.everydayFavorites')}</span>
         <span aria-hidden="true">✦</span>
-        <span>Uniquely yours</span>
+        <span>{t('home.uniquelyYours')}</span>
       </div>
 
       <section
@@ -158,14 +159,14 @@ export default function Homepage() {
         <div className="mb-12 flex items-end justify-between gap-6">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-primary">
-              The Jeweliette selection
+              {t('home.selection')}
             </p>
 
             <h2
               id="featured-heading"
               className="mt-4 font-display text-[clamp(1.875rem,3vw,2.75rem)] leading-none tracking-tight"
             >
-              Currently coveted
+              {t('home.coveted')}
             </h2>
           </div>
 
@@ -173,7 +174,7 @@ export default function Homepage() {
             to={featuredUrl}
             className="hidden min-h-11 items-center border-b border-ink text-xs uppercase tracking-widest sm:inline-flex"
           >
-            View all pieces
+            {t('home.viewAll')}
           </Link>
         </div>
 
@@ -195,11 +196,11 @@ export default function Homepage() {
         ) : (
           <div className="border-y border-line py-12">
             <h3 className="font-display text-2xl">
-              New favorites are on their way.
+              {t('home.emptyTitle')}
             </h3>
 
             <p className="mt-3 text-sm text-primary">
-              Explore the available collections below.
+              {t('home.emptyText')}
             </p>
           </div>
         )}
@@ -208,7 +209,7 @@ export default function Homepage() {
           to={featuredUrl}
           className="mt-10 inline-flex min-h-11 items-center border-b border-ink text-xs uppercase tracking-widest sm:hidden"
         >
-          View all pieces
+          {t('home.viewAll')}
         </Link>
       </section>
 
@@ -222,7 +223,7 @@ export default function Homepage() {
               alt={
                 storyImage.altText ||
                 story?.title ||
-                'Details from the Jeweliette collection'
+                t('home.storyAlt')
               }
               loading="lazy"
               sizes="(min-width: 800px) 52vw, 100vw"
@@ -233,16 +234,16 @@ export default function Homepage() {
 
         <div className="flex flex-col items-start justify-center px-[5vw] py-12 tablet:py-16">
           <p className="text-xs uppercase tracking-[0.2em] text-secondary">
-            Make it yours
+            {t('home.makeItYours')}
           </p>
 
           <h2 className="mt-6 max-w-[9ch] font-display text-[clamp(2.25rem,4vw,3.5rem)] leading-none tracking-tight">
-            One of one, just like you.
+            {t('home.oneOfOne')}
           </h2>
 
           <p className="mt-7 max-w-[36ch] text-base leading-7 text-white/85">
             {story?.description ||
-              'Start with a piece you love. Add the details that make it yours.'}
+              t('home.storyText')}
           </p>
 
           <Link
@@ -250,7 +251,7 @@ export default function Homepage() {
             prefetch="intent"
             className="mt-9 inline-flex min-h-[50px] items-center justify-between gap-10 bg-paper px-6 text-xs font-medium uppercase tracking-widest text-primary transition-colors hover:bg-secondary"
           >
-            Discover the collection
+            {t('home.discoverCollection')}
             <span aria-hidden="true">↗</span>
           </Link>
         </div>
@@ -262,14 +263,14 @@ export default function Homepage() {
           aria-labelledby="collections-heading"
         >
           <p className="text-xs uppercase tracking-[0.2em] text-primary">
-            Find your next favorite
+            {t('catalog.nextFavorite')}
           </p>
 
           <h2
             id="collections-heading"
             className="mt-4 font-display text-[clamp(1.875rem,3vw,2.75rem)] leading-none tracking-tight"
           >
-            Explore the collections
+            {t('home.exploreCollections')}
           </h2>
 
           <div className="mt-10 grid grid-cols-2 md:grid-cols-3 gap-4 lg:grid-cols-4 xl:grid-cols-5">
@@ -316,18 +317,9 @@ export default function Homepage() {
 
       <section className="grid border-t border-line bg-paper px-[5vw] py-12 tablet:grid-cols-3 tablet:py-16">
         {[
-          [
-            'Considered details',
-            'Explore the materials and finishes listed on each product page.',
-          ],
-          [
-            'Made to layer',
-            'Find pieces to wear together, or a new favorite to wear on its own.',
-          ],
-          [
-            'Your selection',
-            'Choose your options before adding a piece to your shopping bag.',
-          ],
+          [t('home.detailsTitle'), t('home.detailsText')],
+          [t('home.madeToLayer'), t('home.layerText')],
+          [t('common.yourSelection'), t('home.selectionText')],
         ].map(([title, text], index) => (
           <article
             key={title}

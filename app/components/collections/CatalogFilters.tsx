@@ -1,6 +1,7 @@
 import {Form, Link} from 'react-router';
 import {parseFilterObject, serializeFilterInput} from '~/lib/search';
 import {PriceRange} from './PriceRange';
+import {useTranslation} from '~/lib/i18n';
 
 type Filter = {
   id: string;
@@ -48,6 +49,7 @@ export function CatalogFilters({
   sort,
   sortOptions = [],
 }: Props) {
+  const t = useTranslation();
   const active = selectedFilters.length > 0 || priceMin || priceMax;
 
   const summaryClass =
@@ -116,7 +118,7 @@ export function CatalogFilters({
           to={clearHref}
           className="mr-auto inline-flex min-h-12 items-center px-3 text-xs uppercase tracking-widest underline"
         >
-          Clear filters
+          {t('filters.clear')}
         </Link>
       ) : null}
 
@@ -156,7 +158,7 @@ export function CatalogFilters({
 
                     <span>
                       {parseFilterObject(value.input).available === true
-                        ? 'In stock'
+                        ? t('filters.inStock')
                         : value.label}{' '}
                       <span className="text-primary">({value.count})</span>
                     </span>
@@ -171,7 +173,7 @@ export function CatalogFilters({
       {sortOptions.length > 0 ? (
         <details className="relative border-l border-line">
           <summary className={summaryClass}>
-            Sort by <span aria-hidden="true">+</span>
+            {t('filters.sortBy')} <span aria-hidden="true">+</span>
           </summary>
 
           <div className={panelClass}>

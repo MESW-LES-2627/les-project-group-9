@@ -7,41 +7,42 @@ import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 import {JEWELIETTE_PRODUCT_CARD_FRAGMENT} from '~/lib/jeweliette-catalog';
 import {CatalogFilters} from '~/components/collections/CatalogFilters';
 import {readCatalogFilters} from '~/lib/search';
+import {useTranslation, type MessageKey} from '~/lib/i18n';
 
 const SORT_OPTIONS: Record<
   string,
   {
-    label: string;
+    labelKey: MessageKey;
     sortKey: ProductCollectionSortKeys;
     reverse: boolean;
   }
 > = {
   featured: {
-    label: 'Featured',
+    labelKey: 'catalog.sort.featured',
     sortKey: 'COLLECTION_DEFAULT',
     reverse: false,
   },
 
   bestselling: {
-    label: 'Best selling',
+    labelKey: 'catalog.sort.bestselling',
     sortKey: 'BEST_SELLING',
     reverse: false,
   },
 
   newest: {
-    label: 'Newest',
+    labelKey: 'catalog.sort.newest',
     sortKey: 'CREATED',
     reverse: true,
   },
 
   'price-asc': {
-    label: 'Price: low to high',
+    labelKey: 'catalog.sort.priceAsc',
     sortKey: 'PRICE',
     reverse: false,
   },
 
   'price-desc': {
-    label: 'Price: high to low',
+    labelKey: 'catalog.sort.priceDesc',
     sortKey: 'PRICE',
     reverse: true,
   },
@@ -122,12 +123,13 @@ export default function CollectionPage() {
     priceMax,
     paginationKey,
   } = useLoaderData<typeof loader>();
+  const t = useTranslation();
 
   return (
     <section className="mx-auto max-w-[1400px] px-[4vw] pb-20 pt-10 tablet:pt-14">
       <header className="mx-auto max-w-2xl text-center">
         <p className="text-[11px] uppercase tracking-[0.2em] text-primary">
-          Jeweliette collections
+          {t('catalog.collectionsEyebrow')}
         </p>
 
         <h1 className="mt-3 font-display text-[clamp(2.25rem,4vw,3.5rem)] leading-none tracking-tight">
@@ -165,19 +167,18 @@ export default function CollectionPage() {
               sortOptions={Object.entries(SORT_OPTIONS).map(
                 ([value, option]) => ({
                   value,
-                  label: option.label,
+                  label: t(option.labelKey),
                 }),
               )}
             />
 
             <p className="mt-4 text-xs uppercase tracking-widest text-primary">
-              {nodes.length}{' '}
-              {nodes.length === 1 ? 'piece loaded' : 'pieces loaded'}
+              {t('catalog.piecesLoaded', {count: nodes.length})}
             </p>
 
             <div className="mt-6 flex justify-center">
               <PreviousLink className="inline-flex min-h-10 items-center border-b border-primary text-[11px] uppercase tracking-widest text-primary">
-                {isLoading ? 'Loading…' : 'Load previous'}
+                {isLoading ? t('common.loading') : t('common.loadPrevious')}
               </PreviousLink>
             </div>
 
@@ -194,18 +195,18 @@ export default function CollectionPage() {
             ) : (
               <div className="mt-8 border-y border-line py-16 text-center">
                 <h2 className="font-display text-2xl">
-                  No pieces found.
+                  {t('catalog.noPieces')}
                 </h2>
 
                 <p className="mt-3 text-sm text-primary">
-                  Try a different selection or clear your filters.
+                  {t('catalog.noPiecesHint')}
                 </p>
               </div>
             )}
 
             <div className="mt-12 flex justify-center">
               <NextLink className="inline-flex min-h-11 items-center border border-primary px-6 text-[11px] uppercase tracking-widest text-primary transition-colors hover:bg-primary hover:text-white">
-                {isLoading ? 'Loading…' : 'Load more'}
+                {isLoading ? t('common.loading') : t('common.loadMore')}
               </NextLink>
             </div>
           </>

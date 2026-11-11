@@ -1,5 +1,6 @@
 import {Icon} from '~/components/shared/Icon';
 import {useFittingRoom} from '~/lib/fitting-room';
+import {useTranslation} from '~/lib/i18n';
 import {ProductActionButton} from './ProductActionButton';
 
 export function FittingRoomButton({
@@ -13,6 +14,7 @@ export function FittingRoomButton({
 }) {
   const {has, toggle, isLoggedIn} = useFittingRoom();
   const active = has(productId);
+  const t = useTranslation();
 
   return (
     <ProductActionButton
@@ -21,9 +23,9 @@ export function FittingRoomButton({
       label={
         isLoggedIn
           ? active
-            ? `Remove ${title} from fitting room`
-            : `Add ${title} to fitting room`
-          : `Log in to add ${title} to fitting room`
+            ? t('product.fittingRoomRemove', {title})
+            : t('product.fittingRoomAdd', {title})
+          : t('product.fittingRoomLogin', {title})
       }
       onClick={() => {
         if (!isLoggedIn) {

@@ -44,6 +44,11 @@ export function ringFingerLabel(finger: RingFinger): string {
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
+/** The finger id (`thumb`, `index`…) of a hand-finger key; translate it in the UI. */
+export function ringFingerOf(finger: RingFinger): RingFingerName {
+  return finger.split('-')[1] as RingFingerName;
+}
+
 export function ringHandOf(finger: RingFinger): RingHand {
   return finger.split('-')[0] as RingHand;
 }

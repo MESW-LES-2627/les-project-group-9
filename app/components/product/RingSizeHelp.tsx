@@ -1,11 +1,11 @@
 import {useCallback, useEffect, useId, useRef, useState} from 'react';
 import {Link} from 'react-router';
 import {useProfile} from '~/lib/profile/ProfileProvider';
+import {useTranslation} from '~/lib/i18n';
 import {
   RING_FINGERS,
-  RING_HAND_LABELS,
   RING_HANDS,
-  ringFingerLabel,
+  ringFingerOf,
   ringHandOf,
 } from '~/lib/profile/preferences';
 
@@ -17,6 +17,7 @@ const FOCUSABLE = 'button, a[href]';
  */
 export function RingSizeHelp() {
   const {status, isLoggedIn, preferences} = useProfile();
+  const t = useTranslation();
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -75,13 +76,13 @@ export function RingSizeHelp() {
         onClick={() => setOpen(true)}
         className="text-[11px] uppercase tracking-widest text-primary underline underline-offset-4 hover:text-ink"
       >
-        Measurement Guide
+        {t('ring.guide')}
       </button>
 
       {open ? (
         <div className="fixed inset-0 z-50 grid place-items-center px-4">
           <button
-            aria-label="Close dialog"
+            aria-label={t('common.closeDialog')}
             className="absolute inset-0 h-full w-full cursor-default bg-ink/40"
             onClick={close}
             tabIndex={-1}
@@ -95,7 +96,7 @@ export function RingSizeHelp() {
             className="relative w-full max-w-md bg-paper p-6 text-sm text-ink"
           >
             <h2 id={titleId} className="font-display text-2xl">
-              Your ring sizes
+              {t('ring.yourSizes')}
             </h2>
 
             {hasSavedSizes ? (
@@ -108,12 +109,15 @@ export function RingSizeHelp() {
                   return (
                     <div key={hand}>
                       <h3 className="text-[11px] uppercase tracking-widest text-primary">
-                        {RING_HAND_LABELS[hand]}
+                        {t(`ring.hand.${hand}`)}
                       </h3>
                       <ul className="mt-2 space-y-1">
                         {fingers.map((finger) => (
                           <li key={finger}>
-                            {ringFingerLabel(finger)}: {ringSizes[finger] ?? '—'}
+                            {t('ring.fingerSize', {
+                              finger: t(`ring.finger.${ringFingerOf(finger)}`),
+                              size: ringSizes[finger] ?? '—',
+                            })}
                           </li>
                         ))}
                       </ul>
@@ -124,13 +128,13 @@ export function RingSizeHelp() {
             ) : (
               <div className="mt-4 space-y-4">
                 <p className="leading-7 text-primary">
-                  You have not saved your ring sizes yet.
+                  {t('ring.noSizes')}
                 </p>
                 <Link
                   to="/account/profile"
                   className="inline-block bg-primary px-6 py-3 text-[11px] uppercase tracking-widest text-white transition-colors hover:bg-ink"
                 >
-                  Add my ring sizes
+                  {t('ring.addSizes')}
                 </Link>
               </div>
             )}
@@ -141,7 +145,7 @@ export function RingSizeHelp() {
                 onClick={close}
                 className="text-[11px] uppercase tracking-widest text-primary hover:text-ink"
               >
-                Close
+                {t('nav.close')}
               </button>
             </div>
           </div>

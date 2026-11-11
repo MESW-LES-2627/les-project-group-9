@@ -1,6 +1,7 @@
 import type {Route} from './+types/collections.all';
 import {useLoaderData} from 'react-router';
 import {getPaginationVariables} from '@shopify/hydrogen';
+import {useTranslation} from '~/lib/i18n';
 import {PaginatedResourceSection} from '~/components/shared/PaginatedResourceSection';
 import {ProductItem} from '~/components/product/ProductItem';
 import {JEWELIETTE_PRODUCT_CARD_FRAGMENT} from '~/lib/jeweliette-catalog';
@@ -50,21 +51,21 @@ function loadDeferredData({context}: Route.LoaderArgs) {
 
 export default function Collection() {
   const {products} = useLoaderData<typeof loader>();
+  const t = useTranslation();
 
   return (
     <section className="mx-auto max-w-[1400px] px-[4vw] pb-20 pt-12">
       <header className="mb-12 text-center">
         <p className="text-xs uppercase tracking-[0.2em] text-primary">
-          The Jeweliette collection
+          {t('catalog.allEyebrow')}
         </p>
 
         <h1 className="mt-4 font-display text-[clamp(2.5rem,5vw,4rem)] leading-none">
-          All pieces
+          {t('common.allPieces')}
         </h1>
 
         <p className="mx-auto mt-5 max-w-md text-sm leading-7 text-primary">
-          Find your next favorite. Explore pieces to wear,
-          layer and make your own.
+          {t('catalog.allIntro')}
         </p>
       </header>
 

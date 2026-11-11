@@ -294,6 +294,13 @@ function selectPluralForm(
   return message[rules.select(count)] ?? message.other;
 }
 
+/** Joins items as a localized list: "A, B and C" / "A, B e C" / "A, B et C". */
+export function formatList(items: string[], tag: string): string {
+  return new Intl.ListFormat(tag, {style: 'long', type: 'conjunction'}).format(
+    items,
+  );
+}
+
 /** English (US) with the default country: used before a locale is known. */
 export const DEFAULT_APP_LOCALE: AppLocale = toAppLocale({
   language: LOCALES[DEFAULT_LOCALE].language,

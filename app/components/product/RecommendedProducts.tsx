@@ -5,10 +5,12 @@ import {useFavorites} from '~/lib/favorites';
 import {useProfile} from '~/lib/profile/ProfileProvider';
 import {hasRecommendationPreferences} from '~/lib/profile/preferences';
 import {ProductItem} from '~/components/product/ProductItem';
+import {useTranslation} from '~/lib/i18n';
+import type {RecommendationReason} from '~/lib/recommendation/types';
 
 type RecommendationLoaderData = {
   products: CatalogProduct[];
-  reasons: Record<string, string[]>;
+  reasons: Record<string, RecommendationReason[]>;
 };
 
 export function RecommendedProducts({
@@ -18,6 +20,7 @@ export function RecommendedProducts({
 }) {
   const {ids, ready, syncing} = useFavorites();
   const {preferences} = useProfile();
+  const t = useTranslation();
   const fetcher = useFetcher<RecommendationLoaderData>();
   const hasFavorites = ids.length > 0;
   const hasPreferences = hasRecommendationPreferences(preferences);
@@ -47,21 +50,28 @@ export function RecommendedProducts({
       <div className="mb-10">
         <p className="text-xs uppercase tracking-[0.2em] text-primary">
           {hasFavorites
-            ? 'Because you liked these'
-            : 'Based on your preferences'}
+            ? t('recommendation.eyebrowFavorites')
+            : t('recommendation.eyebrowPreferences')}
         </p>
         <h2
           id="recommendations-heading"
           className="mt-3 font-display text-[clamp(1.75rem,3vw,2.5rem)] leading-none tracking-tight"
         >
-          {hasFavorites ? 'You may also like' : 'Picked for you'}
+          {hasFavorites
+            ? t('product.related')
+            : t('recommendation.titlePreferences')}
         </h2>
       </div>
 
       <div className="grid grid-cols-2 gap-x-4 gap-y-10 lg:grid-cols-4">
         {products.map((product) => {
           const reasons = fetcher.data?.reasons?.[product.id] ?? [];
-          const reason = reasons.slice(0, 2).join(' · ');
+          const reason = reasons
+            .slice(0, 2)
+            .map(({code, value}) =>
+              t(`recommendation.reason.${code}`, {value: value ?? ''}),
+            )
+            .join(' · ');
 
           return (
             <div key={product.id}>
