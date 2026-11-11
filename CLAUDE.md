@@ -83,7 +83,7 @@ See [docs/architecture.md](docs/architecture.md) for the full picture.
 **Content and language**
 - Never hardcode a language in queries or UI. Let `context.storefront.i18n` supply
   `$language`/`$country`. UI text goes through `useTranslation()` with keys in
-  `app/lib/i18n.ts` (English and pt-PT both required). See [docs/i18n.md](docs/i18n.md).
+  `app/lib/i18n.ts` (English, pt-PT and French all required). See [docs/i18n.md](docs/i18n.md).
 - Never hardcode shop-specific handles or product data.
 
 **Styling and accessibility**

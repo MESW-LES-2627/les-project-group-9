@@ -44,6 +44,16 @@ describe('POST /locale', () => {
     expect(cookie).toContain('Secure');
   });
 
+  it('accepts French and persists it in the cookie', async () => {
+    const response = asResponse(
+      await post({locale: 'fr', redirectTo: '/search?q=bague&sort=price'}),
+    );
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get('Location')).toBe('/search?q=bague&sort=price');
+    expect(response.headers.get('Set-Cookie')).toContain(`${LOCALE_COOKIE}=fr`);
+  });
+
   it('keeps the query and hash of the current location', async () => {
     const response = asResponse(
       await post({
@@ -82,7 +92,7 @@ describe('POST /locale', () => {
     expect(response.headers.get('Location')).toBe('/');
   });
 
-  it.each(['fr', 'PT_PT', '', 'pt; Path=/evil'])(
+  it.each(['de', 'FR', 'fr-FR', 'PT_PT', '', 'pt; Path=/evil'])(
     'rejects unsupported language %j without setting a cookie',
     async (locale) => {
       const result = await post({locale, redirectTo: '/'});

@@ -6,8 +6,8 @@ import {toSafeRedirectPath} from '~/lib/redirect';
 /**
  * POST /locale — switches the storefront language.
  *
- * Form fields: `locale` (`en` | `pt`) and `redirectTo` (a same-origin path,
- * usually the current page). Sets the language cookie and redirects back.
+ * Form fields: `locale` (a key of `LOCALES`: `en`, `pt`, `fr`) and
+ * `redirectTo` (a same-origin path, usually the current page). Sets the language cookie and redirects back.
  */
 export async function action({request}: Route.ActionArgs) {
   if (request.method !== 'POST') return methodNotAllowed();

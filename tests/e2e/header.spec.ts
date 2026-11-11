@@ -106,7 +106,7 @@ for (const lang of ['en', 'pt'] as const) {
       const languages = menu
         .getByRole('group', {name: t.language})
         .getByRole('button');
-      await expect(languages).toHaveCount(2);
+      await expect(languages).toHaveCount(3);
       for (const button of await languages.all()) {
         await expectTouchTarget(button);
       }
@@ -131,7 +131,7 @@ for (const lang of ['en', 'pt'] as const) {
     const languages = header
       .getByRole('group', {name: t.language})
       .getByRole('button');
-    await expect(languages).toHaveCount(2);
+    await expect(languages).toHaveCount(3);
     for (const button of await languages.all()) {
       await expectTouchTarget(button);
     }

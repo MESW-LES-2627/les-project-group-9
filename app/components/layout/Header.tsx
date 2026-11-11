@@ -360,8 +360,9 @@ function FittingRoomLink() {
 }
 
 /**
- * EN/PT switch. Posts to `/locale`, which sets the language cookie and
- * redirects back to the current path and query. Works without JavaScript.
+ * Language switch with one option per entry in `LOCALES`. Posts to `/locale`,
+ * which sets the language cookie and redirects back to the current path and
+ * query. Works without JavaScript.
  * Each option is at least 44×44 CSS px regardless of the root font size.
  */
 export function LanguageSelector({

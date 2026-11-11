@@ -194,8 +194,8 @@ metafields (namespace `custom`) through the Customer Account API.
 
 ## Internationalisation
 
-See [i18n.md](i18n.md). Supported languages are English (`en`, default) and European
-Portuguese (`pt`). `getLocaleFromRequest()` resolves the language on the server: an
+See [i18n.md](i18n.md). Supported languages are English (`en`, default), European
+Portuguese (`pt`) and French (`fr`), all defined in `LOCALES`. `getLocaleFromRequest()` resolves the language on the server: an
 explicit choice in the `jeweliette_locale` cookie (set by `POST /locale`), then the
 browser's `Accept-Language`, then English. The country sent to Shopify is a separate
 setting (`US`); it never follows the language. UI text comes from the typed dictionary in
@@ -261,7 +261,7 @@ has been decided.
 | 1 | `HEADER_QUERY` and `FOOTER_QUERY` are defined twice. The copies in `app/lib/fragments.ts` are not imported anywhere; `root.tsx` uses its own. | `grep HEADER_QUERY app` | Proposed cleanup |
 | 2 | Components never imported by any file in `app/`: `AddToCartButton`, `MockShopNotice`, `SearchOverlay`, `ProductImage`. `AddToCartButton` and `MockShopNotice` still have component tests. | grep of import paths | Proposed cleanup |
 | 3 | ~~`language: 'EN'` is hardcoded in 8 calls across 7 files: `lib/products.server.ts`, `lib/recommendation/catalog.server.ts`, `routes/_index.tsx`, `collections.$handle.tsx`, `collections.all.tsx`, `collections._index.tsx`, `products.$handle.tsx` (×2). (The first count of 7 missed `_index.tsx`.)~~ Resolved in US-046; guarded by `tests/unit/locale-propagation.test.ts`. | `grep "language: 'EN'"` | US-046 |
-| 4 | ~~`getLocaleFromRequest` only maps subdomains to ES/FR/DE/JA; PT is not supported; `<html lang="en">` is hardcoded.~~ Resolved in US-046 (cookie-based EN/PT, `<html lang>` from the locale). | `app/lib/i18n.ts`, `app/root.tsx` | US-046 |
+| 4 | ~~`getLocaleFromRequest` only maps subdomains to ES/FR/DE/JA; PT is not supported; `<html lang="en">` is hardcoded.~~ Resolved in US-046 (EN/PT/FR from cookie or Accept-Language, `<html lang>` from the locale). | `app/lib/i18n.ts`, `app/root.tsx` | US-046 |
 | 5 | UI strings are hardcoded English, including in `app/lib/`: recommendation reasons (`recommendation/signals.ts`, `"Popular piece"` in `engine.ts`), preference labels (`ALLERGY_LABELS`, `RING_HAND_LABELS`, `ringFingerLabel` in `profile/preferences.ts`), sort labels, and API error messages. | source | US-047 |
 | 6 | Dates use fixed locales: blog dates `Intl.DateTimeFormat('en-US')`, order dates `toLocaleDateString('en-GB')`. | `blogs.*.tsx`, `account.orders._index.tsx` | US-047 |
 | 7 | The root font size is 14px, so inputs styled `text-base` render at 14px. iOS Safari zooms on focus for inputs below 16px; this zoom was not tested on a device (**unverified**). | `app/styles/tailwind.css` | US-048 (another team member) |

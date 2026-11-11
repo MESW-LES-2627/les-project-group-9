@@ -91,7 +91,7 @@ test('the language route rejects unsupported values and external redirects', asy
   request,
 }) => {
   const unsupported = await request.post('/locale', {
-    form: {locale: 'fr', redirectTo: '/'},
+    form: {locale: 'de', redirectTo: '/'},
     maxRedirects: 0,
   });
   expect(unsupported.status()).toBe(400);

@@ -7,8 +7,9 @@ import type {RootLoader} from '~/root';
  *
  * - key: app locale code (cookie and form value). Not a Shopify value.
  * - `language`: Storefront/Customer Account API `LanguageCode` for `@inContext`.
- *   `PT_PT` is "Portuguese (Portugal)" in the installed schema; the store must
- *   publish that language for it to return Portuguese content.
+ *   Checked against the installed schema: `EN`, `PT_PT` ("Portuguese
+ *   (Portugal)"), `FR` (the only French code). The store must publish a
+ *   language before the API returns content in it.
  * - `tag`: BCP 47 tag for `<html lang>`, `Intl` and Accept-Language matching.
  *
  * Only add a language here when it has full UI messages, is published in
@@ -23,6 +24,9 @@ export const LOCALES = {
     name: 'Português (Portugal)',
     short: 'PT',
   },
+  // French has a single Shopify LanguageCode (`FR`). France (fr-FR) is the
+  // formatting convention for the French experience.
+  fr: {language: 'FR', tag: 'fr-FR', name: 'Français (France)', short: 'FR'},
 } as const satisfies Record<
   string,
   {language: I18nBase['language']; tag: string; name: string; short: string}
@@ -284,6 +288,33 @@ const MESSAGES: Record<LocaleCode, Messages> = {
     },
     'nav.close': 'Fechar',
     'nav.closePanel': 'Fechar painel',
+  },
+  fr: {
+    'language.label': 'Langue',
+    // French typography: no-break space before the colon.
+    'language.current': 'Langue actuelle : {language}',
+    'nav.skipToContent': 'Aller au contenu',
+    'nav.main': 'Navigation principale',
+    'nav.mobile': 'Menu de navigation',
+    'nav.accountActions': 'Actions du compte',
+    'nav.home': 'Accueil',
+    'nav.homeOf': '{shop} — accueil',
+    'nav.openMenu': 'Ouvrir le menu',
+    'nav.menu': 'Menu',
+    'nav.search': 'Rechercher',
+    'nav.account': 'Compte',
+    'nav.myAccount': 'Mon compte',
+    'nav.favorites': 'Favoris',
+    'nav.fittingRoom': 'Cabine d’essayage',
+    'nav.shoppingBag': 'Panier',
+    // CLDR French: `one` covers 0 and 1, `many` large round numbers (1 000 000).
+    'nav.openCart': {
+      one: 'Ouvrir le panier ({count} article)',
+      many: 'Ouvrir le panier ({count} d’articles)',
+      other: 'Ouvrir le panier ({count} articles)',
+    },
+    'nav.close': 'Fermer',
+    'nav.closePanel': 'Fermer le panneau',
   },
 };
 

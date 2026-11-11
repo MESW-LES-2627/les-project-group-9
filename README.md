@@ -9,7 +9,7 @@ Shopify Oxygen. Besides the usual catalog, search, cart and customer account, it
   materials, colours and gemstones
 - **Personalised recommendations** based on favorites and preferences
 - **Allergen warnings** before adding a piece to the bag, and a ring-size guide
-- **English (US) and Portuguese (Portugal)** language selection ([docs/i18n.md](docs/i18n.md))
+- **English (US), Portuguese (Portugal) and French** language selection ([docs/i18n.md](docs/i18n.md))
 
 ## Tech stack
 
