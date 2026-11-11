@@ -61,7 +61,8 @@ Request
    - `shouldRevalidate`: the root reloads only after non-GET submissions or same-URL navigations.
    - `Layout`: renders `<html lang>` from the active locale's BCP 47 tag,
      wraps the app in `Analytics.Provider` → `ProfileProvider` → `PageLayout`.
-   - `ErrorBoundary`: a single branded error page.
+   - `ErrorBoundary`: a single branded error page with a translated message chosen by
+     status (404, other 4xx, 5xx); raw error messages are logged, not shown.
 4. **Route loaders** query the Storefront API (`context.storefront.query`) or the Customer
    Account API (`context.customerAccount.query`). Critical data is awaited; secondary data
    (e.g. product recommendations) is returned as a promise and rendered with `<Await>`.
@@ -199,8 +200,12 @@ See [i18n.md](i18n.md). Supported languages are English (`en`, default), Europea
 Portuguese (`pt`) and French (`fr`), all defined in `LOCALES`. `getLocaleFromRequest()` resolves the language on the server: an
 explicit choice in the `jeweliette_locale` cookie (set by `POST /locale`), then the
 browser's `Accept-Language`, then English. The country sent to Shopify is a separate
-setting (`US`); it never follows the language. UI text comes from the typed dictionary in
-`app/lib/i18n.ts` via `useTranslation()`; most strings are still English until US-047.
+setting (`US`); it never follows the language. All interface text comes from the typed
+dictionaries in `app/lib/messages/{en,pt,fr}.ts` via `useTranslation()` (components),
+`translatorFor()` (loaders and actions) and `translatorFromMatches()` (`meta`). Prices use
+`app/components/shared/Money.tsx`, and dates and lists use `formatDate()`/`formatList()`, all
+with the active locale. Shopify content is translated in the Shopify admin (see
+[i18n.md → Shopify administration setup](i18n.md#shopify-administration-setup)).
 
 ## Styling
 
@@ -214,7 +219,8 @@ setting (`US`); it never follows the language. UI text comes from the typed dict
   smaller than Tailwind's defaults.
 - Reusable class strings for account forms live in `app/lib/account-ui.ts`.
 - `prefers-reduced-motion` disables animations globally. `:focus-visible` has a global outline.
-- Icons: `components/shared/Icon.tsx` (inline SVG set).
+- Icons: `components/shared/Icon.tsx` (inline SVG set). Prices: `components/shared/Money.tsx`
+  (locale-aware; use it instead of Hydrogen's `<Money>`).
 
 ## Testing
 
@@ -245,7 +251,7 @@ See [testing.md](testing.md). In short:
 | Add a catalog filter | Shopify admin (Search & Discovery filters). If it needs a new filter key, extend `allowedKeys` in `readCatalogFilters()` (`app/lib/search.ts`). UI changes go in `CatalogFilters.tsx`. |
 | Add a sort option | `SORT_OPTIONS` in `app/routes/collections.$handle.tsx`. |
 | Add a customer preference | `PreferenceProfile` (`profile/types.ts`), `profile/preferences.ts` (normalise/parse), `PreferencesForm.tsx`, tests. |
-| Add a UI string / translation | Add the key to `en` and `pt` in `app/lib/i18n.ts` and use `useTranslation()`. See [i18n.md](i18n.md#adding-a-string). |
+| Add a UI string / translation | Add the key to `app/lib/messages/en.ts`, `pt.ts` and `fr.ts` and use `useTranslation()` (or `translatorFor` / `translatorFromMatches`). See [i18n.md](i18n.md#adding-a-string). |
 | Add a language | Add an entry to `LOCALES` and a message object in `app/lib/i18n.ts`, then publish the language in the Shopify admin. |
 | Change the language selector | `app/components/layout/LanguageSelector.tsx` (dropdown + flags; one component for header and mobile menu). Language list, short codes and flag keys come from `LOCALES` in `app/lib/i18n.ts`. See [i18n.md](i18n.md#language-selector). |
 | Change a theme color/font/breakpoint | `@theme` in `app/styles/tailwind.css`. |
@@ -264,8 +270,8 @@ has been decided.
 | 2 | Components never imported by any file in `app/`: `AddToCartButton`, `MockShopNotice`, `SearchOverlay`, `ProductImage`. `AddToCartButton` and `MockShopNotice` still have component tests. | grep of import paths | Proposed cleanup |
 | 3 | ~~`language: 'EN'` is hardcoded in 8 calls across 7 files: `lib/products.server.ts`, `lib/recommendation/catalog.server.ts`, `routes/_index.tsx`, `collections.$handle.tsx`, `collections.all.tsx`, `collections._index.tsx`, `products.$handle.tsx` (×2). (The first count of 7 missed `_index.tsx`.)~~ Resolved in US-046; guarded by `tests/unit/locale-propagation.test.ts`. | `grep "language: 'EN'"` | US-046 |
 | 4 | ~~`getLocaleFromRequest` only maps subdomains to ES/FR/DE/JA; PT is not supported; `<html lang="en">` is hardcoded.~~ Resolved in US-046 (EN/PT/FR from cookie or Accept-Language, `<html lang>` from the locale). | `app/lib/i18n.ts`, `app/root.tsx` | US-046 |
-| 5 | UI strings are hardcoded English, including in `app/lib/`: recommendation reasons (`recommendation/signals.ts`, `"Popular piece"` in `engine.ts`), preference labels (`ALLERGY_LABELS`, `RING_HAND_LABELS`, `ringFingerLabel` in `profile/preferences.ts`), sort labels, and API error messages. | source | US-047 |
-| 6 | Dates use fixed locales: blog dates `Intl.DateTimeFormat('en-US')`, order dates `toLocaleDateString('en-GB')`. | `blogs.*.tsx`, `account.orders._index.tsx` | US-047 |
+| 5 | ~~UI strings are hardcoded English, including in `app/lib/`.~~ Resolved in US-047: every interface string goes through the dictionaries; recommendation reasons are codes; preference labels moved out of `app/lib`. Intentional exceptions are listed in [i18n.md](i18n.md#what-is-not-translated-in-code). | source | US-047 |
+| 6 | ~~Dates use fixed locales; prices always formatted as en-US (Hydrogen `<Money>` without a `ShopifyProvider`).~~ Resolved in US-047: `formatDate()` and the shared `Money` use the active locale. | `blogs.*.tsx`, `account.orders.*`, `components/shared/Money.tsx` | US-047 |
 | 7 | The root font size is 14px, so inputs styled `text-base` render at 14px. iOS Safari zooms on focus for inputs below 16px; this zoom was not tested on a device (**unverified**). | `app/styles/tailwind.css` | US-048 (another team member) |
 | 8 | Touch targets below 44px. Header favorites and fitting-room links are `h-10 w-10`. Because spacing is `rem`-based and the root is 14px, the codebase-wide `size-11`/`min-h-11` targets compute to 38.5px, and `h-10` to 35px (calculated from the CSS, not measured in a browser). | `components/layout/Header.tsx`, `app/styles/tailwind.css` | US-048 (another team member). The new language selector uses explicit 44px targets (US-046). |
 | 9 | Playwright has only a desktop Chromium project. Phone-sized viewports are set per test in `footer.spec.ts` (375px) and, for the header and language selector only, `header.spec.ts` and `language.spec.ts` (US-046). Other flows are not tested on a phone-sized screen. | `playwright.config.ts`, `tests/e2e/` | US-048 (another team member) |
@@ -274,3 +280,5 @@ has been decided.
 | 12 | Comments in `app/lib/context.ts` and `react-router.config.ts` mention React Router 7.9.x; the installed version is 7.16.0. | source, `package.json` | Proposed cleanup |
 | 13 | CI (`test.yml`) does not run `npm run build`. The Oxygen workflow deploys on every push to any branch. | `.github/workflows/` | Information |
 | 14 | `PUBLIC_CHECKOUT_DOMAIN` is read by `root.tsx` and `entry.server.tsx` but is not listed in `.env.example`. | grep `env.` | Proposed cleanup |
+| 15 | The home loader finds the `home-content` menu items by title ("Hero", "Featured", "Story"). Menu titles are translatable content, so translating them in Shopify would hide those home sections in other languages. | `app/routes/_index.tsx` (`findCollection`) | Proposed follow-up (match by tags); documented in i18n.md |
+| 16 | `FooterMenu` calls `open('search')` but does not get `open` from `useAside()`, so it most likely resolves to the browser's `window.open` (not verified in a browser). | `components/layout/Footer.tsx` | Proposed fix |
