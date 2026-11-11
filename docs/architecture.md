@@ -41,7 +41,8 @@ Request
        ├─ createRequestHandler()  → React Router
        │     ├─ app/root.tsx loader      header (awaited), footer/cart/isLoggedIn (deferred)
        │     └─ matched route loader/action  app/routes/*.tsx
-       ├─ appends the session cookie if it changed (keeps cookies set by routes)
+       ├─ finalizeResponse()      app/lib/response.server.ts (appends the session cookie,
+       │                           Vary: Cookie, Accept-Language)
        └─ on 404: storefrontRedirect() (Shopify admin URL redirects)
 ```
 

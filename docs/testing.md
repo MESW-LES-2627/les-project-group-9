@@ -40,7 +40,7 @@ Watch mode:
 npm run test:watch
 ```
 
-Unit tests (`tests/unit`) cover the `app/lib` modules (allergens, i18n, materials, metafields, order filters, profile schema/preferences/customer, recommendation engine and traits, redirect, ring category, search filters, variants, fitting room) and the API/form routes (`api.profile*`, `api.recommendations`, `locale`, fitting-room move to cart).
+Unit tests (`tests/unit`) cover the `app/lib` modules (allergens, i18n, materials, metafields, order filters, profile schema/preferences/customer, recommendation engine and traits, redirect, ring category, search filters, variants, fitting room) and the API/form routes (`api.profile*`, `api.recommendations`, `locale`, fitting-room move to cart). `response.test.ts` checks the worker's response finishing (`app/lib/response.server.ts`): the language and session cookies both survive on one response, plus the `Vary` merging.
 
 Component tests cover:
 
@@ -89,7 +89,7 @@ npx playwright test --ui                     # step through tests in a browser
 | `favorites.spec.ts` | Logged-out shoppers are sent to log in from the favorites page, product page and product cards |
 | `footer.spec.ts` | Footer "Discover" links are on separate lines at 1280px and 375px, and open their pages |
 | `header.spec.ts` | Compact header at 375, 800 and 1279px and desktop header at 1280px, in EN and PT: which controls are visible, actions available, menu contents, 44px language targets, no horizontal overflow, nav-to-actions gap |
-| `language.spec.ts` | English by default; choosing PT keeps the path and query, sets the cookie (HttpOnly, SameSite=Lax) and persists after reload; choosing from the mobile menu at 375px (44px targets, no horizontal overflow); the cart, other cookies and currency are unchanged after switching; `/locale` rejects unsupported languages, external redirects and GET |
+| `language.spec.ts` | English by default; choosing PT keeps the path and query, sets the cookie (HttpOnly, SameSite=Lax) and persists after reload; choosing from the mobile menu at 375px (44px targets, no horizontal overflow); the cart, other cookies and currency are unchanged after switching; `/locale` rejects unsupported languages, external redirects and GET; pages send `Vary: Cookie, Accept-Language` |
 
 Customer account routes (`/account/*`) are not covered, because they need Shopify Customer Account OAuth.
 

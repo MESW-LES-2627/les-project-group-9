@@ -46,6 +46,7 @@ app/components/<group>/    UI grouped by area: account, cart, collections, fitti
                            layout, product, search, shared (+ RichText.tsx)
 app/lib/                   Domain logic and utilities (pure where possible)
   context.ts, session.ts, i18n.ts     Hydrogen context, cookie session, locale
+  response.server.ts                  Final response headers (session cookie, Vary)
   jeweliette-catalog.ts               Shared product fragments and catalog types
   profile/                            Favorites, fitting room, preferences (customer metafields)
   recommendation/                     Recommendation engine (pure) + candidate loader

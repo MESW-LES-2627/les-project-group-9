@@ -139,3 +139,14 @@ test('switching language keeps the cart and the market', async ({
     .evaluate(() => document.body.innerText.match(/[€$£]/)?.[0]);
   expect(priceAfter).toBe(priceBefore);
 });
+
+test('pages vary on the headers that decide the language', async ({
+  request,
+}) => {
+  for (const path of ['/', '/collections/all']) {
+    const response = await request.get(path);
+    const vary = (response.headers()['vary'] ?? '').toLowerCase();
+    expect(vary).toContain('cookie');
+    expect(vary).toContain('accept-language');
+  }
+});
