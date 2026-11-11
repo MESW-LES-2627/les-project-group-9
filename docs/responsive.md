@@ -15,14 +15,40 @@ Tailwind 4 defaults plus two custom breakpoints from the `@theme` block in
 | `xs` | `27rem` (custom) | 432px | Large phones (used once) |
 | `sm` | `40rem` | 640px | Small tablets / landscape phones |
 | `md` | `48rem` | 768px | Tablets |
-| `tablet` | `50rem` (custom) | 800px | Header switches from mobile menu to desktop navigation |
+| `tablet` | `50rem` (custom) | 800px | Page layouts (home hero, section padding) |
 | `lg` | `64rem` | 1024px | Desktop grids |
-| `xl` | `80rem` | 1280px | Wide desktop |
+| `xl` | `80rem` | 1280px | Wide desktop; **site header switches from compact (menu button) to desktop navigation** |
 
 The root font size is 87.5% (14px), and 93.75% at 1700px and up (`app/styles/tailwind.css`).
 `rem`-based sizes (`text-base`, `p-4`, `min-h-11`) are therefore 12.5% smaller than
 Tailwind's documented pixel values. For example, `min-h-11` is 38.5px, not 44px. This
 affects touch targets and input font sizes; US-048 addresses it.
+
+## Site header modes
+
+The header in `components/layout/Header.tsx` has two modes, switched at `xl` (1280px).
+Only the header uses this switch; the page layouts keep using `tablet`.
+
+| Width | Header |
+| --- | --- |
+| < 1280px | Compact: menu button, logo, search, favorites, fitting room, bag. The menu holds the navigation, "My account", "Shopping bag" and the language selector. |
+| ≥ 1280px | Desktop: logo, centred navigation, language selector, search, favorites, fitting room, account, bag. |
+
+Why 1280px (US-046): the language selector (2 × 44px) made the desktop header too wide
+below that. Measured in Chromium with fonts loaded, on the current store menu, in EN and PT:
+
+| Width | Gap between last nav link and first action |
+| --- | --- |
+| 800px (old switch point) | Overlap of 41px; header content 855px wide |
+| 1024px | 0px |
+| 1100px | 17px |
+| 1180px | 55px |
+| 1280px | 74px |
+
+The header used to switch at `tablet` (800px). Tablets and small laptops (800–1279px) now
+get the compact header. `tests/e2e/header.spec.ts` checks both modes just below and at
+1280px in both languages: visibility, no horizontal overflow, 44px selector targets, and a
+nav-to-actions gap of at least 16px. A longer Shopify menu needs a re-check.
 
 ## Rules
 

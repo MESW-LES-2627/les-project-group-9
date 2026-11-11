@@ -88,6 +88,7 @@ npx playwright test --ui                     # step through tests in a browser
 | `search.spec.ts` | Empty search; no results; searching from the search page and from the header |
 | `favorites.spec.ts` | Logged-out shoppers are sent to log in from the favorites page, product page and product cards |
 | `footer.spec.ts` | Footer "Discover" links are on separate lines at 1280px and 375px, and open their pages |
+| `header.spec.ts` | Compact header at 375, 800 and 1279px and desktop header at 1280px, in EN and PT: which controls are visible, actions available, menu contents, 44px language targets, no horizontal overflow, nav-to-actions gap |
 | `language.spec.ts` | English by default; choosing PT keeps the path and query, sets the cookie (HttpOnly, SameSite=Lax) and persists after reload; choosing from the mobile menu at 375px (44px targets, no horizontal overflow); the cart, other cookies and currency are unchanged after switching; `/locale` rejects unsupported languages, external redirects and GET |
 
 Customer account routes (`/account/*`) are not covered, because they need Shopify Customer Account OAuth.

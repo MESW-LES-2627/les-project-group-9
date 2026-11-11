@@ -54,13 +54,13 @@ export function Header({
         <span>Free shipping on orders over €100</span>
         <span className="hidden sm:inline"> · Made to last</span>
       </div>
-      <header className="sticky top-0 z-50 grid h-[66px] grid-cols-[44px_1fr_auto] items-center border-b border-line bg-paper px-4 tablet:grid-cols-[minmax(140px,1fr)_auto_minmax(140px,1fr)] tablet:px-[3vw]">
-        <div className="tablet:hidden">
+      <header className="sticky top-0 z-50 grid h-[66px] grid-cols-[44px_1fr_auto] items-center border-b border-line bg-paper px-4 xl:grid-cols-[minmax(140px,1fr)_auto_minmax(140px,1fr)] xl:px-[3vw]">
+        <div className="xl:hidden">
           <HeaderMenuMobileToggle />
         </div>
         <NavLink
           aria-label={t('nav.homeOf', {shop: shop.name})}
-          className="justify-self-center font-display text-2xl font-medium tracking-[-0.04em] text-primary tablet:justify-self-start"
+          className="justify-self-center font-display text-2xl font-medium tracking-[-0.04em] text-primary xl:justify-self-start"
           prefetch="intent"
           to="/"
           end
@@ -100,7 +100,7 @@ export function HeaderMenu({
       className={
         mobile
           ? 'flex flex-col gap-1 px-5 py-6'
-          : 'hidden items-center justify-center gap-3 tablet:flex xl:gap-7'
+          : 'hidden items-center justify-center gap-7 xl:flex'
       }
     >
       {mobile && (
@@ -171,14 +171,14 @@ function HeaderCtas({
       aria-label={t('nav.accountActions')}
       className="flex items-center justify-end gap-1 text-primary sm:gap-2"
     >
-      <LanguageSelector className="hidden tablet:flex" />
+      <LanguageSelector className="hidden xl:flex" />
       <SearchToggle />
       <FavoritesLink />
       <FittingRoomLink />
 
       <NavLink
         aria-label={t('nav.account')}
-        className="hidden size-11 place-items-center hover:text-ink tablet:grid"
+        className="hidden size-11 place-items-center hover:text-ink xl:grid"
         prefetch="intent"
         to="/account"
       >
