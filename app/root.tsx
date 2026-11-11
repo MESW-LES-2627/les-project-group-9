@@ -15,7 +15,7 @@ import logo from '~/assets/logo.svg';
 import tailwindCss from '~/styles/tailwind.css?url';
 import {PageLayout} from '~/components/layout/PageLayout';
 import {ProfileProvider} from '~/lib/profile/ProfileProvider';
-import {toAppLocale, useLocale} from '~/lib/i18n';
+import {DEFAULT_APP_LOCALE, LocaleContext, toAppLocale} from '~/lib/i18n';
 
 export type RootLoader = typeof loader;
 
@@ -100,7 +100,7 @@ function loadDeferredData({context}: Route.LoaderArgs) {
 export function Layout({children}: {children?: React.ReactNode}) {
   const nonce = useNonce();
   const data = useRouteLoaderData<RootLoader>('root');
-  const locale = useLocale();
+  const locale = data?.locale ?? DEFAULT_APP_LOCALE;
 
   return (
     <html lang={locale.tag}>
@@ -112,6 +112,7 @@ export function Layout({children}: {children?: React.ReactNode}) {
       <link rel="stylesheet" href={tailwindCss} />
     </head>
     <body>
+    <LocaleContext.Provider value={locale}>
     {data ? (
       <Analytics.Provider cart={data.cart} shop={data.shop} consent={data.consent}>
         <ProfileProvider>
@@ -121,6 +122,7 @@ export function Layout({children}: {children?: React.ReactNode}) {
     ) : (
       children
     )}
+    </LocaleContext.Provider>
     <ScrollRestoration nonce={nonce} />
     <Scripts nonce={nonce} />
     </body>

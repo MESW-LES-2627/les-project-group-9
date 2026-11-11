@@ -6,6 +6,7 @@ import {LanguageSelector} from '../../../app/components/layout/LanguageSelector'
 import {
   getLocaleFromRequest,
   LOCALE_COOKIE,
+  LocaleContext,
   toAppLocale,
   useLocale,
   type LocaleCode,
@@ -36,12 +37,13 @@ function renderSelector(
       id: 'root',
       path: '/products/:handle',
       loader: () => ({locale}),
+      // The root layout provides the locale; mirror that here.
       Component: () => (
-        <>
+        <LocaleContext.Provider value={locale}>
           <LanguageSelector layout={layout} />
           <button type="button">Outside</button>
           <DocumentLanguage />
-        </>
+        </LocaleContext.Provider>
       ),
     },
     {

@@ -1,6 +1,5 @@
 import type {I18nBase} from '@shopify/hydrogen';
-import {useRouteLoaderData} from 'react-router';
-import type {RootLoader} from '~/root';
+import {createContext, useContext, useMemo} from 'react';
 import {
   en,
   type MessageKey,
@@ -295,19 +294,26 @@ function selectPluralForm(
   return message[rules.select(count)] ?? message.other;
 }
 
-/** The active locale from the root loader; the default outside of it (e.g. error pages). */
+/** English (US) with the default country: used before a locale is known. */
+export const DEFAULT_APP_LOCALE: AppLocale = toAppLocale({
+  language: LOCALES[DEFAULT_LOCALE].language,
+  country: DEFAULT_COUNTRY,
+});
+
+/**
+ * The active locale for components. The root layout provides the locale from
+ * the root loader; anything rendered outside it (isolated component tests)
+ * gets English. A context, unlike `useRouteLoaderData`, needs no data router.
+ */
+export const LocaleContext = createContext<AppLocale>(DEFAULT_APP_LOCALE);
+
+/** The active locale (`{code, language, country, tag}`). */
 export function useLocale(): AppLocale {
-  const data = useRouteLoaderData<RootLoader>('root');
-  return (
-    data?.locale ??
-    toAppLocale({
-      language: LOCALES[DEFAULT_LOCALE].language,
-      country: DEFAULT_COUNTRY,
-    })
-  );
+  return useContext(LocaleContext);
 }
 
 /** Translate function for the active locale. */
 export function useTranslation(): Translate {
-  return createTranslator(useLocale().code);
+  const {code} = useLocale();
+  return useMemo(() => createTranslator(code), [code]);
 }

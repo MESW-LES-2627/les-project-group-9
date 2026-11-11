@@ -56,7 +56,8 @@ Request
    - `loader`: awaits the `Header` query (shop + `main-menu`). The `Footer` query (`footer`
      menu), `cart.get()` and `customerAccount.isLoggedIn()` are returned as promises
      (streamed). It also returns analytics `shop`/`consent` data, `publicStoreDomain` and
-     `locale` (`{code, language, country, tag}`, read with `useLocale()`).
+     `locale` (`{code, language, country, tag}`). `Layout` provides it through
+     `LocaleContext`, read with `useLocale()`/`useTranslation()`.
    - `shouldRevalidate`: the root reloads only after non-GET submissions or same-URL navigations.
    - `Layout`: renders `<html lang>` from the active locale's BCP 47 tag,
      wraps the app in `Analytics.Provider` → `ProfileProvider` → `PageLayout`.
