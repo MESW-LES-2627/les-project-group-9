@@ -294,6 +294,11 @@ function selectPluralForm(
   return message[rules.select(count)] ?? message.other;
 }
 
+/** Translator for server code (loaders, actions) from Hydrogen's `i18n`. */
+export function translatorFor(i18n: I18nBase): Translate {
+  return createTranslator(toAppLocale(i18n).code);
+}
+
 /** Joins items as a localized list: "A, B and C" / "A, B e C" / "A, B et C". */
 export function formatList(items: string[], tag: string): string {
   return new Intl.ListFormat(tag, {style: 'long', type: 'conjunction'}).format(

@@ -224,4 +224,74 @@ export const pt: Messages = {
   'recommendation.reason.sameGemColor': 'Mesma cor de pedra: {value}',
   'recommendation.reason.similarFavorite': 'Semelhante aos seus favoritos',
   'recommendation.reason.popular': 'Peça popular',
+
+  // Cart
+  'common.remove': 'Remover',
+  'common.logIn': 'Iniciar sessão',
+  'cart.region.page': 'Página do saco de compras',
+  'cart.region.drawer': 'Painel do saco de compras',
+  'cart.lines': 'Artigos',
+  'cart.lineChildren': 'Artigos com {title}',
+  'cart.empty': 'O seu saco de compras está vazio',
+  'cart.emptyText':
+    'Parece que ainda não adicionou nada. Explore as coleções e encontre uma peça de que goste.',
+  'cart.continueShopping': 'Continuar a comprar',
+  'cart.decrease': 'Diminuir a quantidade',
+  'cart.increase': 'Aumentar a quantidade',
+  'cart.summary': 'Resumo da encomenda',
+  'cart.addCode': 'Adicionar um código',
+  'cart.subtotal': 'Subtotal',
+  'cart.taxesNote': 'Envio e impostos calculados na finalização da compra.',
+  'cart.checkout': 'Finalizar compra',
+  'cart.appliedCodes': 'Códigos aplicados',
+  'cart.removeDiscount': 'Remover código de desconto',
+  'cart.giftCard': 'Cartão de oferta ***{last}',
+  'cart.removeGiftCard': 'Remover cartão de oferta terminado em {last}',
+  'cart.discountCode': 'Código de desconto',
+  'cart.giftCardCode': 'Código do cartão de oferta',
+  'cart.apply': 'Aplicar',
+
+  // Favorites
+  'favorites.loading': 'A carregar favoritos…',
+  'favorites.loginTitle': 'Inicie sessão para guardar favoritos.',
+  'favorites.loginText':
+    'Inicie sessão para guardar as suas peças favoritas em todos os dispositivos.',
+  'favorites.emptyTitle': 'Ainda não guardou nada.',
+  'favorites.emptyText':
+    'Toque no coração de qualquer peça para a guardar aqui.',
+
+  // Fitting room
+  'fittingRoom.loading': 'A carregar o seu provador…',
+  'fittingRoom.loginTitle': 'Inicie sessão para usar o provador.',
+  'fittingRoom.loginText':
+    'Inicie sessão para guardar as peças que quer experimentar em todos os dispositivos.',
+  'fittingRoom.emptyTitle': 'O seu provador está vazio.',
+  'fittingRoom.emptyText':
+    'Use o botão do cabide em qualquer peça para a adicionar aqui.',
+  'fittingRoom.loadingPieces': 'A carregar peças…',
+  'fittingRoom.unavailableTitle': 'Estas peças não estão disponíveis.',
+  'fittingRoom.unavailableText': 'Podem ter sido retiradas da loja.',
+  'fittingRoom.listLabel': 'Peças no seu provador',
+  'fittingRoom.count': {one: '{count} peça', other: '{count} peças'},
+  'fittingRoom.selectAll': 'Selecionar tudo',
+  'fittingRoom.clear': 'Limpar',
+  'fittingRoom.select': 'Selecionar {title}',
+  'fittingRoom.moveLabel': 'Mover {title} para o saco de compras',
+  'fittingRoom.moving': 'A mover…',
+  'fittingRoom.moveToCart': 'Mover para o saco',
+  'fittingRoom.tryOn': 'Prova virtual',
+  'fittingRoom.tryOnTitle': 'Veja como lhe fica',
+  'fittingRoom.tryOnText':
+    'Escolha as peças que quer experimentar em conjunto. A prova virtual estará disponível em breve.',
+  'fittingRoom.readyToTry': {
+    one: '{count} peça pronta a experimentar',
+    other: '{count} peças prontas a experimentar',
+  },
+  'fittingRoom.selectHint':
+    'Selecione pelo menos uma peça à esquerda para criar o seu visual.',
+  'fittingRoom.error.unauthorized': 'Não autorizado',
+  'fittingRoom.error.invalid': 'Produto inválido',
+  'fittingRoom.error.soldOut': 'Esta peça está esgotada',
+  'fittingRoom.error.remove': 'Não foi possível remover do provador',
+  'fittingRoom.error.move': 'Não foi possível mover para o saco de compras',
 };

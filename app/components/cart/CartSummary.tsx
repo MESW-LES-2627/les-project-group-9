@@ -3,6 +3,7 @@ import type {CartLayout} from '~/components/cart/CartMain';
 import {CartForm, Money, type OptimisticCart} from '@shopify/hydrogen';
 import {useEffect, useId, useRef, useState} from 'react';
 import {useFetcher} from 'react-router';
+import {useTranslation} from '~/lib/i18n';
 
 type CartSummaryProps = {
   cart: OptimisticCart<CartApiQueryFragment | null>;
@@ -19,6 +20,7 @@ export function CartSummary({cart, layout}: CartSummaryProps) {
   const summaryId = useId();
   const discountCodeInputId = useId();
   const giftCardInputId = useId();
+  const t = useTranslation();
 
   const hasAppliedDiscounts = Boolean(
     cart?.discountCodes?.some((discount) => discount.applicable),
@@ -33,7 +35,7 @@ export function CartSummary({cart, layout}: CartSummaryProps) {
   return (
     <section aria-labelledby={summaryId} className={wrapperClass}>
       <h4 id={summaryId} className="sr-only">
-        Order summary
+        {t('cart.summary')}
       </h4>
 
       <CartAppliedCodes
@@ -46,7 +48,7 @@ export function CartSummary({cart, layout}: CartSummaryProps) {
         open={hasAppliedDiscounts || hasAppliedGiftCards ? undefined : false}
       >
         <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between text-xs uppercase tracking-widest text-primary [&::-webkit-details-marker]:hidden">
-          Add a code
+          {t('cart.addCode')}
           <span
             aria-hidden="true"
             className="text-base transition-transform group-open:rotate-45"
@@ -66,7 +68,7 @@ export function CartSummary({cart, layout}: CartSummaryProps) {
 
       <dl className="flex items-baseline justify-between pt-3">
         <dt className="text-xs uppercase tracking-widest text-primary">
-          Subtotal
+          {t('cart.subtotal')}
         </dt>
         <dd className="font-display text-xl text-ink">
           {cart?.cost?.subtotalAmount?.amount ? (
@@ -78,7 +80,7 @@ export function CartSummary({cart, layout}: CartSummaryProps) {
       </dl>
 
       <p className="mt-1 text-xs text-primary">
-        Shipping and taxes calculated at checkout.
+        {t('cart.taxesNote')}
       </p>
 
       <CartCheckoutActions checkoutUrl={cart?.checkoutUrl} />
@@ -87,6 +89,7 @@ export function CartSummary({cart, layout}: CartSummaryProps) {
 }
 
 function CartCheckoutActions({checkoutUrl}: {checkoutUrl?: string}) {
+  const t = useTranslation();
   if (!checkoutUrl) return null;
 
   return (
@@ -95,7 +98,7 @@ function CartCheckoutActions({checkoutUrl}: {checkoutUrl?: string}) {
       target="_self"
       className="mt-3 flex min-h-11 w-full items-center justify-between bg-primary px-5 text-xs font-medium uppercase tracking-widest text-white transition-colors hover:bg-ink"
     >
-      Checkout
+      {t('cart.checkout')}
       <span aria-hidden="true">→</span>
     </a>
   );
@@ -113,6 +116,7 @@ function CartAppliedCodes({
       ?.filter((discount) => discount.applicable)
       ?.map(({code}) => code) || [];
 
+  const t = useTranslation();
   const removeButtonRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const previousCardIdsRef = useRef<string[]>([]);
   const [removedCardIndex, setRemovedCardIndex] = useState<number | null>(null);
@@ -133,17 +137,17 @@ function CartAppliedCodes({
   if (!codes.length && !giftCardCodes?.length) return null;
 
   return (
-    <ul className="mb-2 flex flex-wrap gap-2" aria-label="Applied codes">
+    <ul className="mb-2 flex flex-wrap gap-2" aria-label={t('cart.appliedCodes')}>
       {codes.length > 0 && (
         <li className="flex items-center gap-2 bg-secondary/60 py-1 pl-3 pr-1 text-xs text-ink">
           <span>{codes.join(', ')}</span>
           <UpdateDiscountForm discountCodes={[]}>
             <button
               type="submit"
-              aria-label="Remove discount code"
+              aria-label={t('cart.removeDiscount')}
               className="min-h-8 px-2 text-primary underline underline-offset-2"
             >
-              Remove
+              {t('common.remove')}
             </button>
           </UpdateDiscountForm>
         </li>
@@ -154,7 +158,7 @@ function CartAppliedCodes({
           key={giftCard.id}
           className="flex items-center gap-2 bg-secondary/60 py-1 pl-3 pr-1 text-xs text-ink"
         >
-          <span>Gift card ***{giftCard.lastCharacters}</span>
+          <span>{t('cart.giftCard', {last: giftCard.lastCharacters})}</span>
           <CartForm
             route="/cart"
             action={CartForm.ACTIONS.GiftCardCodesRemove}
@@ -162,7 +166,9 @@ function CartAppliedCodes({
           >
             <button
               type="submit"
-              aria-label={`Remove gift card ending in ${giftCard.lastCharacters}`}
+              aria-label={t('cart.removeGiftCard', {
+                last: giftCard.lastCharacters,
+              })}
               ref={(el) => {
                 if (el) removeButtonRefs.current.set(giftCard.id, el);
                 else removeButtonRefs.current.delete(giftCard.id);
@@ -173,7 +179,7 @@ function CartAppliedCodes({
               }}
               className="min-h-8 px-2 text-primary underline underline-offset-2"
             >
-              Remove
+              {t('common.remove')}
             </button>
           </CartForm>
         </li>
@@ -189,6 +195,7 @@ function CartDiscountForm({
   discountCodes?: CartApiQueryFragment['discountCodes'];
   inputId: string;
 }) {
+  const t = useTranslation();
   const codes: string[] =
     discountCodes
       ?.filter((discount) => discount.applicable)
@@ -197,19 +204,19 @@ function CartDiscountForm({
   return (
     <UpdateDiscountForm discountCodes={codes}>
       <label htmlFor={inputId} className="sr-only">
-        Discount code
+        {t('cart.discountCode')}
       </label>
       <div className="flex gap-2">
         <input
           id={inputId}
           type="text"
           name="discountCode"
-          placeholder="Discount code"
+          placeholder={t('cart.discountCode')}
           autoComplete="off"
           className={inputClass}
         />
         <button type="submit" className={secondaryButtonClass}>
-          Apply
+          {t('cart.apply')}
         </button>
       </div>
     </UpdateDiscountForm>
@@ -237,6 +244,7 @@ function UpdateDiscountForm({
 function CartGiftCardForm({inputId}: {inputId: string}) {
   const giftCardCodeInput = useRef<HTMLInputElement>(null);
   const giftCardAddFetcher = useFetcher({key: 'gift-card-add'});
+  const t = useTranslation();
 
   useEffect(() => {
     if (giftCardAddFetcher.data && giftCardCodeInput.current !== null) {
@@ -251,14 +259,14 @@ function CartGiftCardForm({inputId}: {inputId: string}) {
       fetcherKey="gift-card-add"
     >
       <label htmlFor={inputId} className="sr-only">
-        Gift card code
+        {t('cart.giftCardCode')}
       </label>
       <div className="flex gap-2">
         <input
           id={inputId}
           type="text"
           name="giftCardCode"
-          placeholder="Gift card code"
+          placeholder={t('cart.giftCardCode')}
           autoComplete="off"
           ref={giftCardCodeInput}
           className={inputClass}
@@ -268,7 +276,7 @@ function CartGiftCardForm({inputId}: {inputId: string}) {
           disabled={giftCardAddFetcher.state !== 'idle'}
           className={`${secondaryButtonClass} disabled:cursor-wait disabled:opacity-60`}
         >
-          Apply
+          {t('cart.apply')}
         </button>
       </div>
     </CartForm>

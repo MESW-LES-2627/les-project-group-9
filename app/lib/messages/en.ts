@@ -232,6 +232,74 @@ export const en = {
   'recommendation.reason.sameGemColor': 'Same gem colour: {value}',
   'recommendation.reason.similarFavorite': 'Similar to your favorites',
   'recommendation.reason.popular': 'Popular piece',
+
+  // Cart
+  'common.remove': 'Remove',
+  'common.logIn': 'Log in',
+  'cart.region.page': 'Cart page',
+  'cart.region.drawer': 'Cart drawer',
+  'cart.lines': 'Line items',
+  'cart.lineChildren': 'Line items with {title}',
+  'cart.empty': 'Your bag is empty',
+  'cart.emptyText':
+    'Looks like you haven’t added anything yet. Explore the collections and find a piece you love.',
+  'cart.continueShopping': 'Continue shopping',
+  'cart.decrease': 'Decrease quantity',
+  'cart.increase': 'Increase quantity',
+  'cart.summary': 'Order summary',
+  'cart.addCode': 'Add a code',
+  'cart.subtotal': 'Subtotal',
+  'cart.taxesNote': 'Shipping and taxes calculated at checkout.',
+  'cart.checkout': 'Checkout',
+  'cart.appliedCodes': 'Applied codes',
+  'cart.removeDiscount': 'Remove discount code',
+  'cart.giftCard': 'Gift card ***{last}',
+  'cart.removeGiftCard': 'Remove gift card ending in {last}',
+  'cart.discountCode': 'Discount code',
+  'cart.giftCardCode': 'Gift card code',
+  'cart.apply': 'Apply',
+
+  // Favorites
+  'favorites.loading': 'Loading favorites…',
+  'favorites.loginTitle': 'Log in to save favorites.',
+  'favorites.loginText':
+    'Sign in to keep your favourite pieces across devices.',
+  'favorites.emptyTitle': 'Nothing saved yet.',
+  'favorites.emptyText': 'Tap the heart on any piece to keep it here.',
+
+  // Fitting room
+  'fittingRoom.loading': 'Loading your fitting room…',
+  'fittingRoom.loginTitle': 'Log in to use the fitting room.',
+  'fittingRoom.loginText':
+    'Sign in to keep the pieces you want to try across devices.',
+  'fittingRoom.emptyTitle': 'Your fitting room is empty.',
+  'fittingRoom.emptyText': 'Use the hanger button on any piece to add it here.',
+  'fittingRoom.loadingPieces': 'Loading pieces…',
+  'fittingRoom.unavailableTitle': 'These pieces are unavailable.',
+  'fittingRoom.unavailableText': 'They may have been removed from the store.',
+  'fittingRoom.listLabel': 'Pieces in your fitting room',
+  'fittingRoom.count': {one: '{count} piece', other: '{count} pieces'},
+  'fittingRoom.selectAll': 'Select all',
+  'fittingRoom.clear': 'Clear',
+  'fittingRoom.select': 'Select {title}',
+  'fittingRoom.moveLabel': 'Move {title} to cart',
+  'fittingRoom.moving': 'Moving…',
+  'fittingRoom.moveToCart': 'Move to cart',
+  'fittingRoom.tryOn': 'Virtual try-on',
+  'fittingRoom.tryOnTitle': 'See it on you',
+  'fittingRoom.tryOnText':
+    'Choose the pieces you want to try together. The virtual fitting experience is coming soon.',
+  'fittingRoom.readyToTry': {
+    one: '{count} piece ready to try',
+    other: '{count} pieces ready to try',
+  },
+  'fittingRoom.selectHint':
+    'Select at least one piece on the left to build your look.',
+  'fittingRoom.error.unauthorized': 'Unauthorized',
+  'fittingRoom.error.invalid': 'Invalid product',
+  'fittingRoom.error.soldOut': 'This piece is sold out',
+  'fittingRoom.error.remove': 'Could not remove from fitting room',
+  'fittingRoom.error.move': 'Could not move to cart',
 } as const satisfies Record<string, string | PluralMessage>;
 
 export type MessageKey = keyof typeof en;

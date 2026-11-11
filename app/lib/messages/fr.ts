@@ -228,4 +228,76 @@ export const fr: Messages = {
   'recommendation.reason.sameGemColor': 'Même couleur de pierre : {value}',
   'recommendation.reason.similarFavorite': 'Semblable à vos favoris',
   'recommendation.reason.popular': 'Pièce populaire',
+
+  // Cart
+  'common.remove': 'Retirer',
+  'common.logIn': 'Se connecter',
+  'cart.region.page': 'Page du panier',
+  'cart.region.drawer': 'Volet du panier',
+  'cart.lines': 'Articles',
+  'cart.lineChildren': 'Articles avec {title}',
+  'cart.empty': 'Votre panier est vide',
+  'cart.emptyText':
+    'Vous n’avez encore rien ajouté. Découvrez les collections et trouvez une pièce qui vous plaît.',
+  'cart.continueShopping': 'Continuer mes achats',
+  'cart.decrease': 'Diminuer la quantité',
+  'cart.increase': 'Augmenter la quantité',
+  'cart.summary': 'Récapitulatif de la commande',
+  'cart.addCode': 'Ajouter un code',
+  'cart.subtotal': 'Sous-total',
+  'cart.taxesNote': 'Livraison et taxes calculées lors du paiement.',
+  'cart.checkout': 'Paiement',
+  'cart.appliedCodes': 'Codes appliqués',
+  'cart.removeDiscount': 'Retirer le code de réduction',
+  'cart.giftCard': 'Carte cadeau ***{last}',
+  'cart.removeGiftCard': 'Retirer la carte cadeau se terminant par {last}',
+  'cart.discountCode': 'Code de réduction',
+  'cart.giftCardCode': 'Code de la carte cadeau',
+  'cart.apply': 'Appliquer',
+
+  // Favorites
+  'favorites.loading': 'Chargement des favoris…',
+  'favorites.loginTitle': 'Connectez-vous pour enregistrer vos favoris.',
+  'favorites.loginText':
+    'Connectez-vous pour retrouver vos pièces favorites sur tous vos appareils.',
+  'favorites.emptyTitle': 'Aucun favori pour le moment.',
+  'favorites.emptyText': 'Touchez le cœur d’une pièce pour la retrouver ici.',
+
+  // Fitting room
+  'fittingRoom.loading': 'Chargement de votre cabine d’essayage…',
+  'fittingRoom.loginTitle':
+    'Connectez-vous pour utiliser la cabine d’essayage.',
+  'fittingRoom.loginText':
+    'Connectez-vous pour retrouver les pièces à essayer sur tous vos appareils.',
+  'fittingRoom.emptyTitle': 'Votre cabine d’essayage est vide.',
+  'fittingRoom.emptyText':
+    'Utilisez le bouton cintre d’une pièce pour l’ajouter ici.',
+  'fittingRoom.loadingPieces': 'Chargement des pièces…',
+  'fittingRoom.unavailableTitle': 'Ces pièces ne sont pas disponibles.',
+  'fittingRoom.unavailableText':
+    'Elles ont peut-être été retirées de la boutique.',
+  'fittingRoom.listLabel': 'Pièces dans votre cabine d’essayage',
+  'fittingRoom.count': {one: '{count} pièce', other: '{count} pièces'},
+  'fittingRoom.selectAll': 'Tout sélectionner',
+  'fittingRoom.clear': 'Effacer',
+  'fittingRoom.select': 'Sélectionner {title}',
+  'fittingRoom.moveLabel': 'Déplacer {title} vers le panier',
+  'fittingRoom.moving': 'Déplacement…',
+  'fittingRoom.moveToCart': 'Mettre au panier',
+  'fittingRoom.tryOn': 'Essayage virtuel',
+  'fittingRoom.tryOnTitle': 'Voyez le rendu sur vous',
+  'fittingRoom.tryOnText':
+    'Choisissez les pièces à essayer ensemble. L’essayage virtuel arrive bientôt.',
+  'fittingRoom.readyToTry': {
+    one: '{count} pièce prête à essayer',
+    other: '{count} pièces prêtes à essayer',
+  },
+  'fittingRoom.selectHint':
+    'Sélectionnez au moins une pièce à gauche pour composer votre look.',
+  'fittingRoom.error.unauthorized': 'Non autorisé',
+  'fittingRoom.error.invalid': 'Produit invalide',
+  'fittingRoom.error.soldOut': 'Cette pièce est épuisée',
+  'fittingRoom.error.remove':
+    'Impossible de retirer la pièce de la cabine d’essayage',
+  'fittingRoom.error.move': 'Impossible de déplacer la pièce vers le panier',
 };
