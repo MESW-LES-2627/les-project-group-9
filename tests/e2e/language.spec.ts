@@ -7,16 +7,19 @@ const LOCALE_COOKIE = 'jeweliette_locale';
 function languageButton(
   page: Page,
   scope: 'banner' | 'dialog',
-  code: 'EN' | 'PT',
+  code: 'EN' | 'PT' | 'FR',
 ) {
-  const name = code === 'EN' ? /^EN — / : /^PT — /;
-  return page.getByRole(scope).getByRole('button', {name});
+  return page
+    .getByRole(scope)
+    .getByRole('button', {name: new RegExp(`^${code} — `)});
 }
 
 /*
- * These tests cover the UI locale only (labels, <html lang>, cookie and
- * negotiation). Translated Shopify content is not asserted: Portuguese is not
- * yet published in the store, so the Storefront API returns English content.
+ * These tests cover the application locale only (labels, <html lang>, cookie
+ * and negotiation). Translated Shopify content is not asserted: Portuguese and
+ * French are not yet published in the store, so the Storefront API returns
+ * English content. Each locale case runs in its own browser context; the
+ * config default is en-US and the describe blocks override it.
  */
 
 test('an English browser gets English', async ({page}) => {
@@ -222,5 +225,117 @@ test.describe('a fresh English browser', () => {
     expect(
       (await context.cookies()).find((c) => c.name === LOCALE_COOKIE),
     ).toBeUndefined();
+  });
+});
+
+test.describe('a fresh French browser', () => {
+  test.use({locale: 'fr-FR'});
+
+  test('gets French without choosing, and no cookie is set', async ({
+    page,
+    context,
+  }) => {
+    await page.goto('/');
+
+    await expect(page.locator('html')).toHaveAttribute('lang', 'fr-FR');
+    await expect(
+      page.getByRole('banner').getByRole('group', {name: 'Langue'}),
+    ).toBeVisible();
+    await expect(languageButton(page, 'banner', 'FR')).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await expect(
+      page.getByRole('banner').getByRole('button', {name: 'Rechercher'}),
+    ).toBeVisible();
+    expect(
+      (await context.cookies()).find((c) => c.name === LOCALE_COOKIE),
+    ).toBeUndefined();
+  });
+
+  test('choosing English survives reload and navigation', async ({
+    page,
+    context,
+  }) => {
+    await page.goto('/');
+    await languageButton(page, 'banner', 'EN').click();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en-US');
+    expect(
+      (await context.cookies()).find((c) => c.name === LOCALE_COOKIE)?.value,
+    ).toBe('en');
+
+    await page.reload();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en-US');
+    await page.goto('/collections/all');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en-US');
+  });
+});
+
+test.describe('a fresh Canadian French browser', () => {
+  test.use({locale: 'fr-CA'});
+
+  test('falls back to the available French experience', async ({page}) => {
+    await page.goto('/');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'fr-FR');
+  });
+});
+
+test.describe('choosing French', () => {
+  for (const browserLocale of ['en-US', 'pt-PT'] as const) {
+    test.describe(`in a ${browserLocale} browser`, () => {
+      test.use({locale: browserLocale});
+
+      test('keeps the page and query, and persists after reload and navigation', async ({
+        page,
+        context,
+      }) => {
+        await page.goto('/search?q=ring&sort=price');
+
+        await languageButton(page, 'banner', 'FR').click();
+
+        await expect(page.locator('html')).toHaveAttribute('lang', 'fr-FR');
+        await expect(page).toHaveURL(
+          (url) =>
+            url.pathname === '/search' &&
+            url.searchParams.get('q') === 'ring' &&
+            url.searchParams.get('sort') === 'price',
+        );
+        const cookie = (await context.cookies()).find(
+          (c) => c.name === LOCALE_COOKIE,
+        );
+        expect(cookie?.value).toBe('fr');
+        expect(cookie?.httpOnly).toBe(true);
+
+        await page.reload();
+        await expect(page.locator('html')).toHaveAttribute('lang', 'fr-FR');
+
+        await page.goto('/collections/all');
+        await expect(page.locator('html')).toHaveAttribute('lang', 'fr-FR');
+        await expect(languageButton(page, 'banner', 'FR')).toHaveAttribute(
+          'aria-pressed',
+          'true',
+        );
+      });
+    });
+  }
+
+  test('from the phone menu, with a French plural cart label', async ({
+    page,
+  }) => {
+    await page.setViewportSize({width: 375, height: 812});
+    await page.goto('/');
+
+    await page.getByRole('button', {name: 'Open menu'}).click();
+    const french = languageButton(page, 'dialog', 'FR');
+    await expectTouchTarget(french);
+    await french.click();
+
+    await expect(page.locator('html')).toHaveAttribute('lang', 'fr-FR');
+    await expect(
+      page.getByRole('link', {name: /^Ouvrir le panier \(\d+ articles?\)$/}),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', {name: 'Ouvrir le menu'}),
+    ).toBeVisible();
   });
 });

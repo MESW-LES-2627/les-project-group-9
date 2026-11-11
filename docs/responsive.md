@@ -39,7 +39,7 @@ belongs to **US-046** (language selector integration).
 | ≥ 1280px | Desktop: logo, centred navigation, language selector, search, favorites, fitting room, account, bag. |
 
 Why 1280px (US-046): the language selector (2 × 44px) made the desktop header too wide
-below that. Measured in Chromium with fonts loaded, on the current store menu, in EN and PT:
+below that. Measured in Chromium with fonts loaded, on the current store menu, in EN and PT (two options):
 
 | Width | Gap between last nav link and first action |
 | --- | --- |
@@ -49,10 +49,23 @@ below that. Measured in Chromium with fonts loaded, on the current store menu, i
 | 1180px | 55px |
 | 1280px | 74px |
 
+**Re-check with French (three options, 3 × 44px)**, same method, in EN, PT and FR:
+
+| Width | Gap between last nav link and first action | Selector buttons |
+| --- | --- | --- |
+| 1279px | compact header (desktop nav hidden) | in the menu |
+| 1280px | 30px | 44×44 each |
+| 1366px | 70px | 44×44 each |
+| 1440px | 105px | 44×44 each |
+| Menu at 360px / 375px | no horizontal overflow | 3 × 44×44 in one row |
+
+The third option fits at 1280px without any layout change, so the switch point stays at
+`xl`. Each further language would cost another 44px: re-measure before adding one.
+
 The header used to switch at `tablet` (800px). Tablets and small laptops (800–1279px) now
 get the compact header. `tests/e2e/header.spec.ts` checks both modes just below and at
-1280px in both languages: visibility, no horizontal overflow, 44px selector targets, and a
-nav-to-actions gap of at least 16px. A longer Shopify menu needs a re-check.
+1280px in EN, PT and FR: visibility, no horizontal overflow, three 44px selector targets,
+and a nav-to-actions gap of at least 16px. A longer Shopify menu needs a re-check.
 
 ## Rules
 
