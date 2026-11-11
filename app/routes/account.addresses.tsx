@@ -18,6 +18,7 @@ import {
   CREATE_ADDRESS_MUTATION,
 } from '~/graphql/customer-account/CustomerAddressMutations';
 import {accountAddressForm} from '~/lib/account-ui';
+import {translatorFor, useTranslation} from '~/lib/i18n';
 
 export type ActionResponse = {
   addressId?: string | null;
@@ -40,6 +41,8 @@ export async function loader({context}: Route.LoaderArgs) {
 
 export async function action({request, context}: Route.ActionArgs) {
   const {customerAccount} = context;
+  // Our own messages are translated; Shopify validation messages are passed through.
+  const t = translatorFor(customerAccount.i18n);
 
   try {
     const form = await request.formData();
@@ -48,14 +51,14 @@ export async function action({request, context}: Route.ActionArgs) {
       ? String(form.get('addressId'))
       : null;
     if (!addressId) {
-      throw new Error('You must provide an address id.');
+      throw new Error(t('address.error.missingId'));
     }
 
     // this will ensure redirecting to login never happen for mutatation
     const isLoggedIn = await customerAccount.isLoggedIn();
     if (!isLoggedIn) {
       return data(
-        {error: {[addressId]: 'Unauthorized'}},
+        {error: {[addressId]: t('account.error.unauthorized')}},
         {
           status: 401,
         },
@@ -110,7 +113,7 @@ export async function action({request, context}: Route.ActionArgs) {
           }
 
           if (!data?.customerAddressCreate?.customerAddress) {
-            throw new Error('Customer address create failed.');
+            throw new Error(t('address.error.create'));
           }
 
           return {
@@ -160,7 +163,7 @@ export async function action({request, context}: Route.ActionArgs) {
           }
 
           if (!data?.customerAddressUpdate?.customerAddress) {
-            throw new Error('Customer address update failed.');
+            throw new Error(t('address.error.update'));
           }
 
           return {
@@ -208,7 +211,7 @@ export async function action({request, context}: Route.ActionArgs) {
           }
 
           if (!data?.customerAddressDelete?.deletedAddressId) {
-            throw new Error('Customer address delete failed.');
+            throw new Error(t('address.error.delete'));
           }
 
           return {error: null, deletedAddress: addressId};
@@ -232,7 +235,7 @@ export async function action({request, context}: Route.ActionArgs) {
 
       default: {
         return data(
-          {error: {[addressId]: 'Method not allowed'}},
+          {error: {[addressId]: t('account.error.method')}},
           {
             status: 405,
           },
@@ -260,21 +263,22 @@ export async function action({request, context}: Route.ActionArgs) {
 export default function Addresses() {
   const {customer} = useOutletContext<{customer: CustomerFragment}>();
   const {defaultAddress, addresses} = customer;
+  const t = useTranslation();
 
   return (
     <div className="space-y-6 [&>h2]:font-display [&>h2]:text-2xl [&_legend]:font-display [&_legend]:text-xl">
-      <h2>Addresses</h2>
+      <h2>{t('account.addresses')}</h2>
       <br />
       <div>
         <div>
-          <legend>Create address</legend>
+          <legend>{t('address.create')}</legend>
           <NewAddressForm key={addresses.nodes.length} />
         </div>
         <br />
         <hr />
         <br />
         {!addresses.nodes.length ? (
-          <p>You have no addresses saved.</p>
+          <p>{t('address.none')}</p>
         ) : (
           <ExistingAddresses
             addresses={addresses}
@@ -300,6 +304,7 @@ function NewAddressForm() {
     zoneCode: '',
     zip: '',
   } as CustomerAddressInput;
+  const t = useTranslation();
 
   return (
     <AddressForm
@@ -314,7 +319,9 @@ function NewAddressForm() {
             formMethod="POST"
             type="submit"
           >
-            {stateForMethod('POST') !== 'idle' ? 'Creating' : 'Create'}
+            {stateForMethod('POST') !== 'idle'
+              ? t('address.creating')
+              : t('address.createButton')}
           </button>
         </div>
       )}
@@ -326,9 +333,10 @@ function ExistingAddresses({
   addresses,
   defaultAddress,
 }: Pick<CustomerFragment, 'addresses' | 'defaultAddress'>) {
+  const t = useTranslation();
   return (
     <div>
-      <legend>Existing addresses</legend>
+      <legend>{t('address.existing')}</legend>
       {addresses.nodes.map((address) => (
         <AddressForm
           key={address.id}
@@ -343,14 +351,18 @@ function ExistingAddresses({
                 formMethod="PUT"
                 type="submit"
               >
-                {stateForMethod('PUT') !== 'idle' ? 'Saving' : 'Save'}
+                {stateForMethod('PUT') !== 'idle'
+                  ? t('address.saving')
+                  : t('address.save')}
               </button>
               <button
                 disabled={stateForMethod('DELETE') !== 'idle'}
                 formMethod="DELETE"
                 type="submit"
               >
-                {stateForMethod('DELETE') !== 'idle' ? 'Deleting' : 'Delete'}
+                {stateForMethod('DELETE') !== 'idle'
+                  ? t('address.deleting')
+                  : t('address.delete')}
               </button>
             </div>
           )}
@@ -377,111 +389,112 @@ export function AddressForm({
   const action = useActionData<ActionResponse>();
   const error = action?.error?.[addressId];
   const isDefaultAddress = defaultAddress?.id === addressId;
+  const t = useTranslation();
   return (
     <Form id={addressId} className={accountAddressForm}>
       <fieldset>
         <input type="hidden" name="addressId" defaultValue={addressId} />
-        <label htmlFor="firstName">First name*</label>
+        <label htmlFor="firstName">{t('address.firstName')}*</label>
         <input
-          aria-label="First name"
+          aria-label={t('address.firstName')}
           autoComplete="given-name"
           defaultValue={address?.firstName ?? ''}
           id="firstName"
           name="firstName"
-          placeholder="First name"
+          placeholder={t('address.firstName')}
           required
           type="text"
         />
-        <label htmlFor="lastName">Last name*</label>
+        <label htmlFor="lastName">{t('address.lastName')}*</label>
         <input
-          aria-label="Last name"
+          aria-label={t('address.lastName')}
           autoComplete="family-name"
           defaultValue={address?.lastName ?? ''}
           id="lastName"
           name="lastName"
-          placeholder="Last name"
+          placeholder={t('address.lastName')}
           required
           type="text"
         />
-        <label htmlFor="company">Company</label>
+        <label htmlFor="company">{t('address.company')}</label>
         <input
-          aria-label="Company"
+          aria-label={t('address.company')}
           autoComplete="organization"
           defaultValue={address?.company ?? ''}
           id="company"
           name="company"
-          placeholder="Company"
+          placeholder={t('address.company')}
           type="text"
         />
-        <label htmlFor="address1">Address line*</label>
+        <label htmlFor="address1">{t('address.address1')}*</label>
         <input
-          aria-label="Address line 1"
+          aria-label={t('address.address1')}
           autoComplete="address-line1"
           defaultValue={address?.address1 ?? ''}
           id="address1"
           name="address1"
-          placeholder="Address line 1*"
+          placeholder={`${t('address.address1')}*`}
           required
           type="text"
         />
-        <label htmlFor="address2">Address line 2</label>
+        <label htmlFor="address2">{t('address.address2')}</label>
         <input
-          aria-label="Address line 2"
+          aria-label={t('address.address2')}
           autoComplete="address-line2"
           defaultValue={address?.address2 ?? ''}
           id="address2"
           name="address2"
-          placeholder="Address line 2"
+          placeholder={t('address.address2')}
           type="text"
         />
-        <label htmlFor="city">City*</label>
+        <label htmlFor="city">{t('address.city')}*</label>
         <input
-          aria-label="City"
+          aria-label={t('address.city')}
           autoComplete="address-level2"
           defaultValue={address?.city ?? ''}
           id="city"
           name="city"
-          placeholder="City"
+          placeholder={t('address.city')}
           required
           type="text"
         />
-        <label htmlFor="zoneCode">State / Province*</label>
+        <label htmlFor="zoneCode">{t('address.zone')}*</label>
         <input
-          aria-label="State/Province"
+          aria-label={t('address.zone')}
           autoComplete="address-level1"
           defaultValue={address?.zoneCode ?? ''}
           id="zoneCode"
           name="zoneCode"
-          placeholder="State / Province"
+          placeholder={t('address.zone')}
           required
           type="text"
         />
-        <label htmlFor="zip">Zip / Postal Code*</label>
+        <label htmlFor="zip">{t('address.zip')}*</label>
         <input
-          aria-label="Zip"
+          aria-label={t('address.zip')}
           autoComplete="postal-code"
           defaultValue={address?.zip ?? ''}
           id="zip"
           name="zip"
-          placeholder="Zip / Postal Code"
+          placeholder={t('address.zip')}
           required
           type="text"
         />
-        <label htmlFor="territoryCode">Country Code*</label>
+        <label htmlFor="territoryCode">{t('address.countryCode')}*</label>
         <input
-          aria-label="Country code"
+          aria-label={t('address.countryCode')}
           autoComplete="country"
           defaultValue={address?.territoryCode ?? ''}
           id="territoryCode"
           name="territoryCode"
-          placeholder="Country"
+          placeholder={t('address.country')}
           required
           type="text"
           maxLength={2}
         />
-        <label htmlFor="phoneNumber">Phone</label>
+        <label htmlFor="phoneNumber">{t('address.phone')}</label>
         <input
-          aria-label="Phone Number"
+          aria-label={t('address.phoneNumber')}
           autoComplete="tel"
           defaultValue={address?.phoneNumber ?? ''}
           id="phoneNumber"
@@ -497,7 +510,7 @@ export function AddressForm({
             name="defaultAddress"
             type="checkbox"
           />
-          <label htmlFor="defaultAddress">Set as default address</label>
+          <label htmlFor="defaultAddress">{t('address.default')}</label>
         </div>
         {error ? (
           <p>

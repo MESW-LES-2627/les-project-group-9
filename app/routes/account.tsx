@@ -7,6 +7,7 @@ import {
 } from 'react-router';
 import type {Route} from './+types/account';
 import {CUSTOMER_DETAILS_QUERY} from '~/graphql/customer-account/CustomerDetailsQuery';
+import {useTranslation} from '~/lib/i18n';
 
 export function shouldRevalidate() {
   return true;
@@ -36,12 +37,13 @@ export async function loader({context}: Route.LoaderArgs) {
 
 export default function AccountLayout() {
   const {customer} = useLoaderData<typeof loader>();
+  const t = useTranslation();
 
   const heading = customer
     ? customer.firstName
-      ? `Welcome, ${customer.firstName}`
-      : `Welcome to your account.`
-    : 'Account Details';
+      ? t('account.welcomeName', {name: customer.firstName})
+      : t('account.welcome')
+    : t('account.details');
 
   return (
     <div className="mx-auto max-w-[1100px] px-[4vw] py-12">
@@ -65,19 +67,20 @@ const accountLinkClass = ({isActive,}: { isActive: boolean; }) => `inline-flex m
   }`;
 
 function AccountMenu() {
+  const t = useTranslation();
   return (
     <nav
-      aria-label="Account"
+      aria-label={t('nav.account')}
       className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3 border-b border-line pb-4"
     >
       <NavLink to="/account/orders" className={accountLinkClass}>
-        Orders
+        {t('account.orders')}
       </NavLink>
       <NavLink to="/account/profile" className={accountLinkClass}>
-        Profile
+        {t('account.profile')}
       </NavLink>
       <NavLink to="/account/addresses" className={accountLinkClass}>
-        Addresses
+        {t('account.addresses')}
       </NavLink>
       <Logout />
     </nav>
@@ -85,13 +88,14 @@ function AccountMenu() {
 }
 
 function Logout() {
+  const t = useTranslation();
   return (
     <Form method="POST" action="/account/logout">
       <button
         type="submit"
         className="min-h-11 text-xs uppercase tracking-[0.14em] text-primary transition-colors hover:text-ink"
       >
-        Sign out
+        {t('account.signOut')}
       </button>
     </Form>
   );

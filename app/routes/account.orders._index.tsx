@@ -7,6 +7,7 @@ import {
 import {accountInput, accountButton, accountSecondaryButton,} from '~/lib/account-ui';
 import type {Route} from './+types/account.orders._index';
 import {useRef} from 'react';
+import {formatDate, useLocale, useTranslation} from '~/lib/i18n';
 import {
   Money,
   getPaginationVariables,
@@ -62,10 +63,11 @@ export async function loader({request, context}: Route.LoaderArgs) {
 export default function Orders() {
   const {customer, filters} = useLoaderData<OrdersLoaderData>();
   const {orders} = customer;
+  const t = useTranslation();
 
   return (
     <div className="space-y-8">
-      <h2 className="font-display text-2xl">Your orders</h2>
+      <h2 className="font-display text-2xl">{t('orders.title')}</h2>
       <OrderSearchForm currentFilters={filters} />
       <OrdersTable orders={orders} filters={filters} />
     </div>
@@ -99,18 +101,19 @@ function EmptyOrders({
                      }: {
   hasFilters?: boolean;
 }) {
+  const t = useTranslation();
   return (
     <div className="border-y border-line py-16 text-center">
       <h3 className="font-display text-2xl">
         {hasFilters
-          ? 'No matching orders'
-          : 'Your story starts here'}
+          ? t('orders.emptyFilteredTitle')
+          : t('orders.emptyTitle')}
       </h3>
 
       <p className="mt-4 text-sm text-primary">
         {hasFilters
-          ? 'Try another order number or clear your filters.'
-          : "You haven't placed any orders yet."}
+          ? t('orders.emptyFilteredText')
+          : t('orders.emptyText')}
       </p>
 
       <Link
@@ -121,7 +124,7 @@ function EmptyOrders({
         }
         className={`${accountSecondaryButton} mt-7`}
       >
-        {hasFilters ? 'Clear filters' : 'Start shopping'}
+        {hasFilters ? t('filters.clear') : t('orders.startShopping')}
       </Link>
     </div>
   );
@@ -133,6 +136,7 @@ function OrderSearchForm({
   currentFilters: OrderFilterParams;
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
+  const t = useTranslation();
   const navigation = useNavigation();
   const isSearching =
     navigation.state !== 'idle' &&
@@ -164,25 +168,25 @@ function OrderSearchForm({
       ref={formRef}
       onSubmit={handleSubmit}
       className="border border-line bg-paper p-5 sm:p-6"
-      aria-label="Search orders"
+      aria-label={t('orders.search')}
     >
       <fieldset className="space-y-4">
-        <legend className="mb-4 text-xs uppercase tracking-widest text-primary">Filter Orders</legend>
+        <legend className="mb-4 text-xs uppercase tracking-widest text-primary">{t('orders.filter')}</legend>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <input
             type="search"
             name={ORDER_FILTER_FIELDS.NAME}
-            placeholder="Order #"
-            aria-label="Order number"
+            placeholder={t('orders.numberPlaceholder')}
+            aria-label={t('orders.numberLabel')}
             defaultValue={currentFilters.name || ''}
             className={accountInput}
           />
           <input
             type="search"
             name={ORDER_FILTER_FIELDS.CONFIRMATION_NUMBER}
-            placeholder="Confirmation #"
-            aria-label="Confirmation number"
+            placeholder={t('orders.confirmationPlaceholder')}
+            aria-label={t('orders.confirmationLabel')}
             defaultValue={currentFilters.confirmationNumber || ''}
             className={accountInput}
           />
@@ -190,7 +194,7 @@ function OrderSearchForm({
 
         <div className="flex flex-wrap gap-3">
           <button type="submit" className={accountButton} disabled={isSearching}>
-            {isSearching ? 'Searching' : 'Search'}
+            {isSearching ? t('orders.searching') : t('nav.search')}
           </button>
           {hasFilters && (
             <button
@@ -202,7 +206,7 @@ function OrderSearchForm({
                 formRef.current?.reset();
               }}
             >
-              Clear
+              {t('common.clear')}
             </button>
           )}
         </div>
@@ -218,6 +222,8 @@ function OrderItem({
 }) {
   const fulfillmentStatus =
     flattenConnection(order.fulfillments)[0]?.status;
+  const t = useTranslation();
+  const {tag} = useLocale();
 
   const href = `/account/orders/${btoa(order.id)}`;
 
@@ -228,24 +234,19 @@ function OrderItem({
           to={href}
           className="font-display text-xl hover:text-primary"
         >
-          Order #{order.number}
+          {t('orders.orderNumber', {number: order.number})}
         </Link>
 
         <p className="mt-2 text-sm text-primary">
-          {new Date(order.processedAt).toLocaleDateString(
-            'en-GB',
-            {
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric',
-            },
-          )}
+          {formatDate(order.processedAt, tag)}
         </p>
 
         <p className="mt-3 text-xs uppercase tracking-wider text-primary">
-          {order.financialStatus}
+          {order.financialStatus
+            ? t(`order.financial.${order.financialStatus}`)
+            : null}
           {fulfillmentStatus
-            ? ` · ${fulfillmentStatus}`
+            ? ` · ${t(`order.fulfillment.${fulfillmentStatus}`)}`
             : ''}
         </p>
       </div>
@@ -257,7 +258,7 @@ function OrderItem({
           to={href}
           className="block text-xs uppercase tracking-widest underline underline-offset-4"
         >
-          View order
+          {t('orders.view')}
         </Link>
       </div>
     </article>

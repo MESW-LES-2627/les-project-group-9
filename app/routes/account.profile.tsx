@@ -11,6 +11,7 @@ import {
 import type {Route} from './+types/account.profile';
 import {PreferencesForm} from '~/components/account/PreferencesForm';
 import {RingSizeForm} from '~/components/account/RingSizeForm';
+import {translatorFor, useTranslation} from '~/lib/i18n';
 
 export type ActionResponse = {
   error: string | null;
@@ -29,9 +30,11 @@ export async function loader({context}: Route.LoaderArgs) {
 
 export async function action({request, context}: Route.ActionArgs) {
   const {customerAccount} = context;
+  // Our own messages are translated; Shopify validation messages are passed through.
+  const t = translatorFor(customerAccount.i18n);
 
   if (request.method !== 'PUT') {
-    return data({error: 'Method not allowed'}, {status: 405});
+    return data({error: t('account.error.method')}, {status: 405});
   }
 
   const form = await request.formData();
@@ -60,7 +63,7 @@ export async function action({request, context}: Route.ActionArgs) {
     }
 
     if (!data?.customerUpdate?.customer) {
-      throw new Error('Customer profile update failed.');
+      throw new Error(t('profile.error.update'));
     }
 
     return {
@@ -82,29 +85,30 @@ export default function AccountProfile() {
   const {state} = useNavigation();
   const action = useActionData<ActionResponse>();
   const customer = action?.customer ?? account?.customer;
+  const t = useTranslation();
 
   return (
     <div className="grid gap-12 lg:grid-cols-2">
       <section>
         <h2 className="font-display text-2xl text-ink">
-          Personal information
+          {t('profile.personalInfo')}
         </h2>
 
         <Form method="PUT" className="mt-5 space-y-5">
           <fieldset className="space-y-4">
-            <legend className="sr-only">Personal information</legend>
+            <legend className="sr-only">{t('profile.personalInfo')}</legend>
 
             <label className="block">
               <span className="text-[11px] uppercase tracking-[0.15em] text-primary">
-                First name
+                {t('address.firstName')}
               </span>
               <input
                 id="firstName"
                 name="firstName"
                 type="text"
                 autoComplete="given-name"
-                placeholder="First name"
-                aria-label="First name"
+                placeholder={t('address.firstName')}
+                aria-label={t('address.firstName')}
                 defaultValue={customer.firstName ?? ''}
                 className="mt-1 w-full border border-line bg-paper px-3 py-2 text-sm text-ink outline-none focus:border-ink"
               />
@@ -112,15 +116,15 @@ export default function AccountProfile() {
 
             <label className="block">
               <span className="text-[11px] uppercase tracking-[0.15em] text-primary">
-                Last name
+                {t('address.lastName')}
               </span>
               <input
                 id="lastName"
                 name="lastName"
                 type="text"
                 autoComplete="family-name"
-                placeholder="Last name"
-                aria-label="Last name"
+                placeholder={t('address.lastName')}
+                aria-label={t('address.lastName')}
                 defaultValue={customer.lastName ?? ''}
                 className="mt-1 w-full border border-line bg-paper px-3 py-2 text-sm text-ink outline-none focus:border-ink"
               />
@@ -133,7 +137,7 @@ export default function AccountProfile() {
             </p>
           ) : action?.customer && state === 'idle' ? (
             <p role="status" className="text-sm text-primary">
-              Profile updated.
+              {t('profile.updated')}
             </p>
           ) : null}
 
@@ -142,7 +146,7 @@ export default function AccountProfile() {
             disabled={state !== 'idle'}
             className="bg-primary px-6 py-3 text-[11px] uppercase tracking-widest text-white transition-colors hover:bg-ink disabled:opacity-60"
           >
-            {state !== 'idle' ? 'Updating' : 'Update'}
+            {state !== 'idle' ? t('profile.updating') : t('profile.update')}
           </button>
         </Form>
       </section>

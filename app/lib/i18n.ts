@@ -295,8 +295,26 @@ function selectPluralForm(
 }
 
 /** Translator for server code (loaders, actions) from Hydrogen's `i18n`. */
-export function translatorFor(i18n: I18nBase): Translate {
-  return createTranslator(toAppLocale(i18n).code);
+export function translatorFor(i18n: Pick<I18nBase, 'language'>): Translate {
+  return createTranslator(
+    toAppLocale({language: i18n.language, country: DEFAULT_COUNTRY}).code,
+  );
+}
+
+/**
+ * Formats a date in the locale, by default as "12 November 2026" /
+ * "12 de novembro de 2026" / "12 novembre 2026".
+ */
+export function formatDate(
+  value: string | number | Date,
+  tag: string,
+  options: Intl.DateTimeFormatOptions = {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  },
+): string {
+  return new Intl.DateTimeFormat(tag, options).format(new Date(value));
 }
 
 /** Joins items as a localized list: "A, B and C" / "A, B e C" / "A, B et C". */
