@@ -53,7 +53,7 @@ export async function createHydrogenRouterContext(
       cache,
       waitUntil,
       session,
-      // Or detect from URL path based on locale subpath, cookies, or any other strategy
+      // Language from the `jeweliette_locale` cookie (see app/lib/i18n.ts).
       i18n: getLocaleFromRequest(request),
       cart: {
         queryFragment: CART_QUERY_FRAGMENT,

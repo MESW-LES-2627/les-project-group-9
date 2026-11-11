@@ -31,7 +31,9 @@ export default {
       const response = await handleRequest(request);
 
       if (hydrogenContext.session.isPending) {
-        response.headers.set(
+        // Append, not set: routes may already send their own cookies
+        // (e.g. the language cookie from /locale).
+        response.headers.append(
           'Set-Cookie',
           await hydrogenContext.session.commit(),
         );

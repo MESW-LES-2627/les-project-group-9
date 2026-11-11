@@ -15,6 +15,7 @@ import logo from '~/assets/logo.svg';
 import tailwindCss from '~/styles/tailwind.css?url';
 import {PageLayout} from '~/components/layout/PageLayout';
 import {ProfileProvider} from '~/lib/profile/ProfileProvider';
+import {toAppLocale, useLocale} from '~/lib/i18n';
 
 export type RootLoader = typeof loader;
 
@@ -51,6 +52,7 @@ export async function loader(args: Route.LoaderArgs) {
     ...deferredData,
     ...criticalData,
     publicStoreDomain: env.PUBLIC_STORE_DOMAIN,
+    locale: toAppLocale(storefront.i18n),
     shop: getShopAnalytics({
       storefront,
       publicStorefrontId: env.PUBLIC_STOREFRONT_ID,
@@ -98,9 +100,10 @@ function loadDeferredData({context}: Route.LoaderArgs) {
 export function Layout({children}: {children?: React.ReactNode}) {
   const nonce = useNonce();
   const data = useRouteLoaderData<RootLoader>('root');
+  const locale = useLocale();
 
   return (
-    <html lang="en">
+    <html lang={locale.tag}>
     <head>
       <meta charSet="utf-8" />
       <meta name="viewport" content="width=device-width,initial-scale=1" />

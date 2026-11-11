@@ -36,12 +36,12 @@ Request
   └─ server.ts (Oxygen fetch handler)
        ├─ createHydrogenRouterContext()  app/lib/context.ts
        │     ├─ AppSession.init()        app/lib/session.ts  (cookie session)
-       │     ├─ getLocaleFromRequest()   app/lib/i18n.ts     (i18n for Storefront API)
+       │     ├─ getLocaleFromRequest()   app/lib/i18n.ts     (language from the jeweliette_locale cookie)
        │     └─ createHydrogenContext()  → storefront, customerAccount, cart, session, env
        ├─ createRequestHandler()  → React Router
        │     ├─ app/root.tsx loader      header (awaited), footer/cart/isLoggedIn (deferred)
        │     └─ matched route loader/action  app/routes/*.tsx
-       ├─ commits the session cookie if it changed
+       ├─ appends the session cookie if it changed (keeps cookies set by routes)
        └─ on 404: storefrontRedirect() (Shopify admin URL redirects)
 ```
 
@@ -54,9 +54,10 @@ Request
 3. **`app/root.tsx`**
    - `loader`: awaits the `Header` query (shop + `main-menu`). The `Footer` query (`footer`
      menu), `cart.get()` and `customerAccount.isLoggedIn()` are returned as promises
-     (streamed). It also returns analytics `shop`/`consent` data and `publicStoreDomain`.
+     (streamed). It also returns analytics `shop`/`consent` data, `publicStoreDomain` and
+     `locale` (`{code, language, country, tag}`, read with `useLocale()`).
    - `shouldRevalidate`: the root reloads only after non-GET submissions or same-URL navigations.
-   - `Layout`: renders `<html lang="en">` (hardcoded; see [Known issues](#known-issues)),
+   - `Layout`: renders `<html lang>` from the active locale's BCP 47 tag,
      wraps the app in `Analytics.Provider` → `ProfileProvider` → `PageLayout`.
    - `ErrorBoundary`: a single branded error page.
 4. **Route loaders** query the Storefront API (`context.storefront.query`) or the Customer
@@ -83,6 +84,7 @@ Request
 | Cart | `cart` (CartForm actions), `cart.$lines` (permalinks), `discount.$code` |
 | Customer | `account` (layout), `account._index`, `account.profile`, `account.addresses`, `account.orders._index`, `account.orders.$id`, `account.$`, `account_.login`, `account_.authorize`, `account_.logout` |
 | Personal | `favorites`, `fitting-room` |
+| Language | `locale` (POST only: sets the language cookie and redirects back) |
 | JSON API | `api.profile`, `api.profile.favorites`, `api.profile.fitting-room`, `api.profile.preferences`, `api.recommendations` |
 | Content | `pages.$handle`, `policies._index`, `policies.$handle`, `blogs._index`, `blogs.$blogHandle._index`, `blogs.$blogHandle.$articleHandle` |
 | SEO | `[robots.txt]`, `[sitemap.xml]`, `sitemap.$type.$page[.xml]` |
@@ -191,8 +193,11 @@ metafields (namespace `custom`) through the Customer Account API.
 
 ## Internationalisation
 
-See [i18n.md](i18n.md). Today the language comes from the request subdomain only (EN-US
-default). UI strings are hardcoded English, and several loaders force `language: 'EN'`.
+See [i18n.md](i18n.md). Supported languages are English (`en`, default) and European
+Portuguese (`pt`). The choice is stored in the `jeweliette_locale` cookie by `POST /locale`
+and read in `getLocaleFromRequest()` into Hydrogen's `i18n`. The country is fixed, so the
+market and currency do not change. UI text comes from the typed dictionary in
+`app/lib/i18n.ts` via `useTranslation()`; most strings are still English until US-047.
 
 ## Styling
 
@@ -237,7 +242,8 @@ See [testing.md](testing.md). In short:
 | Add a catalog filter | Shopify admin (Search & Discovery filters). If it needs a new filter key, extend `allowedKeys` in `readCatalogFilters()` (`app/lib/search.ts`). UI changes go in `CatalogFilters.tsx`. |
 | Add a sort option | `SORT_OPTIONS` in `app/routes/collections.$handle.tsx`. |
 | Add a customer preference | `PreferenceProfile` (`profile/types.ts`), `profile/preferences.ts` (normalise/parse), `PreferencesForm.tsx`, tests. |
-| Add a translation | See [i18n.md](i18n.md). |
+| Add a UI string / translation | Add the key to `en` and `pt` in `app/lib/i18n.ts` and use `useTranslation()`. See [i18n.md](i18n.md#adding-a-string). |
+| Add a language | Add an entry to `LOCALES` and a message object in `app/lib/i18n.ts`, then publish the language in the Shopify admin. |
 | Change a theme color/font/breakpoint | `@theme` in `app/styles/tailwind.css`. |
 | Change header/footer navigation | Shopify admin menus `main-menu` / `footer`. The code fallback is `FALLBACK_HEADER_MENU` in `Header.tsx`. Layout is in `components/layout/`. |
 | Add a test | Unit: `tests/unit/<module>.test.ts`. Component: `tests/components/<group>/<Component>.test.tsx`. E2E: `tests/e2e/<flow>.spec.ts`. See [testing.md](testing.md). |
@@ -252,8 +258,8 @@ has been decided.
 | --- | --- | --- | --- |
 | 1 | `HEADER_QUERY` and `FOOTER_QUERY` are defined twice. The copies in `app/lib/fragments.ts` are not imported anywhere; `root.tsx` uses its own. | `grep HEADER_QUERY app` | Proposed cleanup |
 | 2 | Components never imported by any file in `app/`: `AddToCartButton`, `MockShopNotice`, `SearchOverlay`, `ProductImage`. `AddToCartButton` and `MockShopNotice` still have component tests. | grep of import paths | Proposed cleanup |
-| 3 | `language: 'EN'` is hardcoded in 7 calls across 6 files: `lib/products.server.ts`, `lib/recommendation/catalog.server.ts`, `routes/collections.$handle.tsx`, `collections.all.tsx`, `collections._index.tsx`, `products.$handle.tsx` (×2). | `grep "language: 'EN'"` | US-046 |
-| 4 | `getLocaleFromRequest` only maps subdomains to ES/FR/DE/JA; PT is not supported. There is no language selector, and `<html lang="en">` is hardcoded. | `app/lib/i18n.ts`, `app/root.tsx` | US-046 |
+| 3 | `language: 'EN'` is hardcoded in 8 calls across 7 files: `lib/products.server.ts`, `lib/recommendation/catalog.server.ts`, `routes/_index.tsx`, `collections.$handle.tsx`, `collections.all.tsx`, `collections._index.tsx`, `products.$handle.tsx` (×2). (The first count of 7 missed `_index.tsx`.) | `grep "language: 'EN'"` | US-046 |
+| 4 | ~~`getLocaleFromRequest` only maps subdomains to ES/FR/DE/JA; PT is not supported; `<html lang="en">` is hardcoded.~~ Resolved in US-046 (cookie-based EN/PT, `<html lang>` from the locale). | `app/lib/i18n.ts`, `app/root.tsx` | US-046 |
 | 5 | UI strings are hardcoded English, including in `app/lib/`: recommendation reasons (`recommendation/signals.ts`, `"Popular piece"` in `engine.ts`), preference labels (`ALLERGY_LABELS`, `RING_HAND_LABELS`, `ringFingerLabel` in `profile/preferences.ts`), sort labels, and API error messages. | source | US-047 |
 | 6 | Dates use fixed locales: blog dates `Intl.DateTimeFormat('en-US')`, order dates `toLocaleDateString('en-GB')`. | `blogs.*.tsx`, `account.orders._index.tsx` | US-047 |
 | 7 | The root font size is 14px, so inputs styled `text-base` render at 14px. iOS Safari zooms on focus for inputs below 16px; this zoom was not tested on a device (**unverified**). | `app/styles/tailwind.css` | US-048 |
