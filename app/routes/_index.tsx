@@ -1,23 +1,20 @@
 import {Link, useLoaderData} from 'react-router';
 import {Image} from '@shopify/hydrogen';
 import type {Route} from './+types/_index';
+import {translatorFromMatches, useTranslation} from '~/lib/i18n';
 import {ProductItem} from '~/components/product/ProductItem';
 import {RecommendedProducts} from '~/components/product/RecommendedProducts';
-import {useTranslation} from '~/lib/i18n';
 import {
   JEWELIETTE_PRODUCT_CARD_FRAGMENT,
 } from '~/lib/jeweliette-catalog';
 
-export const meta: Route.MetaFunction = () => [
-  {
-    title: 'Jeweliette | Wear your story',
-  },
-  {
-    name: 'description',
-    content:
-      'Explore the Jeweliette collection. Find pieces to wear, layer and make your own.',
-  },
-];
+export const meta: Route.MetaFunction = ({matches}) => {
+  const t = translatorFromMatches(matches);
+  return [
+    {title: t('meta.homeTitle')},
+    {name: 'description', content: t('meta.homeDescription')},
+  ];
+};
 
 export async function loader({context}: Route.LoaderArgs) {
   const result = await context.storefront.query(HOME_QUERY);

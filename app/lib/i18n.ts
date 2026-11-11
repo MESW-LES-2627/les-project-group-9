@@ -317,6 +317,39 @@ export function formatDate(
   return new Intl.DateTimeFormat(tag, options).format(new Date(value));
 }
 
+/**
+ * Formats a Shopify money amount in the locale ("€1,234.50" / "1234,50 €" /
+ * "1 234,50 €"). Only the format follows the language; the currency always
+ * comes from the API. `withoutTrailingZeros` drops ",00" on whole amounts.
+ */
+export function formatMoney(
+  money: {amount: string; currencyCode: string},
+  tag: string,
+  {withoutTrailingZeros = false}: {withoutTrailingZeros?: boolean} = {},
+): string {
+  const amount = Number(money.amount);
+  const whole = Number.isInteger(amount);
+  return new Intl.NumberFormat(tag, {
+    style: 'currency',
+    currency: money.currencyCode,
+    ...(withoutTrailingZeros && whole
+      ? {minimumFractionDigits: 0, maximumFractionDigits: 0}
+      : {}),
+  }).format(amount);
+}
+
+/**
+ * Translator for route `meta` functions, which cannot use hooks: reads the
+ * locale from the root match's loader data (English when it is missing).
+ */
+export function translatorFromMatches(
+  matches: ReadonlyArray<{id: string; loaderData?: unknown} | undefined>,
+): Translate {
+  const root = matches.find((match) => match?.id === 'root')?.loaderData as
+    {locale?: AppLocale} | undefined;
+  return createTranslator(root?.locale?.code ?? DEFAULT_LOCALE);
+}
+
 /** Joins items as a localized list: "A, B and C" / "A, B e C" / "A, B et C". */
 export function formatList(items: string[], tag: string): string {
   return new Intl.ListFormat(tag, {style: 'long', type: 'conjunction'}).format(

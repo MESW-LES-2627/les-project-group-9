@@ -419,4 +419,28 @@ export const pt: Messages = {
   'ring.save': 'Guardar tamanhos',
   'ring.saved': 'Tamanhos guardados.',
   'ring.saveError': 'Não foi possível guardar os tamanhos.',
+
+  // Page titles and descriptions
+  'meta.homeTitle': 'Jeweliette | Use a sua história',
+  'meta.homeDescription':
+    'Explore a coleção Jeweliette. Encontre peças para usar, combinar e tornar suas.',
+  'meta.collectionFallback': 'Coleção',
+  'meta.collectionDescription': 'Explore a coleção Jeweliette.',
+  'meta.productFallback': 'Produto',
+  'meta.pageFallback': 'Página',
+  'meta.policyFallback': 'Política',
+  'meta.blogs': 'Blogues',
+
+  // Errors and content pages
+  'error.label': 'Erro {status}',
+  'error.notFoundTitle': 'Página não encontrada.',
+  'error.notFoundText': 'A página que procura não existe ou foi movida.',
+  'error.title': 'Algo correu mal.',
+  'error.badRequestText':
+    'Não foi possível processar o pedido. Verifique a ligação e tente novamente.',
+  'error.unexpectedText': 'Ocorreu um erro inesperado. Tente novamente.',
+  'error.backHome': 'Voltar ao início',
+  'policies.eyebrow': 'Informação',
+  'policies.title': 'Políticas da loja',
+  'policies.all': 'Todas as políticas',
 };

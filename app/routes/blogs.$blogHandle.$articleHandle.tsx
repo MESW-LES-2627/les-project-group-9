@@ -1,10 +1,12 @@
 import {useLoaderData} from 'react-router';
 import type {Route} from './+types/blogs.$blogHandle.$articleHandle';
+import {formatDate, translatorFromMatches, useLocale} from '~/lib/i18n';
 import {Image} from '@shopify/hydrogen';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 
-export const meta: Route.MetaFunction = ({data}) => {
-  return [{title: `Hydrogen | ${data?.article.title ?? ''} article`}];
+export const meta: Route.MetaFunction = ({data, matches}) => {
+  const fallback = translatorFromMatches(matches)('meta.blogs');
+  return [{title: `${data?.article.title ?? fallback} | Jeweliette`}];
 };
 
 export async function loader(args: Route.LoaderArgs) {
@@ -68,12 +70,9 @@ function loadDeferredData({context}: Route.LoaderArgs) {
 export default function Article() {
   const {article} = useLoaderData<typeof loader>();
   const {title, image, contentHtml, author} = article;
+  const {tag} = useLocale();
 
-  const publishedDate = new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  }).format(new Date(article.publishedAt));
+  const publishedDate = formatDate(article.publishedAt, tag);
 
   return (
     <div className="article">

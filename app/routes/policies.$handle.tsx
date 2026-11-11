@@ -1,5 +1,6 @@
 import {Link, useLoaderData} from 'react-router';
 import type {Route} from './+types/policies.$handle';
+import {translatorFromMatches, useTranslation} from '~/lib/i18n';
 import {type Shop} from '@shopify/hydrogen/storefront-api-types';
 import {RichText} from '~/components/RichText';
 
@@ -8,8 +9,9 @@ type SelectedPolicies = keyof Pick<
   'privacyPolicy' | 'shippingPolicy' | 'termsOfService' | 'refundPolicy'
 >;
 
-export const meta: Route.MetaFunction = ({data}) => {
-  return [{title: `${data?.policy.title ?? 'Policy'} | Jeweliette`}];
+export const meta: Route.MetaFunction = ({data, matches}) => {
+  const fallback = translatorFromMatches(matches)('meta.policyFallback');
+  return [{title: `${data?.policy.title ?? fallback} | Jeweliette`}];
 };
 
 export async function loader({params, context}: Route.LoaderArgs) {
@@ -44,6 +46,7 @@ export async function loader({params, context}: Route.LoaderArgs) {
 
 export default function Policy() {
   const {policy} = useLoaderData<typeof loader>();
+  const t = useTranslation();
 
   return (
     <article className="mx-auto max-w-6xl px-[5vw] pb-24 pt-12">
@@ -51,7 +54,7 @@ export default function Policy() {
         to="/policies"
         className="text-xs uppercase tracking-widest text-primary hover:text-ink"
       >
-        ← All policies
+        <span aria-hidden="true">←</span> {t('policies.all')}
       </Link>
 
       <h1 className="mb-10 mt-6 font-display text-[clamp(2.5rem,5vw,4rem)] leading-tight">

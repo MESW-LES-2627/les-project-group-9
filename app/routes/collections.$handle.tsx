@@ -2,12 +2,12 @@ import {redirect, useLoaderData} from 'react-router';
 import {Analytics, getPaginationVariables, Pagination} from '@shopify/hydrogen';
 import type {ProductCollectionSortKeys} from '@shopify/hydrogen/storefront-api-types';
 import type {Route} from './+types/collections.$handle';
+import {type MessageKey, translatorFromMatches, useTranslation} from '~/lib/i18n';
 import {ProductItem} from '~/components/product/ProductItem';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 import {JEWELIETTE_PRODUCT_CARD_FRAGMENT} from '~/lib/jeweliette-catalog';
 import {CatalogFilters} from '~/components/collections/CatalogFilters';
 import {readCatalogFilters} from '~/lib/search';
-import {useTranslation, type MessageKey} from '~/lib/i18n';
 
 const SORT_OPTIONS: Record<
   string,
@@ -48,17 +48,18 @@ const SORT_OPTIONS: Record<
   },
 };
 
-export const meta: Route.MetaFunction = ({data}) => [
-  {
-    title: `${data?.collection.title || 'Collection'} | Jeweliette`,
-  },
-  {
-    name: 'description',
-    content:
-      data?.collection.description ||
-      'Explore the Jeweliette collection.',
-  },
-];
+export const meta: Route.MetaFunction = ({data, matches}) => {
+  const t = translatorFromMatches(matches);
+  return [
+    {
+      title: `${data?.collection.title || t('meta.collectionFallback')} | Jeweliette`,
+    },
+    {
+      name: 'description',
+      content: data?.collection.description || t('meta.collectionDescription'),
+    },
+  ];
+};
 
 export async function loader({context, params, request}: Route.LoaderArgs) {
   if (!params.handle) {throw redirect('/collections');}

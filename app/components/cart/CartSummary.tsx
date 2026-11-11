@@ -1,6 +1,7 @@
 import type {CartApiQueryFragment} from 'storefrontapi.generated';
 import type {CartLayout} from '~/components/cart/CartMain';
-import {CartForm, Money, type OptimisticCart} from '@shopify/hydrogen';
+import {CartForm, type OptimisticCart} from '@shopify/hydrogen';
+import {Money} from '~/components/shared/Money';
 import {useEffect, useId, useRef, useState} from 'react';
 import {useFetcher} from 'react-router';
 import {useTranslation} from '~/lib/i18n';

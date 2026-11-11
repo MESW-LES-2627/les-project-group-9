@@ -1,10 +1,12 @@
 import {useLoaderData} from 'react-router';
 import type {Route} from './+types/pages.$handle';
+import {translatorFromMatches} from '~/lib/i18n';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 import {RichText} from '~/components/RichText';
 
-export const meta: Route.MetaFunction = ({data}) => {
-  return [{title: `${data?.page.title ?? 'Page'} | Jeweliette`}];
+export const meta: Route.MetaFunction = ({data, matches}) => {
+  const fallback = translatorFromMatches(matches)('meta.pageFallback');
+  return [{title: `${data?.page.title ?? fallback} | Jeweliette`}];
 };
 
 export async function loader(args: Route.LoaderArgs) {

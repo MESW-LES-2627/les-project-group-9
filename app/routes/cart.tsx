@@ -1,12 +1,12 @@
 import {useLoaderData, data, type HeadersFunction} from 'react-router';
 import type {Route} from './+types/cart';
+import {translatorFromMatches, useTranslation} from '~/lib/i18n';
 import type {CartQueryDataReturn} from '@shopify/hydrogen';
 import {CartForm} from '@shopify/hydrogen';
 import {CartMain} from '~/components/cart/CartMain';
-import {useTranslation} from '~/lib/i18n';
 
-export const meta: Route.MetaFunction = () => {
-  return [{title: `Shopping bag | Jeweliette`}];
+export const meta: Route.MetaFunction = ({matches}) => {
+  return [{title: `${translatorFromMatches(matches)('nav.shoppingBag')} | Jeweliette`}];
 };
 
 export const headers: HeadersFunction = ({actionHeaders}) => actionHeaders;

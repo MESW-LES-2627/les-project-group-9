@@ -11,15 +11,19 @@ import {
 import type {Route} from './+types/account.profile';
 import {PreferencesForm} from '~/components/account/PreferencesForm';
 import {RingSizeForm} from '~/components/account/RingSizeForm';
-import {translatorFor, useTranslation} from '~/lib/i18n';
+import {translatorFor, translatorFromMatches, useTranslation} from '~/lib/i18n';
 
 export type ActionResponse = {
   error: string | null;
   customer: CustomerFragment | null;
 };
 
-export const meta: Route.MetaFunction = () => {
-  return [{title: 'Profile'}];
+export const meta: Route.MetaFunction = ({matches}) => {
+  return [
+    {
+      title: `${translatorFromMatches(matches)('account.profile')} | Jeweliette`,
+    },
+  ];
 };
 
 export async function loader({context}: Route.LoaderArgs) {

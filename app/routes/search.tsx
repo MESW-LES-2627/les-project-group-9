@@ -1,5 +1,6 @@
 import {useLoaderData} from 'react-router';
 import type {Route} from './+types/search';
+import {translatorFromMatches, useTranslation} from '~/lib/i18n';
 import {getPaginationVariables, Analytics} from '@shopify/hydrogen';
 import {SearchForm} from '~/components/search/SearchForm';
 import {SearchResults} from '~/components/search/SearchResults';
@@ -7,10 +8,9 @@ import {type RegularSearchReturn, type PredictiveSearchReturn, getEmptyPredictiv
 import type {RegularSearchQuery, PredictiveSearchQuery,} from 'storefrontapi.generated';
 import {JEWELIETTE_PRODUCT_CARD_FRAGMENT,} from '~/lib/jeweliette-catalog';
 import {CatalogFilters} from '~/components/collections/CatalogFilters';
-import {useTranslation} from '~/lib/i18n';
 
-export const meta: Route.MetaFunction = () => {
-  return [{title: `Search | Jeweliette`}];
+export const meta: Route.MetaFunction = ({matches}) => {
+  return [{title: `${translatorFromMatches(matches)('nav.search')} | Jeweliette`}];
 };
 
 export async function loader({request, context}: Route.LoaderArgs) {

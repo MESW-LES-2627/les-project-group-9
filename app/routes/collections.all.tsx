@@ -1,14 +1,14 @@
 import type {Route} from './+types/collections.all';
+import {translatorFromMatches, useTranslation} from '~/lib/i18n';
 import {useLoaderData} from 'react-router';
 import {getPaginationVariables} from '@shopify/hydrogen';
-import {useTranslation} from '~/lib/i18n';
 import {PaginatedResourceSection} from '~/components/shared/PaginatedResourceSection';
 import {ProductItem} from '~/components/product/ProductItem';
 import {JEWELIETTE_PRODUCT_CARD_FRAGMENT} from '~/lib/jeweliette-catalog';
 import type {JewelietteProductCardFragment} from 'storefrontapi.generated';
 
-export const meta: Route.MetaFunction = () => [
-  {title: 'All pieces | Jeweliette'},
+export const meta: Route.MetaFunction = ({matches}) => [
+  {title: `${translatorFromMatches(matches)('common.allPieces')} | Jeweliette`},
 ];
 
 export async function loader(args: Route.LoaderArgs) {

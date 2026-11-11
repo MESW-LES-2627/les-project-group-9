@@ -425,4 +425,30 @@ export const fr: Messages = {
   'ring.save': 'Enregistrer les tailles',
   'ring.saved': 'Tailles enregistrées.',
   'ring.saveError': 'Impossible d’enregistrer les tailles.',
+
+  // Page titles and descriptions
+  'meta.homeTitle': 'Jeweliette | Portez votre histoire',
+  'meta.homeDescription':
+    'Découvrez la collection Jeweliette. Trouvez des pièces à porter, à superposer et à faire vôtres.',
+  'meta.collectionFallback': 'Collection',
+  'meta.collectionDescription': 'Découvrez la collection Jeweliette.',
+  'meta.productFallback': 'Produit',
+  'meta.pageFallback': 'Page',
+  'meta.policyFallback': 'Politique',
+  'meta.blogs': 'Blogs',
+
+  // Errors and content pages
+  'error.label': 'Erreur {status}',
+  'error.notFoundTitle': 'Page introuvable.',
+  'error.notFoundText':
+    'La page que vous recherchez n’existe pas ou a été déplacée.',
+  'error.title': 'Une erreur est survenue.',
+  'error.badRequestText':
+    'La demande n’a pas pu être traitée. Vérifiez le lien et réessayez.',
+  'error.unexpectedText':
+    'Une erreur inattendue est survenue. Veuillez réessayer.',
+  'error.backHome': 'Retour à l’accueil',
+  'policies.eyebrow': 'Informations',
+  'policies.title': 'Politiques de la boutique',
+  'policies.all': 'Toutes les politiques',
 };

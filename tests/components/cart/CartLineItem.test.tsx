@@ -31,7 +31,6 @@ vi.mock('@shopify/hydrogen', () => {
   return {
     CartForm,
     Image: ({alt}: {alt?: string}) => <img alt={alt ?? ''} />,
-    Money: ({data}: {data: {amount: string}}) => <span>{data.amount}</span>,
   };
 });
 
@@ -44,6 +43,7 @@ vi.mock('~/lib/variants', () => ({
 }));
 
 import {CartLineItem} from '~/components/cart/CartLineItem';
+import {DEFAULT_APP_LOCALE, LocaleContext} from '~/lib/i18n';
 
 function makeLine(overrides: Partial<CartLine> = {}) {
   return {
@@ -62,10 +62,13 @@ function makeLine(overrides: Partial<CartLine> = {}) {
 }
 
 function renderLine(line = makeLine()) {
+  // English (US) set explicitly: the line price is formatted for the locale.
   return render(
-    <ul>
-      <CartLineItem childrenMap={{}} layout="page" line={line} />
-    </ul>,
+    <LocaleContext.Provider value={DEFAULT_APP_LOCALE}>
+      <ul>
+        <CartLineItem childrenMap={{}} layout="page" line={line} />
+      </ul>
+    </LocaleContext.Provider>,
   );
 }
 
@@ -79,7 +82,8 @@ describe('CartLineItem', () => {
     );
     expect(screen.getByText('Size: M')).toBeInTheDocument();
     expect(screen.getByText('2')).toBeInTheDocument();
-    expect(screen.getByText('80.00')).toBeInTheDocument();
+    // Line total for 2 × €40.00, in EUR as returned by Shopify.
+    expect(screen.getByText('€80.00')).toBeInTheDocument();
   });
 
   it('can decrease, increase and remove the line', () => {

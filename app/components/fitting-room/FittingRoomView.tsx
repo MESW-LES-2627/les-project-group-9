@@ -1,4 +1,5 @@
-import {Image, Money} from '@shopify/hydrogen';
+import {Image} from '@shopify/hydrogen';
+import {Money} from '~/components/shared/Money';
 import type {CatalogImage, CatalogProduct} from '~/lib/jeweliette-catalog';
 import {useTranslation} from '~/lib/i18n';
 

@@ -7,12 +7,14 @@ import {
 import {accountInput, accountButton, accountSecondaryButton,} from '~/lib/account-ui';
 import type {Route} from './+types/account.orders._index';
 import {useRef} from 'react';
-import {formatDate, useLocale, useTranslation} from '~/lib/i18n';
 import {
-  Money,
-  getPaginationVariables,
-  flattenConnection,
-} from '@shopify/hydrogen';
+  formatDate,
+  translatorFromMatches,
+  useLocale,
+  useTranslation,
+} from '~/lib/i18n';
+import {getPaginationVariables, flattenConnection} from '@shopify/hydrogen';
+import {Money} from '~/components/shared/Money';
 import {
   buildOrderSearchQuery,
   parseOrderFilters,
@@ -31,8 +33,8 @@ type OrdersLoaderData = {
   filters: OrderFilterParams;
 };
 
-export const meta: Route.MetaFunction = () => {
-  return [{title: 'Orders'}];
+export const meta: Route.MetaFunction = ({matches}) => {
+  return [{title: `${translatorFromMatches(matches)('account.orders')} | Jeweliette`}];
 };
 
 export async function loader({request, context}: Route.LoaderArgs) {

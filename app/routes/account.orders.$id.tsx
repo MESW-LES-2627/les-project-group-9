@@ -1,16 +1,27 @@
 import {redirect, useLoaderData} from 'react-router';
 import type {Route} from './+types/account.orders.$id';
-import {Money, Image} from '@shopify/hydrogen';
+import {Image} from '@shopify/hydrogen';
+import {Money} from '~/components/shared/Money';
 import type {
   OrderLineItemFullFragment,
   OrderQuery,
 } from 'customer-accountapi.generated';
 import {CUSTOMER_ORDER_QUERY} from '~/graphql/customer-account/CustomerOrderQuery';
 import {accountOrderDetail} from '~/lib/account-ui';
-import {formatDate, useLocale, useTranslation} from '~/lib/i18n';
+import {
+  formatDate,
+  translatorFromMatches,
+  useLocale,
+  useTranslation,
+} from '~/lib/i18n';
 
-export const meta: Route.MetaFunction = ({data}) => {
-  return [{title: `Order ${data?.order?.name}`}];
+export const meta: Route.MetaFunction = ({data, matches}) => {
+  const t = translatorFromMatches(matches);
+  return [
+    {
+      title: `${t('order.title', {name: data?.order?.name ?? ''})} | Jeweliette`,
+    },
+  ];
 };
 
 export async function loader({params, context}: Route.LoaderArgs) {

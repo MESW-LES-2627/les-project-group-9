@@ -1,6 +1,7 @@
 import {Suspense} from 'react';
 import {Await, Link, redirect, useLoaderData} from 'react-router';
 import type {Route} from './+types/products.$handle';
+import {translatorFromMatches, useTranslation} from '~/lib/i18n';
 import {
   getSelectedProductOptions,
   Analytics,
@@ -25,10 +26,11 @@ import {
 import {materialsForColor, parseProductMaterials} from '~/lib/materials';
 import {isColorOption} from '~/lib/options';
 import {isRingProduct} from '~/lib/profile/ringCategory';
-import {useTranslation} from '~/lib/i18n';
 
-export const meta: Route.MetaFunction = ({data}) => [
-  {title: `${data?.product.title ?? 'Product'} | Jeweliette`},
+export const meta: Route.MetaFunction = ({data, matches}) => [
+  {
+    title: `${data?.product.title ?? translatorFromMatches(matches)('meta.productFallback')} | Jeweliette`,
+  },
   {
     name: 'description',
     content: data?.product.seo.description ?? data?.product.description ?? '',

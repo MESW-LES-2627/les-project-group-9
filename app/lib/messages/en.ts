@@ -423,6 +423,31 @@ export const en = {
   'ring.save': 'Save ring sizes',
   'ring.saved': 'Ring sizes saved.',
   'ring.saveError': 'Could not save ring sizes.',
+
+  // Page titles and descriptions
+  'meta.homeTitle': 'Jeweliette | Wear your story',
+  'meta.homeDescription':
+    'Explore the Jeweliette collection. Find pieces to wear, layer and make your own.',
+  'meta.collectionFallback': 'Collection',
+  'meta.collectionDescription': 'Explore the Jeweliette collection.',
+  'meta.productFallback': 'Product',
+  'meta.pageFallback': 'Page',
+  'meta.policyFallback': 'Policy',
+  'meta.blogs': 'Blogs',
+
+  // Errors and content pages
+  'error.label': 'Error {status}',
+  'error.notFoundTitle': 'Page not found.',
+  'error.notFoundText':
+    'The page you are looking for does not exist or has moved.',
+  'error.title': 'Something went wrong.',
+  'error.badRequestText':
+    'The request could not be processed. Check the link and try again.',
+  'error.unexpectedText': 'An unexpected error occurred. Please try again.',
+  'error.backHome': 'Back to home',
+  'policies.eyebrow': 'Information',
+  'policies.title': 'Store policies',
+  'policies.all': 'All policies',
 } as const satisfies Record<string, string | PluralMessage>;
 
 export type MessageKey = keyof typeof en;

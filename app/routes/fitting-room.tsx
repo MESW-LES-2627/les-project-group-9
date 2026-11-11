@@ -1,16 +1,16 @@
 import {useEffect, useRef, useState} from 'react';
 import {data, Link, useFetcher} from 'react-router';
 import type {Route} from './+types/fitting-room';
+import {translatorFor, translatorFromMatches, useTranslation} from '~/lib/i18n';
 import {FittingRoomView} from '~/components/fitting-room/FittingRoomView';
 import {useFittingRoom} from '~/lib/fitting-room';
 import {updateCustomerFittingRoom} from '~/lib/profile/customer.server';
 import {MAX_FITTING_ROOM} from '~/lib/profile/fitting-room';
 import {isProductGid} from '~/lib/profile/list-schema';
 import {loadProductsByIds, parseProductIds} from '~/lib/products.server';
-import {translatorFor, useTranslation} from '~/lib/i18n';
 
-export const meta: Route.MetaFunction = () => [
-  {title: 'Fitting room | Jeweliette'},
+export const meta: Route.MetaFunction = ({matches}) => [
+  {title: `${translatorFromMatches(matches)('nav.fittingRoom')} | Jeweliette`},
   {name: 'robots', content: 'noindex'},
 ];
 

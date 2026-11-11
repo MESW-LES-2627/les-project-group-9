@@ -1,14 +1,14 @@
 import {useEffect} from 'react';
 import {Link, useFetcher} from 'react-router';
 import type {Route} from './+types/favorites';
+import {translatorFromMatches, useTranslation} from '~/lib/i18n';
 import {ProductItem} from '~/components/product/ProductItem';
 import {RecommendedProducts} from '~/components/product/RecommendedProducts';
 import {useFavorites} from '~/lib/favorites';
-import {useTranslation} from '~/lib/i18n';
 import {loadProductsByIds, parseProductIds} from '~/lib/products.server';
 
-export const meta: Route.MetaFunction = () => [
-  {title: 'Favorites | Jeweliette'},
+export const meta: Route.MetaFunction = ({matches}) => [
+  {title: `${translatorFromMatches(matches)('nav.favorites')} | Jeweliette`},
   {name: 'robots', content: 'noindex'},
 ];
 

@@ -18,7 +18,7 @@ import {
   CREATE_ADDRESS_MUTATION,
 } from '~/graphql/customer-account/CustomerAddressMutations';
 import {accountAddressForm} from '~/lib/account-ui';
-import {translatorFor, useTranslation} from '~/lib/i18n';
+import {translatorFor, translatorFromMatches, useTranslation} from '~/lib/i18n';
 
 export type ActionResponse = {
   addressId?: string | null;
@@ -29,8 +29,12 @@ export type ActionResponse = {
   updatedAddress?: AddressFragment;
 };
 
-export const meta: Route.MetaFunction = () => {
-  return [{title: 'Addresses'}];
+export const meta: Route.MetaFunction = ({matches}) => {
+  return [
+    {
+      title: `${translatorFromMatches(matches)('account.addresses')} | Jeweliette`,
+    },
+  ];
 };
 
 export async function loader({context}: Route.LoaderArgs) {

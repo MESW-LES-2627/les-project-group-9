@@ -1,13 +1,16 @@
 import {Link, useLoaderData} from 'react-router';
 import type {Route} from './+types/blogs._index';
+import {translatorFromMatches, useTranslation} from '~/lib/i18n';
 import {getPaginationVariables} from '@shopify/hydrogen';
 import {PaginatedResourceSection} from '~/components/shared/PaginatedResourceSection';
 import type {BlogsQuery} from 'storefrontapi.generated';
 
 type BlogNode = BlogsQuery['blogs']['nodes'][0];
 
-export const meta: Route.MetaFunction = () => {
-  return [{title: `Hydrogen | Blogs`}];
+export const meta: Route.MetaFunction = ({matches}) => {
+  return [
+    {title: `${translatorFromMatches(matches)('meta.blogs')} | Jeweliette`},
+  ];
 };
 
 export async function loader(args: Route.LoaderArgs) {
@@ -52,10 +55,11 @@ function loadDeferredData({context}: Route.LoaderArgs) {
 
 export default function Blogs() {
   const {blogs} = useLoaderData<typeof loader>();
+  const t = useTranslation();
 
   return (
     <div className="blogs">
-      <h1>Blogs</h1>
+      <h1>{t('meta.blogs')}</h1>
       <div className="blogs-grid">
         <PaginatedResourceSection<BlogNode> connection={blogs}>
           {({node: blog}) => (

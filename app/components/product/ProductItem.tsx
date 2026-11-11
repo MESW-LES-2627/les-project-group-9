@@ -1,6 +1,7 @@
 import {useState} from 'react';
 import {Link} from 'react-router';
-import {CartForm, Image, Money} from '@shopify/hydrogen';
+import {CartForm, Image} from '@shopify/hydrogen';
+import {Money} from '~/components/shared/Money';
 import {type CatalogImage, type CatalogProduct} from '~/lib/jeweliette-catalog';
 import {isColorOption} from '~/lib/options';
 import {useTranslation} from '~/lib/i18n';
