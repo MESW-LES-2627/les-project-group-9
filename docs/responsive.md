@@ -1,7 +1,9 @@
 # Responsive design
 
-Every page must work on a phone (story **US-048**). This page holds the rules and the
-audit. The audit table is filled in by US-048.
+Every page must work on a phone (story **US-048**, assigned to another team member). This
+page holds the shared rules and the audit table that US-048 fills in. The only responsive
+change made so far is the header mode switch below, done in **US-046** because the language
+selector needed it; it is not the US-048 audit and does not complete US-048.
 
 ## Breakpoints
 
@@ -22,12 +24,14 @@ Tailwind 4 defaults plus two custom breakpoints from the `@theme` block in
 The root font size is 87.5% (14px), and 93.75% at 1700px and up (`app/styles/tailwind.css`).
 `rem`-based sizes (`text-base`, `p-4`, `min-h-11`) are therefore 12.5% smaller than
 Tailwind's documented pixel values. For example, `min-h-11` is 38.5px, not 44px. This
-affects touch targets and input font sizes; US-048 addresses it.
+affects touch targets and input font sizes. It is tracked for US-048 and was not changed
+by US-046 or US-047.
 
 ## Site header modes
 
 The header in `components/layout/Header.tsx` has two modes, switched at `xl` (1280px).
-Only the header uses this switch; the page layouts keep using `tablet`.
+Only the header uses this switch; the page layouts keep using `tablet`. This scoped change
+belongs to **US-046** (language selector integration).
 
 | Width | Header |
 | --- | --- |
@@ -79,14 +83,15 @@ nav-to-actions gap of at least 16px. A longer Shopify menu needs a re-check.
    That flag is passed through to the Shopify CLI and was not tested (**unverified**).
    Customer-account flows need the public-domain setup described in the README.
 3. **Playwright**: there is no mobile project yet. `tests/e2e/footer.spec.ts` shows the
-   per-test pattern (`page.setViewportSize({width: 375, height: 812})`). US-048 adds mobile
-   checks for the critical flow.
+   per-test pattern (`page.setViewportSize({width: 375, height: 812})`). `header.spec.ts`
+   and `language.spec.ts` (US-046) use it for the header and language selector only. Mobile
+   checks for the other critical flows are part of US-048.
 4. **Checks per page**: no horizontal scrollbar; header, menu, search, cart drawer and footer
    usable; every button reachable by touch and keyboard; forms usable with the on-screen keyboard.
 
 ## Audit (US-048)
 
-To be filled in by US-048: every route and the shared layout at 360/375/390/768/1280px, in
+Owned by US-048 (another team member); not started by US-046/US-047. Scope: every route and the shared layout at 360/375/390/768/1280px, in
 EN and PT.
 
 | Page / component | Width(s) | Issue found | Fix |
