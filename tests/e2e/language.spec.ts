@@ -1,18 +1,14 @@
-import {expect, test, type Page} from '@playwright/test';
+import {expect, test} from '@playwright/test';
 import {addProductToBag, cartCount} from './support/cart';
+import {
+  chooseLanguage,
+  expectCurrentLanguage,
+  languageOption,
+  languageTrigger,
+} from './support/language';
 import {expectTouchTarget} from './support/layout';
 
 const LOCALE_COOKIE = 'jeweliette_locale';
-
-function languageButton(
-  page: Page,
-  scope: 'banner' | 'dialog',
-  code: 'EN' | 'PT' | 'FR',
-) {
-  return page
-    .getByRole(scope)
-    .getByRole('button', {name: new RegExp(`^${code} — `)});
-}
 
 /*
  * These tests cover the application locale only (labels, <html lang>, cookie
@@ -26,10 +22,7 @@ test('an English browser gets English', async ({page}) => {
   await page.goto('/');
 
   await expect(page.locator('html')).toHaveAttribute('lang', 'en-US');
-  await expect(languageButton(page, 'banner', 'EN')).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
+  await expectCurrentLanguage(page.getByRole('banner'), 'EN');
 });
 
 test('choosing PT keeps the page and query, and persists after reload', async ({
@@ -37,16 +30,17 @@ test('choosing PT keeps the page and query, and persists after reload', async ({
   context,
 }) => {
   await page.goto('/search?q=ring');
+  const banner = page.getByRole('banner');
 
-  await languageButton(page, 'banner', 'PT').click();
+  await chooseLanguage(banner, 'PT');
 
   await expect(page.locator('html')).toHaveAttribute('lang', 'pt-PT');
   await expect(page).toHaveURL(
     (url) => url.pathname === '/search' && url.searchParams.get('q') === 'ring',
   );
-  await expect(
-    page.getByRole('banner').getByRole('group', {name: 'Idioma'}),
-  ).toBeVisible();
+  await expect(languageTrigger(banner)).toContainText(
+    'Idioma atual: Português (Portugal)',
+  );
 
   const cookie = (await context.cookies()).find(
     (c) => c.name === LOCALE_COOKIE,
@@ -59,15 +53,69 @@ test('choosing PT keeps the page and query, and persists after reload', async ({
   await page.reload();
 
   await expect(page.locator('html')).toHaveAttribute('lang', 'pt-PT');
-  await expect(languageButton(page, 'banner', 'PT')).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
+  await expectCurrentLanguage(banner, 'PT');
 
-  await languageButton(page, 'banner', 'EN').click();
+  await chooseLanguage(banner, 'EN');
   await expect(page.locator('html')).toHaveAttribute('lang', 'en-US');
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('lang', 'en-US');
+});
+
+test('the desktop dropdown opens above the page, marks the current language and closes', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const banner = page.getByRole('banner');
+  const trigger = languageTrigger(banner);
+
+  await expectTouchTarget(trigger);
+  await trigger.click();
+
+  const options = banner
+    .getByRole('list', {name: 'Language'})
+    .getByRole('button');
+  await expect(options).toHaveCount(3);
+  await expect(languageOption(banner, 'EN')).toHaveAttribute(
+    'aria-current',
+    'true',
+  );
+  for (const option of await options.all()) {
+    await expectTouchTarget(option);
+    // Not clipped by the header and layered above the page content.
+    const hit = await option.evaluate((element) => {
+      const box = element.getBoundingClientRect();
+      const top = document.elementFromPoint(
+        box.left + box.width / 2,
+        box.top + box.height / 2,
+      );
+      return element.contains(top);
+    });
+    expect(hit).toBe(true);
+  }
+
+  await page.keyboard.press('Escape');
+  await expect(options.first()).toBeHidden();
+  await expect(trigger).toBeFocused();
+
+  await trigger.click();
+  await page.getByRole('heading', {level: 1}).click();
+  await expect(options.first()).toBeHidden();
+});
+
+test('the dropdown works with the keyboard alone', async ({page}) => {
+  await page.goto('/');
+  const banner = page.getByRole('banner');
+
+  await languageTrigger(banner).focus();
+  await page.keyboard.press('Enter');
+  await expect(languageOption(banner, 'EN')).toBeVisible();
+  await page.keyboard.press('ArrowDown');
+  await expect(languageOption(banner, 'EN')).toBeFocused();
+  await page.keyboard.press('ArrowDown');
+  await expect(languageOption(banner, 'PT')).toBeFocused();
+  await page.keyboard.press('Enter');
+
+  await expect(page.locator('html')).toHaveAttribute('lang', 'pt-PT');
 });
 
 test('on a phone the language is chosen from the menu', async ({page}) => {
@@ -75,12 +123,22 @@ test('on a phone the language is chosen from the menu', async ({page}) => {
   await page.goto('/');
 
   await page.getByRole('button', {name: 'Open menu'}).click();
-  const button = languageButton(page, 'dialog', 'PT');
-  await expect(button).toBeVisible();
+  const menu = page.getByRole('dialog');
+  const trigger = languageTrigger(menu);
+  await expectTouchTarget(trigger);
+  await trigger.click();
 
-  await expectTouchTarget(button);
+  const option = languageOption(menu, 'PT');
+  await expect(option).toBeVisible();
+  await expectTouchTarget(option);
+  // The inline list stays inside the drawer.
+  const inside = await option.evaluate((element) => {
+    const box = element.getBoundingClientRect();
+    return box.right <= window.innerWidth && box.left >= 0;
+  });
+  expect(inside).toBe(true);
 
-  await button.click();
+  await option.click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'pt-PT');
   await expect(page.getByRole('button', {name: 'Abrir menu'})).toBeVisible();
 
@@ -125,7 +183,7 @@ test('switching language keeps the cart and the market', async ({
   expect(priceBefore).toBeTruthy();
 
   await page.keyboard.press('Escape');
-  await languageButton(page, 'banner', 'PT').click();
+  await chooseLanguage(page.getByRole('banner'), 'PT');
   await expect(page.locator('html')).toHaveAttribute('lang', 'pt-PT');
 
   await expect(
@@ -171,12 +229,9 @@ test.describe('a fresh Portuguese browser', () => {
     await page.goto('/');
 
     await expect(page.locator('html')).toHaveAttribute('lang', 'pt-PT');
-    await expect(
-      page.getByRole('banner').getByRole('group', {name: 'Idioma'}),
-    ).toBeVisible();
-    await expect(languageButton(page, 'banner', 'PT')).toHaveAttribute(
-      'aria-pressed',
-      'true',
+    await expectCurrentLanguage(page.getByRole('banner'), 'PT');
+    await expect(languageTrigger(page.getByRole('banner'))).toContainText(
+      'Idioma atual',
     );
 
     const cookies = await context.cookies();
@@ -189,7 +244,7 @@ test.describe('a fresh Portuguese browser', () => {
   }) => {
     await page.goto('/collections/all?sort=newest');
 
-    await languageButton(page, 'banner', 'EN').click();
+    await chooseLanguage(page.getByRole('banner'), 'EN');
     await expect(page.locator('html')).toHaveAttribute('lang', 'en-US');
     await expect(page).toHaveURL(
       (url) =>
@@ -205,9 +260,7 @@ test.describe('a fresh Portuguese browser', () => {
 
     await page.goto('/');
     await expect(page.locator('html')).toHaveAttribute('lang', 'en-US');
-    await expect(
-      page.getByRole('banner').getByRole('group', {name: 'Language'}),
-    ).toBeVisible();
+    await expectCurrentLanguage(page.getByRole('banner'), 'EN');
   });
 });
 
@@ -218,10 +271,7 @@ test.describe('a fresh English browser', () => {
     await page.goto('/');
 
     await expect(page.locator('html')).toHaveAttribute('lang', 'en-US');
-    await expect(languageButton(page, 'banner', 'EN')).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
+    await expectCurrentLanguage(page.getByRole('banner'), 'EN');
     expect(
       (await context.cookies()).find((c) => c.name === LOCALE_COOKIE),
     ).toBeUndefined();
@@ -238,12 +288,9 @@ test.describe('a fresh French browser', () => {
     await page.goto('/');
 
     await expect(page.locator('html')).toHaveAttribute('lang', 'fr-FR');
-    await expect(
-      page.getByRole('banner').getByRole('group', {name: 'Langue'}),
-    ).toBeVisible();
-    await expect(languageButton(page, 'banner', 'FR')).toHaveAttribute(
-      'aria-pressed',
-      'true',
+    await expectCurrentLanguage(page.getByRole('banner'), 'FR');
+    await expect(languageTrigger(page.getByRole('banner'))).toContainText(
+      'Langue actuelle',
     );
     await expect(
       page.getByRole('banner').getByRole('button', {name: 'Rechercher'}),
@@ -258,7 +305,7 @@ test.describe('a fresh French browser', () => {
     context,
   }) => {
     await page.goto('/');
-    await languageButton(page, 'banner', 'EN').click();
+    await chooseLanguage(page.getByRole('banner'), 'EN');
     await expect(page.locator('html')).toHaveAttribute('lang', 'en-US');
     expect(
       (await context.cookies()).find((c) => c.name === LOCALE_COOKIE)?.value,
@@ -291,7 +338,7 @@ test.describe('choosing French', () => {
       }) => {
         await page.goto('/search?q=ring&sort=price');
 
-        await languageButton(page, 'banner', 'FR').click();
+        await chooseLanguage(page.getByRole('banner'), 'FR');
 
         await expect(page.locator('html')).toHaveAttribute('lang', 'fr-FR');
         await expect(page).toHaveURL(
@@ -311,10 +358,7 @@ test.describe('choosing French', () => {
 
         await page.goto('/collections/all');
         await expect(page.locator('html')).toHaveAttribute('lang', 'fr-FR');
-        await expect(languageButton(page, 'banner', 'FR')).toHaveAttribute(
-          'aria-pressed',
-          'true',
-        );
+        await expectCurrentLanguage(page.getByRole('banner'), 'FR');
       });
     });
   }
@@ -326,9 +370,7 @@ test.describe('choosing French', () => {
     await page.goto('/');
 
     await page.getByRole('button', {name: 'Open menu'}).click();
-    const french = languageButton(page, 'dialog', 'FR');
-    await expectTouchTarget(french);
-    await french.click();
+    await chooseLanguage(page.getByRole('dialog'), 'FR');
 
     await expect(page.locator('html')).toHaveAttribute('lang', 'fr-FR');
     await expect(

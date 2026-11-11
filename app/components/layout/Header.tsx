@@ -1,12 +1,5 @@
 import {Suspense} from 'react';
-import {
-  Await,
-  Form,
-  Link,
-  NavLink,
-  useAsyncValue,
-  useLocation,
-} from 'react-router';
+import {Await, NavLink, useAsyncValue, Link} from 'react-router';
 import {
   type CartViewPayload,
   useAnalytics,
@@ -14,10 +7,11 @@ import {
 } from '@shopify/hydrogen';
 import type {HeaderQuery, CartApiQueryFragment} from 'storefrontapi.generated';
 import {useAside} from '~/components/layout/Aside';
+import {LanguageSelector} from '~/components/layout/LanguageSelector';
 import {Icon} from '~/components/shared/Icon';
 import {useFavorites} from '~/lib/favorites';
 import {useFittingRoom} from '~/lib/fitting-room';
-import {LOCALE_CODES, LOCALES, useLocale, useTranslation} from '~/lib/i18n';
+import {useTranslation} from '~/lib/i18n';
 
 interface HeaderProps {
   header: HeaderQuery;
@@ -356,57 +350,5 @@ function FittingRoomLink() {
         </span>
       ) : null}
     </Link>
-  );
-}
-
-/**
- * Language switch with one option per entry in `LOCALES`. Posts to `/locale`,
- * which sets the language cookie and redirects back to the current path and
- * query. Works without JavaScript.
- * Each option is at least 44×44 CSS px regardless of the root font size.
- */
-export function LanguageSelector({
-  className = '',
-  onSelect,
-}: {
-  className?: string;
-  /** Called when a language is submitted, e.g. to close the mobile menu. */
-  onSelect?: () => void;
-}) {
-  const t = useTranslation();
-  const {code: activeCode} = useLocale();
-  const location = useLocation();
-  const redirectTo = `${location.pathname}${location.search}${location.hash}`;
-
-  return (
-    <Form action="/locale" className={className} method="post" onSubmit={onSelect}>
-      <input name="redirectTo" type="hidden" value={redirectTo} />
-      <div
-        aria-label={t('language.label')}
-        className="flex items-center text-xs font-medium tracking-[0.12em] text-primary"
-        role="group"
-      >
-        {LOCALE_CODES.map((code) => {
-          const active = code === activeCode;
-          return (
-            <button
-              aria-pressed={active}
-              className={`grid min-h-[44px] min-w-[44px] place-items-center underline-offset-4 hover:text-ink ${
-                active ? 'text-ink underline' : 'text-primary/70'
-              }`}
-              key={code}
-              name="locale"
-              type="submit"
-              value={code}
-            >
-              <span aria-hidden="true">{LOCALES[code].short}</span>
-              <span className="sr-only" lang={LOCALES[code].tag}>
-                {`${LOCALES[code].short} — ${LOCALES[code].name}`}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </Form>
   );
 }

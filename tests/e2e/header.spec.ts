@@ -1,4 +1,5 @@
 import {expect, test, type Page} from '@playwright/test';
+import {languageTrigger} from './support/language';
 import {expectTouchTarget} from './support/layout';
 
 /**
@@ -111,7 +112,7 @@ for (const lang of ['en', 'pt', 'fr'] as const) {
       await expect(
         header.getByRole('navigation', {name: t.mainNav}),
       ).toBeHidden();
-      await expect(header.getByRole('group', {name: t.language})).toBeHidden();
+      await expect(languageTrigger(header)).toBeHidden();
       await expect(
         header.getByRole('link', {name: t.account, exact: true}),
       ).toBeHidden();
@@ -123,13 +124,16 @@ for (const lang of ['en', 'pt', 'fr'] as const) {
       await expect(menu.getByRole('link', {name: t.myAccount})).toBeVisible();
       await expect(menu.getByRole('button', {name: t.bag})).toBeVisible();
 
+      await expectTouchTarget(languageTrigger(menu));
+      await languageTrigger(menu).click();
       const languages = menu
-        .getByRole('group', {name: t.language})
+        .getByRole('list', {name: t.language})
         .getByRole('button');
       await expect(languages).toHaveCount(LANGUAGE_OPTIONS);
       for (const button of await languages.all()) {
         await expectTouchTarget(button);
       }
+      await expectNoHorizontalOverflow(page);
     });
   }
 
@@ -148,23 +152,29 @@ for (const lang of ['en', 'pt', 'fr'] as const) {
     await expectActionsAvailable(page, lang);
     await expectNoHorizontalOverflow(page);
 
-    const languages = header
-      .getByRole('group', {name: t.language})
-      .getByRole('button');
-    await expect(languages).toHaveCount(LANGUAGE_OPTIONS);
-    for (const button of await languages.all()) {
-      await expectTouchTarget(button);
-    }
+    const trigger = languageTrigger(header);
+    await expectTouchTarget(trigger);
 
     const lastLinkRight = await nav
       .getByRole('link')
       .last()
       .evaluate((link) => link.getBoundingClientRect().right);
-    const selectorLeft = await header
-      .getByRole('group', {name: t.language})
-      .evaluate((group) => group.getBoundingClientRect().left);
+    const selectorLeft = await trigger.evaluate(
+      (summary) => summary.getBoundingClientRect().left,
+    );
     expect(selectorLeft - lastLinkRight).toBeGreaterThanOrEqual(
       MIN_NAV_ACTIONS_GAP,
     );
+
+    await trigger.click();
+    const languages = header
+      .getByRole('list', {name: t.language})
+      .getByRole('button');
+    await expect(languages).toHaveCount(LANGUAGE_OPTIONS);
+    for (const button of await languages.all()) {
+      await expectTouchTarget(button);
+    }
+    // The open panel must not widen the page.
+    await expectNoHorizontalOverflow(page);
   });
 }

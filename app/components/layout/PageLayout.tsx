@@ -7,11 +7,8 @@ import type {
 } from 'storefrontapi.generated';
 import {Aside, useAside} from '~/components/layout/Aside';
 import {Footer} from '~/components/layout/Footer';
-import {
-  Header,
-  HeaderMenu,
-  LanguageSelector,
-} from '~/components/layout/Header';
+import {Header, HeaderMenu} from '~/components/layout/Header';
+import {LanguageSelector} from '~/components/layout/LanguageSelector';
 import {CartMain} from '~/components/cart/CartMain';
 import {
   SEARCH_ENDPOINT,
@@ -225,7 +222,7 @@ function MobileMenuAside({
         >
           {t('nav.shoppingBag')}
         </button>
-        <LanguageSelector onSelect={close} />
+        <LanguageSelector layout="inline" onSelect={close} />
       </div>
     </Aside>
   );

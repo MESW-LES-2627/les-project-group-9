@@ -1,8 +1,8 @@
 import {render, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {createRoutesStub} from 'react-router';
+import {createRoutesStub, redirect} from 'react-router';
 import {describe, expect, it, vi} from 'vitest';
-import {LanguageSelector} from '../../../app/components/layout/Header';
+import {LanguageSelector} from '../../../app/components/layout/LanguageSelector';
 import {
   getLocaleFromRequest,
   LOCALE_COOKIE,
@@ -17,9 +17,12 @@ function DocumentLanguage() {
 
 function renderSelector(
   code: LocaleCode,
-  path = '/products/ring?Color=Gold',
-  onAction = vi.fn(),
+  {
+    path = '/products/ring?Color=Gold#details',
+    layout = 'popover',
+  }: {path?: string; layout?: 'popover' | 'inline'} = {},
 ) {
+  const onAction = vi.fn();
   const locale = toAppLocale(
     getLocaleFromRequest(
       new Request('http://localhost/', {
@@ -35,7 +38,8 @@ function renderSelector(
       loader: () => ({locale}),
       Component: () => (
         <>
-          <LanguageSelector />
+          <LanguageSelector layout={layout} />
+          <button type="button">Outside</button>
           <DocumentLanguage />
         </>
       ),
@@ -43,8 +47,10 @@ function renderSelector(
     {
       path: '/locale',
       action: async ({request}) => {
-        onAction(Object.fromEntries(await request.formData()));
-        return null;
+        const form = Object.fromEntries(await request.formData());
+        onAction(form);
+        // Like the real /locale route: redirect back to the page.
+        return redirect(String(form.redirectTo));
       },
     },
   ]);
@@ -53,113 +59,157 @@ function renderSelector(
   return onAction;
 }
 
+/** The trigger is the native <summary>; its name starts with the visible code. */
+async function trigger(code: 'EN' | 'PT' | 'FR') {
+  return screen
+    .findByText(code, {selector: 'summary span'})
+    .then((span) => span.closest('summary')) as Promise<HTMLElement>;
+}
+
+function details() {
+  return document.querySelector('details') as HTMLDetailsElement;
+}
+
+function option(name: RegExp) {
+  return screen.getByRole('button', {name});
+}
+
 describe('LanguageSelector', () => {
-  it('shows EN-US, PT and FR and marks English as active by default', async () => {
+  it('shows the current language on a closed trigger', async () => {
     renderSelector('en');
 
-    const group = await screen.findByRole('group', {name: 'Language'});
-    expect(within(group).getAllByRole('button')).toHaveLength(3);
-    expect(
-      screen.getByRole('button', {name: 'EN — English (US)'}),
-    ).toHaveAttribute('aria-pressed', 'true');
-    expect(
-      screen.getByRole('button', {name: 'PT — Português (Portugal)'}),
-    ).toHaveAttribute('aria-pressed', 'false');
-    expect(
-      screen.getByRole('button', {name: 'FR — Français (France)'}),
-    ).toHaveAttribute('aria-pressed', 'false');
+    const summary = await trigger('EN');
+    expect(summary).toHaveTextContent('EN');
+    expect(summary).toHaveTextContent('Current language: English (US)');
+    expect(details().open).toBe(false);
     expect(screen.getByTestId('lang')).toHaveTextContent('en-US');
   });
 
-  it('labels the selector in French when FR is active', async () => {
-    renderSelector('fr');
+  it.each([
+    ['pt', 'PT', 'Idioma atual: Português (Portugal)', 'pt-PT'],
+    ['fr', 'FR', 'Langue actuelle : Français (France)', 'fr-FR'],
+  ] as const)(
+    'labels the trigger in the active language (%s)',
+    async (code, short, label, tag) => {
+      renderSelector(code);
 
-    expect(
-      await screen.findByRole('group', {name: 'Langue'}),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', {name: 'FR — Français (France)'}),
-    ).toHaveAttribute('aria-pressed', 'true');
-    expect(
-      screen.getByRole('button', {name: 'EN — English (US)'}),
-    ).toHaveAttribute('aria-pressed', 'false');
-    expect(screen.getByTestId('lang')).toHaveTextContent('fr-FR');
-  });
+      const summary = await trigger(short);
+      // Raw text, so the French no-break space before ":" is checked exactly.
+      expect(summary.textContent).toContain(label);
+      expect(screen.getByTestId('lang')).toHaveTextContent(tag);
+    },
+  );
 
-  it('marks each language name with its own language for screen readers', async () => {
-    renderSelector('en');
-    await screen.findByRole('group', {name: 'Language'});
+  it('lists EN, PT and FR with flags, names and the current one marked', async () => {
+    const user = userEvent.setup();
+    renderSelector('pt');
 
-    expect(screen.getByText('FR — Français (France)')).toHaveAttribute(
+    await user.click(await trigger('PT'));
+    expect(details().open).toBe(true);
+
+    const list = screen.getByRole('list', {name: 'Idioma'});
+    const options = within(list).getAllByRole('button');
+    expect(options.map((button) => button.textContent)).toEqual([
+      'EN English (US)',
+      'PT Português (Portugal)',
+      'FR Français (France)',
+    ]);
+    expect(option(/^PT/)).toHaveAttribute('aria-current', 'true');
+    expect(option(/^EN/)).not.toHaveAttribute('aria-current');
+    expect(option(/^FR/)).not.toHaveAttribute('aria-current');
+
+    expect(screen.getByText('Français (France)')).toHaveAttribute(
       'lang',
       'fr-FR',
     );
-    expect(screen.getByText('PT — Português (Portugal)')).toHaveAttribute(
-      'lang',
-      'pt-PT',
-    );
+    for (const flag of document.querySelectorAll('svg')) {
+      expect(flag).toHaveAttribute('aria-hidden', 'true');
+    }
   });
 
-  it('labels the selector in Portuguese when PT is active', async () => {
-    renderSelector('pt');
-
-    expect(
-      await screen.findByRole('group', {name: 'Idioma'}),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', {name: 'PT — Português (Portugal)'}),
-    ).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByTestId('lang')).toHaveTextContent('pt-PT');
-  });
-
-  it('posts French with the current path and query', async () => {
-    const onAction = renderSelector('pt');
+  it('posts the chosen language with the current path, query and hash', async () => {
     const user = userEvent.setup();
+    const onAction = renderSelector('en');
 
-    await user.click(
-      await screen.findByRole('button', {name: 'FR — Français (France)'}),
-    );
+    await user.click(await trigger('EN'));
+    await user.click(option(/^FR/));
 
     await waitFor(() =>
       expect(onAction).toHaveBeenCalledWith({
         locale: 'fr',
-        redirectTo: '/products/ring?Color=Gold',
+        redirectTo: '/products/ring?Color=Gold#details',
       }),
     );
+    expect(details().open).toBe(false);
   });
 
-  it('posts the chosen language and the current path with its query', async () => {
-    const onAction = renderSelector('en');
+  it('supports arrow keys, Home, End and Escape', async () => {
     const user = userEvent.setup();
+    renderSelector('pt');
 
-    await user.click(
-      await screen.findByRole('button', {name: 'PT — Português (Portugal)'}),
-    );
+    const summary = await trigger('PT');
+    summary.focus();
 
-    await waitFor(() =>
-      expect(onAction).toHaveBeenCalledWith({
-        locale: 'pt',
-        redirectTo: '/products/ring?Color=Gold',
-      }),
-    );
+    await user.keyboard('{ArrowDown}');
+    await waitFor(() => expect(option(/^PT/)).toHaveFocus());
+    expect(details().open).toBe(true);
+
+    await user.keyboard('{ArrowDown}');
+    expect(option(/^FR/)).toHaveFocus();
+    await user.keyboard('{ArrowDown}');
+    expect(option(/^EN/)).toHaveFocus();
+    await user.keyboard('{ArrowUp}');
+    expect(option(/^FR/)).toHaveFocus();
+    await user.keyboard('{Home}');
+    expect(option(/^EN/)).toHaveFocus();
+    await user.keyboard('{End}');
+    expect(option(/^FR/)).toHaveFocus();
+
+    await user.keyboard('{Escape}');
+    expect(details().open).toBe(false);
+    expect(summary).toHaveFocus();
   });
 
-  it('can be operated with the keyboard', async () => {
-    const onAction = renderSelector('en');
+  it('chooses a language with the keyboard', async () => {
     const user = userEvent.setup();
+    const onAction = renderSelector('en');
 
-    await screen.findByRole('group', {name: 'Language'});
-    await user.tab();
-    expect(
-      screen.getByRole('button', {name: 'EN — English (US)'}),
-    ).toHaveFocus();
-    await user.tab();
-    await user.keyboard('{Enter}');
+    (await trigger('EN')).focus();
+    await user.keyboard('{ArrowDown}');
+    await waitFor(() => expect(option(/^EN/)).toHaveFocus());
+    await user.keyboard('{ArrowDown}{Enter}');
 
     await waitFor(() =>
       expect(onAction).toHaveBeenCalledWith(
         expect.objectContaining({locale: 'pt'}),
       ),
     );
+  });
+
+  it('closes on an outside click and when focus leaves', async () => {
+    const user = userEvent.setup();
+    renderSelector('en');
+
+    await user.click(await trigger('EN'));
+    expect(details().open).toBe(true);
+    await user.click(screen.getByRole('button', {name: 'Outside'}));
+    expect(details().open).toBe(false);
+
+    await user.click(await trigger('EN'));
+    expect(details().open).toBe(true);
+    option(/^FR/).focus();
+    await user.tab();
+    expect(screen.getByRole('button', {name: 'Outside'})).toHaveFocus();
+    expect(details().open).toBe(false);
+  });
+
+  it('expands in place in the inline (mobile menu) layout', async () => {
+    const user = userEvent.setup();
+    renderSelector('en', {layout: 'inline'});
+
+    await user.click(await trigger('EN'));
+    const list = screen.getByRole('list', {name: 'Language'});
+    expect(list.className).not.toContain('absolute');
+    expect(within(list).getAllByRole('button')).toHaveLength(3);
   });
 });

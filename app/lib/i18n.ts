@@ -2,6 +2,9 @@ import type {I18nBase} from '@shopify/hydrogen';
 import {useRouteLoaderData} from 'react-router';
 import type {RootLoader} from '~/root';
 
+/** Flags available to the language selector (`LanguageSelector.tsx`). */
+export type FlagKey = 'us' | 'pt' | 'fr';
+
 /**
  * Storefront languages: the single place to enable a language.
  *
@@ -17,19 +20,41 @@ import type {RootLoader} from '~/root';
  * (see docs/i18n.md → Adding a language).
  */
 export const LOCALES = {
-  en: {language: 'EN', tag: 'en-US', name: 'English (US)', short: 'EN'},
+  en: {
+    language: 'EN',
+    tag: 'en-US',
+    name: 'English (US)',
+    short: 'EN',
+    flag: 'us',
+  },
   pt: {
     language: 'PT_PT',
     tag: 'pt-PT',
     name: 'Português (Portugal)',
     short: 'PT',
+    flag: 'pt',
   },
   // French has a single Shopify LanguageCode (`FR`). France (fr-FR) is the
   // formatting convention for the French experience.
-  fr: {language: 'FR', tag: 'fr-FR', name: 'Français (France)', short: 'FR'},
+  fr: {
+    language: 'FR',
+    tag: 'fr-FR',
+    name: 'Français (France)',
+    short: 'FR',
+    flag: 'fr',
+  },
 } as const satisfies Record<
   string,
-  {language: I18nBase['language']; tag: string; name: string; short: string}
+  {
+    language: I18nBase['language'];
+    tag: string;
+    /** Name in the language itself (endonym), shown in the selector. */
+    name: string;
+    /** Short code shown on the selector trigger and options. */
+    short: string;
+    /** Flag drawn next to the language in the selector (decorative). */
+    flag: FlagKey;
+  }
 >;
 
 export type LocaleCode = keyof typeof LOCALES;

@@ -1,6 +1,8 @@
 export type IconName =
   | 'arrow'
   | 'bag'
+  | 'check'
+  | 'chevron'
   | 'close'
   | 'heart'
   | 'hanger'
@@ -25,6 +27,8 @@ export function Icon({name, size = 21, filled = false, className}: IconProps) {
         <path d="M9 9V6a3 3 0 0 1 6 0v3" />
       </>
     ),
+    check: <path d="m5 12.5 4.5 4.5L19 7" />,
+    chevron: <path d="m6 9 6 6 6-6" />,
     close: <path d="m6 6 12 12M18 6 6 18" />,
     heart: (
       <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z" />
