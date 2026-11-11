@@ -16,7 +16,7 @@ npx playwright install chromium
 | Folder | Kind | Tool |
 | --- | --- | --- |
 | `tests/unit` | Unit tests for `app/lib` and API routes | Vitest (node) |
-| `tests/components/<page>` | Component tests, grouped like `app/components/<page>` | Vitest + React Testing Library (jsdom) |
+| `tests/components/<group>` | Component tests, grouped like `app/components/<group>` (fitting-room tests currently sit at the top of `tests/components`) | Vitest + React Testing Library (jsdom) |
 | `tests/e2e` | End-to-end tests of the shopper flows | Playwright (Chromium) |
 
 ## Unit and component tests
@@ -25,22 +25,36 @@ npx playwright install chromium
 npm test
 ```
 
+`vitest.config.ts` defines two projects: `unit` (`tests/**/*.test.ts`, node environment) and `components` (`tests/**/*.test.tsx`, jsdom, with `vitest.setup.ts` loading `jest-dom` matchers and cleaning up after each test). The `~` alias points to `app/`.
+
+Run one project or file:
+
+```bash
+npx vitest run --project unit
+npx vitest run tests/unit/search.test.ts
+```
+
 Watch mode:
 
 ```bash
 npm run test:watch
 ```
 
+Unit tests (`tests/unit`) cover the `app/lib` modules (allergens, i18n, materials, metafields, order filters, profile schema/preferences/customer, recommendation engine and traits, redirect, ring category, search filters, variants, fitting room) and the API routes (`api.profile*`, `api.recommendations`, fitting-room move to cart).
+
 Component tests cover:
 
 | Folder | Components |
 | --- | --- |
-| `account` | `PreferencesForm` |
+| *(top level)* | `FittingRoomButton`, `FittingRoomView` |
+| `account` | `PreferencesForm`, `RingSizeForm` |
 | `cart` | `CartLineItem`, `CartSummary` |
 | `layout` | `MockShopNotice` |
-| `product` | `AddToCartButton`, `AllergenBadge`, `FavoriteButton`, `ProductBadge`, `ProductForm`, `ProductGallery`, `ProductItem`, `ProductPrice`, `RecommendedProducts`, swatch gallery |
-| `search` | `SearchForm` |
+| `product` | `AddToCartButton`, `AllergenBadge`, `FavoriteButton`, `ProductBadge`, `ProductForm`, `ProductGallery`, `ProductItem`, `ProductPrice`, `RecommendedProducts`, `RingSizeHelp`, swatch gallery |
+| `search` | `SearchForm`, `SearchResultsPredictive` |
 | `shared` | `ConfirmDialog` |
+
+`AddToCartButton` and `MockShopNotice` are tested but not currently used by the app (see [architecture.md → Known issues](architecture.md#known-issues)).
 
 ## End-to-end tests
 
@@ -49,6 +63,8 @@ npm run test:e2e
 ```
 
 Playwright builds the app and starts it with `npm run preview` on port 3000. If a server is already running there (for example `npm run dev`), it is reused.
+
+The only Playwright project is desktop Chromium. To check a phone-sized screen, set the viewport in the test (`page.setViewportSize`), as `footer.spec.ts` does.
 
 The tests run against the store in `.env`. To run them like CI does, set:
 
@@ -71,6 +87,7 @@ npx playwright test --ui                     # step through tests in a browser
 | `cart.spec.ts` | Empty cart; adding a product updates the cart count; change a line's quantity and remove it |
 | `search.spec.ts` | Empty search; no results; searching from the search page and from the header |
 | `favorites.spec.ts` | Logged-out shoppers are sent to log in from the favorites page, product page and product cards |
+| `footer.spec.ts` | Footer "Discover" links are on separate lines at 1280px and 375px, and open their pages |
 
 Customer account routes (`/account/*`) are not covered, because they need Shopify Customer Account OAuth.
 
@@ -91,5 +108,5 @@ npm run typecheck
 
 `.github/workflows/test.yml` runs on pushes to `main` and on pull requests:
 
-- **test**: install, lint, typecheck, unit and component tests.
+- **test**: install, lint, typecheck, unit and component tests. CI does not run `npm run build`; run it locally before committing.
 - **e2e**: runs the Playwright tests against [mock.shop](https://mock.shop), so no repository secrets are needed. On failure the Playwright report is uploaded as an artifact.
