@@ -3,9 +3,17 @@ import {useRouteLoaderData} from 'react-router';
 import type {RootLoader} from '~/root';
 
 /**
- * Storefront languages. `language` is the Storefront/Customer Account API
- * `LanguageCode` used with `@inContext`; `tag` is the BCP 47 tag used for
- * `<html lang>` and `Intl`.
+ * Storefront languages: the single place to enable a language.
+ *
+ * - key: app locale code (cookie and form value). Not a Shopify value.
+ * - `language`: Storefront/Customer Account API `LanguageCode` for `@inContext`.
+ *   `PT_PT` is "Portuguese (Portugal)" in the installed schema; the store must
+ *   publish that language for it to return Portuguese content.
+ * - `tag`: BCP 47 tag for `<html lang>`, `Intl` and Accept-Language matching.
+ *
+ * Only add a language here when it has full UI messages, is published in
+ * Shopify for the active market, and its mapping has been verified
+ * (see docs/i18n.md → Adding a language).
  */
 export const LOCALES = {
   en: {language: 'EN', tag: 'en-US', name: 'English (US)', short: 'EN'},
@@ -26,8 +34,11 @@ export const LOCALE_CODES = Object.keys(LOCALES) as LocaleCode[];
 export const DEFAULT_LOCALE: LocaleCode = 'en';
 
 /**
- * The commercial country sent with every Storefront query. It does not change
- * with the language, so switching language never changes market or currency.
+ * The country sent with every Storefront query (`@inContext(country:)`).
+ * Unchanged from the template default and independent of the language:
+ * switching language never changes it, and it is never inferred from
+ * Accept-Language. Whether it should match the store's market is a separate,
+ * open configuration decision (docs/i18n.md → Language and country).
  */
 export const DEFAULT_COUNTRY: I18nBase['country'] = 'US';
 
@@ -46,9 +57,15 @@ export function isLocaleCode(value: unknown): value is LocaleCode {
   return typeof value === 'string' && Object.hasOwn(LOCALES, value);
 }
 
-/** Reads the language cookie; anything missing or unsupported is the default. */
-export function readLocaleCookie(cookieHeader: string | null): LocaleCode {
-  if (!cookieHeader) return DEFAULT_LOCALE;
+/**
+ * Reads the explicit language choice from the cookie header. Returns `null`
+ * when there is no cookie or its value is unsupported, so browser
+ * negotiation can still apply.
+ */
+export function readLocaleCookie(
+  cookieHeader: string | null,
+): LocaleCode | null {
+  if (!cookieHeader) return null;
 
   for (const part of cookieHeader.split(';')) {
     const separator = part.indexOf('=');
@@ -56,11 +73,112 @@ export function readLocaleCookie(cookieHeader: string | null): LocaleCode {
     if (part.slice(0, separator).trim() !== LOCALE_COOKIE) continue;
 
     const value = part.slice(separator + 1).trim();
-    return isLocaleCode(value) ? value : DEFAULT_LOCALE;
+    return isLocaleCode(value) ? value : null;
   }
 
-  return DEFAULT_LOCALE;
+  return null;
 }
+
+export type LanguagePreference = {tag: string; q: number};
+
+const MAX_ACCEPT_LANGUAGE_LENGTH = 1024;
+const MAX_ACCEPT_LANGUAGE_ENTRIES = 32;
+const LANGUAGE_RANGE = /^(?:\*|[a-z]{1,8}(?:-[a-z0-9]{1,8})*)$/i;
+const QUALITY = /^q=(0(?:\.\d{0,3})?|1(?:\.0{0,3})?)$/i;
+
+/**
+ * Parses an Accept-Language header (RFC 9110) into lowercase language ranges
+ * ordered by quality, keeping header order for equal qualities. Entries with
+ * `q=0`, malformed ranges or malformed quality values are dropped. Oversized
+ * headers are truncated.
+ */
+export function parseAcceptLanguage(
+  header: string | null,
+): LanguagePreference[] {
+  if (!header) return [];
+
+  const preferences: Array<LanguagePreference & {order: number}> = [];
+  const entries = header
+    .slice(0, MAX_ACCEPT_LANGUAGE_LENGTH)
+    .split(',')
+    .slice(0, MAX_ACCEPT_LANGUAGE_ENTRIES);
+
+  entries.forEach((entry, order) => {
+    const [range = '', ...params] = entry.split(';').map((part) => part.trim());
+    if (!LANGUAGE_RANGE.test(range)) return;
+
+    let q = 1;
+    for (const param of params) {
+      if (!/^q=/i.test(param)) continue;
+      const match = QUALITY.exec(param);
+      if (!match) return;
+      q = Number(match[1]);
+    }
+
+    if (q > 0) preferences.push({tag: range.toLowerCase(), q, order});
+  });
+
+  return preferences
+    .sort((a, b) => b.q - a.q || a.order - b.order)
+    .map(({tag, q}) => ({tag, q}));
+}
+
+function primarySubtag(tag: string): string {
+  return tag.toLowerCase().split('-')[0];
+}
+
+/**
+ * Picks the supported locale for the browser's preferences, or `null` if none
+ * matches. For each preference, in quality order: an exact tag match wins,
+ * otherwise the first locale with the same primary language (so `pt`, `pt-PT`
+ * and `pt-BR` all map to European Portuguese, and any `en-*` to English).
+ * The wildcard `*` names no specific language and is skipped.
+ */
+export function negotiateLocale(
+  acceptLanguage: string | null,
+): LocaleCode | null {
+  for (const {tag} of parseAcceptLanguage(acceptLanguage)) {
+    if (tag === '*') continue;
+
+    const exact = LOCALE_CODES.find(
+      (code) => LOCALES[code].tag.toLowerCase() === tag,
+    );
+    if (exact) return exact;
+
+    const sameLanguage = LOCALE_CODES.find(
+      (code) => primarySubtag(LOCALES[code].tag) === primarySubtag(tag),
+    );
+    if (sameLanguage) return sameLanguage;
+  }
+
+  return null;
+}
+
+export type LocaleSource = 'cookie' | 'browser' | 'default';
+
+/**
+ * Resolves the language for a request: an explicit choice in the cookie
+ * first, then the browser's Accept-Language, then English. Negotiation never
+ * sets a cookie, so it keeps following the browser until the shopper chooses.
+ */
+export function resolveLocale(request: Request): {
+  code: LocaleCode;
+  source: LocaleSource;
+} {
+  const chosen = readLocaleCookie(request.headers.get('Cookie'));
+  if (chosen) return {code: chosen, source: 'cookie'};
+
+  const negotiated = negotiateLocale(request.headers.get('Accept-Language'));
+  if (negotiated) return {code: negotiated, source: 'browser'};
+
+  return {code: DEFAULT_LOCALE, source: 'default'};
+}
+
+/**
+ * Request headers that can change the resolved language. Responses list them
+ * in `Vary` so a shared cache never serves one shopper's language to another.
+ */
+export const LOCALE_VARY_HEADERS = ['Cookie', 'Accept-Language'] as const;
 
 /** Builds the `Set-Cookie` value that persists the chosen language for a year. */
 export function serializeLocaleCookie(
@@ -77,9 +195,9 @@ export function serializeLocaleCookie(
   ].join('; ');
 }
 
-/** Hydrogen `i18n` for a request, from the language cookie. */
+/** Hydrogen `i18n` for a request (see `resolveLocale`). */
 export function getLocaleFromRequest(request: Request): I18nBase {
-  const code = readLocaleCookie(request.headers.get('Cookie'));
+  const {code} = resolveLocale(request);
   return {language: LOCALES[code].language, country: DEFAULT_COUNTRY};
 }
 

@@ -36,7 +36,7 @@ Request
   └─ server.ts (Oxygen fetch handler)
        ├─ createHydrogenRouterContext()  app/lib/context.ts
        │     ├─ AppSession.init()        app/lib/session.ts  (cookie session)
-       │     ├─ getLocaleFromRequest()   app/lib/i18n.ts     (language from the jeweliette_locale cookie)
+       │     ├─ getLocaleFromRequest()   app/lib/i18n.ts     (language: cookie → Accept-Language → English)
        │     └─ createHydrogenContext()  → storefront, customerAccount, cart, session, env
        ├─ createRequestHandler()  → React Router
        │     ├─ app/root.tsx loader      header (awaited), footer/cart/isLoggedIn (deferred)
@@ -194,9 +194,10 @@ metafields (namespace `custom`) through the Customer Account API.
 ## Internationalisation
 
 See [i18n.md](i18n.md). Supported languages are English (`en`, default) and European
-Portuguese (`pt`). The choice is stored in the `jeweliette_locale` cookie by `POST /locale`
-and read in `getLocaleFromRequest()` into Hydrogen's `i18n`. The country is fixed, so the
-market and currency do not change. UI text comes from the typed dictionary in
+Portuguese (`pt`). `getLocaleFromRequest()` resolves the language on the server: an
+explicit choice in the `jeweliette_locale` cookie (set by `POST /locale`), then the
+browser's `Accept-Language`, then English. The country sent to Shopify is a separate
+setting (`US`); it never follows the language. UI text comes from the typed dictionary in
 `app/lib/i18n.ts` via `useTranslation()`; most strings are still English until US-047.
 
 ## Styling
