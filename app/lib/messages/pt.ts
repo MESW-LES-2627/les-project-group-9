@@ -443,4 +443,7 @@ export const pt: Messages = {
   'policies.eyebrow': 'Informação',
   'policies.title': 'Políticas da loja',
   'policies.all': 'Todas as políticas',
+
+  // Product options
+  'product.optionValue': '{option}: {value}',
 };

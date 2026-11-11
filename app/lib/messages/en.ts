@@ -448,6 +448,9 @@ export const en = {
   'policies.eyebrow': 'Information',
   'policies.title': 'Store policies',
   'policies.all': 'All policies',
+
+  // Product options
+  'product.optionValue': '{option}: {value}',
 } as const satisfies Record<string, string | PluralMessage>;
 
 export type MessageKey = keyof typeof en;

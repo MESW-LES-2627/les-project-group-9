@@ -451,4 +451,7 @@ export const fr: Messages = {
   'policies.eyebrow': 'Informations',
   'policies.title': 'Politiques de la boutique',
   'policies.all': 'Toutes les politiques',
+
+  // Product options
+  'product.optionValue': '{option} : {value}',
 };

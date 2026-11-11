@@ -164,7 +164,10 @@ export function ProductItem({product, loading = 'lazy'}: Props) {
                 <Link
                   to={optionUrl}
                   prefetch="intent"
-                  aria-label={`${colorOption.name}: ${value.name}`}
+                  aria-label={t('product.optionValue', {
+                    option: colorOption.name,
+                    value: value.name,
+                  })}
                   title={value.name}
                   onMouseEnter={() =>
                     setVariantImage(value.firstSelectableVariant?.image ?? null)
