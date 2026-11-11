@@ -117,3 +117,5 @@ npm run typecheck
 
 - **test**: install, lint, typecheck, unit and component tests. CI does not run `npm run build`; run it locally before committing.
 - **e2e**: runs the Playwright tests against [mock.shop](https://mock.shop), so no repository secrets are needed. On failure the Playwright report is uploaded as an artifact.
+  - The job runs on `ubuntu-24.04` (not `ubuntu-latest`) with a 30-minute timeout. `npx playwright install --with-deps chromium` installs system packages with `apt`, and a pinned image keeps that package set predictable. Pinning does **not** fix DNS or package-mirror outages on the hosted runner.
+  - The install step is tried up to three times (15 s, then 30 s between attempts) and fails the job if all three fail. A failure at this step happens before any test runs; it is an environment problem, not a test failure, so do not change assertions because of it. If it keeps failing, check the log for `Temporary failure resolving` and rerun later.
