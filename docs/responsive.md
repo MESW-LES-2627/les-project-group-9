@@ -85,8 +85,9 @@ and a nav-to-actions gap of at least 16px. A longer Shopify menu needs a re-chec
 - **Fixed and sticky elements** (the sticky header, asides/drawers, dialogs) must not cover
   content or actions. Use `dvh`/`svh` units for full-height panels.
 - **Dropdowns and popovers** (filters, sort) stay within the viewport.
-- **Longer text**: Portuguese strings are usually longer than English. Layouts must wrap
-  rather than truncate or overflow, so check in both languages.
+- **Longer text**: Portuguese and French strings are usually longer than English. Layouts
+  must wrap rather than truncate or overflow, so check in every supported language (EN, PT,
+  FR).
 
 ## How to test on mobile
 
@@ -105,7 +106,7 @@ and a nav-to-actions gap of at least 16px. A longer Shopify menu needs a re-chec
 ## Audit (US-048)
 
 Owned by US-048 (another team member); not started by US-046/US-047. Scope: every route and the shared layout at 360/375/390/768/1280px, in
-EN and PT.
+EN, PT and FR.
 
 | Page / component | Width(s) | Issue found | Fix |
 | --- | --- | --- | --- |
