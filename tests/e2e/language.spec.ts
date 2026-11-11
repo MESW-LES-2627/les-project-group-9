@@ -121,7 +121,9 @@ test('switching language keeps the cart and the market', async ({
   await expect(page.locator('html')).toHaveAttribute('lang', 'pt-PT');
 
   await expect(
-    page.getByRole('link', {name: `Abrir saco com ${items} artigos`}),
+    page.getByRole('link', {
+      name: `Abrir saco de compras com ${items} ${items === 1 ? 'artigo' : 'artigos'}`,
+    }),
   ).toBeVisible();
 
   const cookiesAfter = await context.cookies();

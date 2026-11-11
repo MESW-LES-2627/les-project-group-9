@@ -272,12 +272,41 @@ describe('createTranslator', () => {
   });
 
   it('interpolates values', () => {
-    expect(createTranslator('en')('nav.openCart', {count: 2})).toBe(
-      'Open cart with 2 items',
+    expect(createTranslator('en')('nav.homeOf', {shop: 'Jeweliette'})).toBe(
+      'Jeweliette — home',
     );
-    expect(createTranslator('pt')('nav.openCart', {count: 2})).toBe(
-      'Abrir saco com 2 artigos',
+    expect(createTranslator('pt')('nav.homeOf', {shop: 'Jeweliette'})).toBe(
+      'Jeweliette — página inicial',
     );
+  });
+
+  it.each([
+    ['en', 0, 'Open cart with 0 items'],
+    ['en', 1, 'Open cart with 1 item'],
+    ['en', 2, 'Open cart with 2 items'],
+    ['pt', 0, 'Abrir saco de compras com 0 artigos'],
+    ['pt', 1, 'Abrir saco de compras com 1 artigo'],
+    ['pt', 2, 'Abrir saco de compras com 2 artigos'],
+    ['pt', 21, 'Abrir saco de compras com 21 artigos'],
+  ] as const)('picks the plural form (%s, %i)', (code, count, expected) => {
+    expect(createTranslator(code)('nav.openCart', {count})).toBe(expected);
+  });
+
+  it('uses the "other" form when no numeric count is given', () => {
+    expect(createTranslator('en')('nav.openCart')).toBe(
+      'Open cart with {count} items',
+    );
+    expect(createTranslator('pt')('nav.openCart', {count: '3'})).toBe(
+      'Abrir saco de compras com 3 artigos',
+    );
+  });
+
+  it('uses the agreed pt-PT terms', () => {
+    const t = createTranslator('pt');
+    expect(t('nav.shoppingBag')).toBe('Saco de compras');
+    expect(t('nav.fittingRoom')).toBe('Provador');
+    expect(t('nav.mobile')).toBe('Menu de navegação');
+    expect(t('nav.accountActions')).toBe('Ações da conta');
   });
 
   it('leaves unknown placeholders untouched', () => {

@@ -79,7 +79,7 @@ async function expectActionsAvailable(page: Page) {
     header.getByRole('link', {name: /^(Fitting room|Provador)/}),
   ).toBeVisible();
   await expect(
-    header.getByRole('link', {name: /^(Open cart|Abrir saco)/}),
+    header.getByRole('link', {name: /^(Open cart|Abrir saco de compras)/}),
   ).toBeVisible();
 }
 

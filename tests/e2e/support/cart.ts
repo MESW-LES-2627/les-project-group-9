@@ -3,7 +3,12 @@ import {expect, type Page} from '@playwright/test';
 /** Cart helpers shared by E2E specs. They use the English labels (default language). */
 
 export function cartBadge(page: Page) {
-  return page.getByRole('link', {name: /^Open cart with \d+ items$/});
+  return page.getByRole('link', {name: /^Open cart with \d+ items?$/});
+}
+
+/** Expected English cart badge label (singular for exactly one item). */
+export function openCartLabel(count: number) {
+  return `Open cart with ${count} ${count === 1 ? 'item' : 'items'}`;
 }
 
 export async function cartCount(page: Page) {
@@ -49,6 +54,6 @@ export async function addProductToBag(page: Page) {
 
   await expect(cartBadge(page)).toHaveAttribute(
     'aria-label',
-    `Open cart with ${before + 1} items`,
+    openCartLabel(before + 1),
   );
 }

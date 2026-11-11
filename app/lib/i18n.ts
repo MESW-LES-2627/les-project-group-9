@@ -218,8 +218,17 @@ export function toAppLocale(i18n: I18nBase): AppLocale {
 /*
  * UI messages. US-046 only covers the language selector and shared
  * navigation; US-047 extends this dictionary to the rest of the interface.
- * `en` defines the key set; every other language must provide every key.
+ * `en` defines the key set and each message's shape; every other language
+ * must provide every key with the same shape.
+ *
+ * A message is a string or, when it depends on a `count` value, an object of
+ * Intl.PluralRules categories (`other` required). Plural forms are chosen in
+ * `createTranslator` only; components just pass `{count}`.
  */
+type PluralMessage = Partial<Record<Intl.LDMLPluralRule, string>> & {
+  other: string;
+};
+
 const en = {
   'language.label': 'Language',
   'language.current': 'Current language: {language}',
@@ -237,13 +246,18 @@ const en = {
   'nav.favorites': 'Favorites',
   'nav.fittingRoom': 'Fitting room',
   'nav.shoppingBag': 'Shopping bag',
-  'nav.openCart': 'Open cart with {count} items',
+  'nav.openCart': {
+    one: 'Open cart with {count} item',
+    other: 'Open cart with {count} items',
+  },
   'nav.close': 'Close',
   'nav.closePanel': 'Close panel',
-} as const;
+} as const satisfies Record<string, string | PluralMessage>;
 
 export type MessageKey = keyof typeof en;
-type Messages = Record<MessageKey, string>;
+type Messages = {
+  [Key in MessageKey]: (typeof en)[Key] extends string ? string : PluralMessage;
+};
 
 const MESSAGES: Record<LocaleCode, Messages> = {
   en,
@@ -252,10 +266,10 @@ const MESSAGES: Record<LocaleCode, Messages> = {
     'language.current': 'Idioma atual: {language}',
     'nav.skipToContent': 'Saltar para o conteúdo',
     'nav.main': 'Navegação principal',
-    'nav.mobile': 'Menu móvel',
+    'nav.mobile': 'Menu de navegação',
     'nav.accountActions': 'Ações da conta',
     'nav.home': 'Início',
-    'nav.homeOf': '{shop} — início',
+    'nav.homeOf': '{shop} — página inicial',
     'nav.openMenu': 'Abrir menu',
     'nav.menu': 'Menu',
     'nav.search': 'Pesquisar',
@@ -264,7 +278,10 @@ const MESSAGES: Record<LocaleCode, Messages> = {
     'nav.favorites': 'Favoritos',
     'nav.fittingRoom': 'Provador',
     'nav.shoppingBag': 'Saco de compras',
-    'nav.openCart': 'Abrir saco com {count} artigos',
+    'nav.openCart': {
+      one: 'Abrir saco de compras com {count} artigo',
+      other: 'Abrir saco de compras com {count} artigos',
+    },
     'nav.close': 'Fechar',
     'nav.closePanel': 'Fechar painel',
   },
@@ -275,18 +292,37 @@ export type Translate = (
   values?: Record<string, string | number>,
 ) => string;
 
-/** Returns a translate function for a locale, falling back to English per key. */
+/**
+ * Returns a translate function for a locale, falling back to English per key.
+ * Plural messages pick their form with Intl.PluralRules for the locale and the
+ * numeric `count` value, using `other` when the form or count is missing.
+ */
 export function createTranslator(code: LocaleCode): Translate {
-  const messages = MESSAGES[code];
+  const messages: Messages = MESSAGES[code];
+  const pluralRules = new Intl.PluralRules(LOCALES[code].tag);
 
   return (key, values) => {
-    const template = messages[key] ?? MESSAGES[DEFAULT_LOCALE][key];
+    const message: string | PluralMessage =
+      messages[key] ?? MESSAGES[DEFAULT_LOCALE][key];
+    const template =
+      typeof message === 'string'
+        ? message
+        : selectPluralForm(message, pluralRules, values?.count);
     if (!values) return template;
 
     return template.replace(/\{(\w+)\}/g, (match, name: string) =>
       name in values ? String(values[name]) : match,
     );
   };
+}
+
+function selectPluralForm(
+  message: PluralMessage,
+  rules: Intl.PluralRules,
+  count: string | number | undefined,
+): string {
+  if (typeof count !== 'number') return message.other;
+  return message[rules.select(count)] ?? message.other;
 }
 
 /** The active locale from the root loader; the default outside of it (e.g. error pages). */
