@@ -1,5 +1,6 @@
 import {expect, test, type Page} from '@playwright/test';
 import {addProductToBag, cartCount} from './support/cart';
+import {expectTouchTarget} from './support/layout';
 
 const LOCALE_COOKIE = 'jeweliette_locale';
 
@@ -12,7 +13,13 @@ function languageButton(
   return page.getByRole(scope).getByRole('button', {name});
 }
 
-test('English is the default language', async ({page}) => {
+/*
+ * These tests cover the UI locale only (labels, <html lang>, cookie and
+ * negotiation). Translated Shopify content is not asserted: Portuguese is not
+ * yet published in the store, so the Storefront API returns English content.
+ */
+
+test('an English browser gets English', async ({page}) => {
   await page.goto('/');
 
   await expect(page.locator('html')).toHaveAttribute('lang', 'en-US');
@@ -68,9 +75,7 @@ test('on a phone the language is chosen from the menu', async ({page}) => {
   const button = languageButton(page, 'dialog', 'PT');
   await expect(button).toBeVisible();
 
-  const box = await button.boundingBox();
-  expect(box?.width).toBeGreaterThanOrEqual(44);
-  expect(box?.height).toBeGreaterThanOrEqual(44);
+  await expectTouchTarget(button);
 
   await button.click();
   await expect(page.locator('html')).toHaveAttribute('lang', 'pt-PT');
@@ -151,4 +156,71 @@ test('pages vary on the headers that decide the language', async ({
     expect(vary).toContain('cookie');
     expect(vary).toContain('accept-language');
   }
+});
+
+test.describe('a fresh Portuguese browser', () => {
+  test.use({locale: 'pt-PT'});
+
+  test('gets Portuguese without choosing, and no cookie is set', async ({
+    page,
+    context,
+  }) => {
+    await page.goto('/');
+
+    await expect(page.locator('html')).toHaveAttribute('lang', 'pt-PT');
+    await expect(
+      page.getByRole('banner').getByRole('group', {name: 'Idioma'}),
+    ).toBeVisible();
+    await expect(languageButton(page, 'banner', 'PT')).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+
+    const cookies = await context.cookies();
+    expect(cookies.find((c) => c.name === LOCALE_COOKIE)).toBeUndefined();
+  });
+
+  test('choosing English survives reload and navigation', async ({
+    page,
+    context,
+  }) => {
+    await page.goto('/collections/all?sort=newest');
+
+    await languageButton(page, 'banner', 'EN').click();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en-US');
+    await expect(page).toHaveURL(
+      (url) =>
+        url.pathname === '/collections/all' &&
+        url.searchParams.get('sort') === 'newest',
+    );
+    expect(
+      (await context.cookies()).find((c) => c.name === LOCALE_COOKIE)?.value,
+    ).toBe('en');
+
+    await page.reload();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en-US');
+
+    await page.goto('/');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en-US');
+    await expect(
+      page.getByRole('banner').getByRole('group', {name: 'Language'}),
+    ).toBeVisible();
+  });
+});
+
+test.describe('a fresh English browser', () => {
+  test.use({locale: 'en-US'});
+
+  test('gets English and no cookie is set', async ({page, context}) => {
+    await page.goto('/');
+
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en-US');
+    await expect(languageButton(page, 'banner', 'EN')).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(
+      (await context.cookies()).find((c) => c.name === LOCALE_COOKIE),
+    ).toBeUndefined();
+  });
 });

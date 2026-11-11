@@ -1,4 +1,5 @@
-import {expect, test, type Locator, type Page} from '@playwright/test';
+import {expect, test, type Page} from '@playwright/test';
+import {expectTouchTarget} from './support/layout';
 
 /**
  * The site header switches from the compact (menu button) layout to the
@@ -8,7 +9,6 @@ import {expect, test, type Locator, type Page} from '@playwright/test';
  */
 const DESKTOP_HEADER_MIN_WIDTH = 1280;
 const MIN_NAV_ACTIONS_GAP = 16;
-const MIN_TARGET = 44;
 
 const LABELS = {
   en: {
@@ -45,12 +45,6 @@ async function openAt(page: Page, width: number, lang: Lang) {
   await page.setViewportSize({width, height: 900});
   await page.goto('/');
   await page.evaluate(() => document.fonts.ready);
-}
-
-async function expectTouchTarget(locator: Locator) {
-  const box = await locator.boundingBox();
-  expect(box?.width).toBeGreaterThanOrEqual(MIN_TARGET);
-  expect(box?.height).toBeGreaterThanOrEqual(MIN_TARGET);
 }
 
 async function expectNoHorizontalOverflow(page: Page) {

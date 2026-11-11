@@ -8,6 +8,9 @@ export default defineConfig({
   reporter: process.env.CI ? 'github' : 'list',
   use: {
     baseURL: 'http://localhost:3000',
+    // The storefront negotiates its language from Accept-Language, so pin the
+    // browser language; specs that test Portuguese set their own locale.
+    locale: 'en-US',
     trace: 'on-first-retry',
   },
   projects: [{name: 'chromium', use: {...devices['Desktop Chrome']}}],

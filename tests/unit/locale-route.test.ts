@@ -44,6 +44,19 @@ describe('POST /locale', () => {
     expect(cookie).toContain('Secure');
   });
 
+  it('keeps the query and hash of the current location', async () => {
+    const response = asResponse(
+      await post({
+        locale: 'en',
+        redirectTo: '/collections/all?sort=newest&filter=%7B%7D#grid',
+      }),
+    );
+
+    expect(response.headers.get('Location')).toBe(
+      '/collections/all?sort=newest&filter=%7B%7D#grid',
+    );
+  });
+
   it('omits Secure over plain HTTP (local development)', async () => {
     const response = asResponse(
       await post(

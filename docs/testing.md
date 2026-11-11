@@ -89,14 +89,14 @@ npx playwright test --ui                     # step through tests in a browser
 | `favorites.spec.ts` | Logged-out shoppers are sent to log in from the favorites page, product page and product cards |
 | `footer.spec.ts` | Footer "Discover" links are on separate lines at 1280px and 375px, and open their pages |
 | `header.spec.ts` | Compact header at 375, 800 and 1279px and desktop header at 1280px, in EN and PT: which controls are visible, actions available, menu contents, 44px language targets, no horizontal overflow, nav-to-actions gap |
-| `language.spec.ts` | English by default; choosing PT keeps the path and query, sets the cookie (HttpOnly, SameSite=Lax) and persists after reload; choosing from the mobile menu at 375px (44px targets, no horizontal overflow); the cart, other cookies and currency are unchanged after switching; `/locale` rejects unsupported languages, external redirects and GET; pages send `Vary: Cookie, Accept-Language` |
+| `language.spec.ts` | UI locale only (Portuguese content is not published in Shopify, so translated content is not asserted). A fresh `en-US` browser gets English and a fresh `pt-PT` browser gets Portuguese, with no cookie set; choosing English in the Portuguese browser survives reload and navigation; `<html lang>` matches; choosing PT keeps the path and query, sets the cookie (HttpOnly, SameSite=Lax) and persists after reload; choosing from the mobile menu at 375px (44px targets, no horizontal overflow); the cart, other cookies and currency are unchanged after switching; `/locale` rejects unsupported languages, external redirects and GET; pages send `Vary: Cookie, Accept-Language` |
 
 Customer account routes (`/account/*`) are not covered, because they need Shopify Customer Account OAuth.
 
 ### Writing E2E tests
 
-- Shared helpers live in `tests/e2e/support/` (e.g. `cart.ts`: `addProductToBag`, `cartCount`). Playwright collects only `*.spec.*`/`*.test.*` files (its default `testMatch`), so support files are not run as tests.
-- Tests run in English by default (no language cookie). To test Portuguese, switch with the header selector as `language.spec.ts` does.
+- Shared helpers live in `tests/e2e/support/` (`cart.ts`: `addProductToBag`, `cartCount`, `openCartLabel`; `layout.ts`: `expectTouchTarget`, which retries until layout settles). Playwright collects only `*.spec.*`/`*.test.*` files (its default `testMatch`), so support files are not run as tests.
+- The browser language is pinned to `en-US` in `playwright.config.ts` (`use.locale`), because the storefront negotiates its language from `Accept-Language`. To test Portuguese, use `test.use({locale: 'pt-PT'})` or switch with the selector, as `language.spec.ts` does.
 - Find elements by role, label or text (`getByRole`, `getByText`), not by CSS classes.
 - Do not depend on store data: never assert product names or prices. Pick products at runtime (for example the first link in `/collections/all`) and assert structure and behaviour, such as the cart count going up.
 - Wait for server actions when the UI updates optimistically, for example the cart `POST` before leaving the page.
