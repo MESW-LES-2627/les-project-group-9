@@ -78,7 +78,6 @@ export async function loader({context, params, request}: Route.LoaderArgs) {
     {
       variables: {
         handle: params.handle,
-        language: 'EN',
         filters,
         sortKey: SORT_OPTIONS[sort].sortKey,
         reverse: SORT_OPTIONS[sort].reverse,

@@ -27,7 +27,6 @@ export async function getRecommendationCandidates(
   const {products} = await context.storefront.query(
     RECOMMENDATION_CANDIDATES_QUERY,
     {
-      variables: {language: 'EN'},
       cache: context.storefront.CacheShort(),
     },
   );

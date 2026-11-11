@@ -40,7 +40,7 @@ export async function loader(args: Route.LoaderArgs) {
 
   const recommendations = args.context.storefront
     .query(RECOMMENDATIONS_QUERY, {
-      variables: {productId: product.id, language: 'EN'},
+      variables: {productId: product.id},
     })
     .then((result) => result.productRecommendations ?? [])
     .catch(() => []);
@@ -55,7 +55,6 @@ async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
   const {product} = await context.storefront.query(PRODUCT_QUERY, {
     variables: {
       handle,
-      language: 'EN',
       selectedOptions: getSelectedProductOptions(request),
     },
   });

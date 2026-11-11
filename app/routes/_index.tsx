@@ -19,11 +19,7 @@ export const meta: Route.MetaFunction = () => [
 ];
 
 export async function loader({context}: Route.LoaderArgs) {
-  const result = await context.storefront.query(HOME_QUERY, {
-    variables: {
-      language: 'EN',
-    },
-  });
+  const result = await context.storefront.query(HOME_QUERY);
 
   function findCollection(name: string) {
     const resource = result.contentMenu?.items.find(

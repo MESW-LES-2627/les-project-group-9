@@ -37,7 +37,7 @@ export async function loadProductsByIds(
   if (!ids.length) return [];
 
   const {nodes} = await context.storefront.query(PRODUCTS_BY_IDS_QUERY, {
-    variables: {ids, language: 'EN'},
+    variables: {ids},
   });
 
   return nodes.flatMap((node: {__typename?: string} | null) =>
