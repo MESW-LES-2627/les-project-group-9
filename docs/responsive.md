@@ -49,7 +49,8 @@ below that. Measured in Chromium with fonts loaded, on the current store menu, i
 | 1180px | 55px |
 | 1280px | 74px |
 
-**Re-check with French (three options, 3 × 44px)**, same method, in EN, PT and FR:
+**Re-check with French (three always-visible buttons, 3 × 44px; replaced by the dropdown
+below)**, same method, in EN, PT and FR:
 
 | Width | Gap between last nav link and first action | Selector buttons |
 | --- | --- | --- |
@@ -62,10 +63,29 @@ below that. Measured in Chromium with fonts loaded, on the current store menu, i
 The third option fits at 1280px without any layout change, so the switch point stays at
 `xl`. Each further language would cost another 44px: re-measure before adding one.
 
+**Re-check with the language dropdown** (one 76–78×44px trigger instead of three
+buttons), same method, in EN, PT and FR:
+
+| Width | Header mode | Gap between last nav link and the trigger |
+| --- | --- | --- |
+| 1279px | compact (current) | — |
+| 1280px | desktop (current) | 84–86px |
+| 1366px | desktop (current) | 124–126px |
+| 1024px | desktop, *temporary experiment* | 0px (links touch the trigger) |
+| 1100px | desktop, *temporary experiment* | 27–29px |
+| 1180px | desktop, *temporary experiment* | 65–67px |
+| 1240px | desktop, *temporary experiment* | 93–95px |
+
+The experiment rows were measured with the header switch moved to `lg` in the working tree
+only, then reverted. `lg` (1024px) still has no room. A header-specific breakpoint around
+1100px would leave about 28px, which would need a new token, since Tailwind has no
+breakpoint there. The switch point stays at `xl` (1280px) until that is decided.
+
 The header used to switch at `tablet` (800px). Tablets and small laptops (800–1279px) now
 get the compact header. `tests/e2e/header.spec.ts` checks both modes just below and at
-1280px in EN, PT and FR: visibility, no horizontal overflow, three 44px selector targets,
-and a nav-to-actions gap of at least 16px. A longer Shopify menu needs a re-check.
+1280px in EN, PT and FR: visibility, no horizontal overflow (also with the panel open), a
+44px trigger and three 44px options, and a nav-to-trigger gap of at least 16px. A longer
+Shopify menu needs a re-check.
 
 ## Rules
 
