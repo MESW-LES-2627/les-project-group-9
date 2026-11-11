@@ -88,11 +88,14 @@ npx playwright test --ui                     # step through tests in a browser
 | `search.spec.ts` | Empty search; no results; searching from the search page and from the header |
 | `favorites.spec.ts` | Logged-out shoppers are sent to log in from the favorites page, product page and product cards |
 | `footer.spec.ts` | Footer "Discover" links are on separate lines at 1280px and 375px, and open their pages |
+| `language.spec.ts` | English by default; choosing PT keeps the path and query, sets the cookie (HttpOnly, SameSite=Lax) and persists after reload; choosing from the mobile menu at 375px (44px targets, no horizontal overflow); the cart, other cookies and currency are unchanged after switching; `/locale` rejects unsupported languages, external redirects and GET |
 
 Customer account routes (`/account/*`) are not covered, because they need Shopify Customer Account OAuth.
 
 ### Writing E2E tests
 
+- Shared helpers live in `tests/e2e/support/` (e.g. `cart.ts`: `addProductToBag`, `cartCount`). Playwright collects only `*.spec.*`/`*.test.*` files (its default `testMatch`), so support files are not run as tests.
+- Tests run in English by default (no language cookie). To test Portuguese, switch with the header selector as `language.spec.ts` does.
 - Find elements by role, label or text (`getByRole`, `getByText`), not by CSS classes.
 - Do not depend on store data: never assert product names or prices. Pick products at runtime (for example the first link in `/collections/all`) and assert structure and behaviour, such as the cart count going up.
 - Wait for server actions when the UI updates optimistically, for example the cart `POST` before leaving the page.
