@@ -32,6 +32,7 @@ affects touch targets and input font sizes; US-048 addresses it.
   `CatalogFilters`, `PaginatedResourceSection`) rather than patching each page.
 - **Touch targets** must be at least 44×44 CSS px, including icon buttons, swatches,
   quantity steppers and close buttons. Check the computed size given the 14px root.
+  New controls can use explicit pixels (`min-h-[44px] min-w-[44px]`), as `LanguageSelector` does.
 - **No hover-only interactions**: anything revealed or triggered on `:hover` needs a touch
   and keyboard path. Give clear `:active` and `:focus-visible` states.
 - **Inputs at 16px or more**: iOS Safari zooms the page when an input below 16px is focused.

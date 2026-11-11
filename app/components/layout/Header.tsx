@@ -1,5 +1,12 @@
 import {Suspense} from 'react';
-import {Await, NavLink, useAsyncValue, Link} from 'react-router';
+import {
+  Await,
+  Form,
+  Link,
+  NavLink,
+  useAsyncValue,
+  useLocation,
+} from 'react-router';
 import {
   type CartViewPayload,
   useAnalytics,
@@ -10,6 +17,7 @@ import {useAside} from '~/components/layout/Aside';
 import {Icon} from '~/components/shared/Icon';
 import {useFavorites} from '~/lib/favorites';
 import {useFittingRoom} from '~/lib/fitting-room';
+import {LOCALE_CODES, LOCALES, useLocale, useTranslation} from '~/lib/i18n';
 
 interface HeaderProps {
   header: HeaderQuery;
@@ -38,6 +46,7 @@ export function Header({
   publicStoreDomain,
 }: HeaderProps) {
   const {shop, menu} = header;
+  const t = useTranslation();
 
   return (
     <>
@@ -50,7 +59,7 @@ export function Header({
           <HeaderMenuMobileToggle />
         </div>
         <NavLink
-          aria-label={`${shop.name} — home`}
+          aria-label={t('nav.homeOf', {shop: shop.name})}
           className="justify-self-center font-display text-2xl font-medium tracking-[-0.04em] text-primary tablet:justify-self-start"
           prefetch="intent"
           to="/"
@@ -82,11 +91,12 @@ export function HeaderMenu({
   publicStoreDomain: HeaderProps['publicStoreDomain'];
 }) {
   const {close} = useAside();
+  const t = useTranslation();
   const mobile = viewport === 'mobile';
 
   return (
     <nav
-      aria-label={mobile ? 'Mobile menu' : 'Main navigation'}
+      aria-label={mobile ? t('nav.mobile') : t('nav.main')}
       className={
         mobile
           ? 'flex flex-col gap-1 px-5 py-6'
@@ -102,7 +112,8 @@ export function HeaderMenu({
           to="/"
         >
           <span>
-            <span className="mr-4 font-sans text-xs">01</span>Home
+            <span className="mr-4 font-sans text-xs">01</span>
+            {t('nav.home')}
           </span>
           <Icon name="arrow" size={18} />
         </NavLink>
@@ -153,17 +164,20 @@ function HeaderCtas({
   isLoggedIn,
   cart,
 }: Pick<HeaderProps, 'isLoggedIn' | 'cart'>) {
+  const t = useTranslation();
+
   return (
     <nav
-      aria-label="Account actions"
+      aria-label={t('nav.accountActions')}
       className="flex items-center justify-end gap-1 text-primary sm:gap-2"
     >
+      <LanguageSelector className="hidden tablet:flex" />
       <SearchToggle />
       <FavoritesLink />
       <FittingRoomLink />
 
       <NavLink
-        aria-label="Account"
+        aria-label={t('nav.account')}
         className="hidden size-11 place-items-center hover:text-ink tablet:grid"
         prefetch="intent"
         to="/account"
@@ -181,9 +195,10 @@ function HeaderCtas({
 
 function HeaderMenuMobileToggle() {
   const {open} = useAside();
+  const t = useTranslation();
   return (
     <button
-      aria-label="Open menu"
+      aria-label={t('nav.openMenu')}
       className="grid size-11 place-items-center text-primary"
       onClick={() => open('mobile')}
       type="button"
@@ -195,9 +210,10 @@ function HeaderMenuMobileToggle() {
 
 function SearchToggle() {
   const {open} = useAside();
+  const t = useTranslation();
   return (
     <button
-      aria-label="Search"
+      aria-label={t('nav.search')}
       className="grid size-11 place-items-center hover:text-ink"
       onClick={() => open('search')}
       type="button"
@@ -210,10 +226,11 @@ function SearchToggle() {
 function CartBadge({count}: {count: number}) {
   const {open} = useAside();
   const {publish, shop, cart, prevCart} = useAnalytics();
+  const t = useTranslation();
 
   return (
     <a
-      aria-label={`Open cart with ${count} items`}
+      aria-label={t('nav.openCart', {count})}
       className="relative grid size-11 place-items-center hover:text-ink"
       href="/cart"
       onClick={(event) => {
@@ -306,10 +323,11 @@ const FALLBACK_HEADER_MENU = {
 
 function FavoritesLink() {
   const {ids} = useFavorites();
+  const t = useTranslation();
   return (
     <Link
       to="/favorites"
-      aria-label={`Favorites${ids.length ? ` (${ids.length})` : ''}`}
+      aria-label={`${t('nav.favorites')}${ids.length ? ` (${ids.length})` : ''}`}
       className="relative flex h-10 w-10 items-center justify-center hover:text-ink"
     >
       <Icon name="heart" size={20} />
@@ -324,10 +342,11 @@ function FavoritesLink() {
 
 function FittingRoomLink() {
   const {ids} = useFittingRoom();
+  const t = useTranslation();
   return (
     <Link
       to="/fitting-room"
-      aria-label={`Fitting room${ids.length ? ` (${ids.length})` : ''}`}
+      aria-label={`${t('nav.fittingRoom')}${ids.length ? ` (${ids.length})` : ''}`}
       className="relative flex h-10 w-10 items-center justify-center hover:text-ink"
     >
       <Icon name="hanger" size={20} />
@@ -337,5 +356,56 @@ function FittingRoomLink() {
         </span>
       ) : null}
     </Link>
+  );
+}
+
+/**
+ * EN/PT switch. Posts to `/locale`, which sets the language cookie and
+ * redirects back to the current path and query. Works without JavaScript.
+ * Each option is at least 44×44 CSS px regardless of the root font size.
+ */
+export function LanguageSelector({
+  className = '',
+  onSelect,
+}: {
+  className?: string;
+  /** Called when a language is submitted, e.g. to close the mobile menu. */
+  onSelect?: () => void;
+}) {
+  const t = useTranslation();
+  const {code: activeCode} = useLocale();
+  const location = useLocation();
+  const redirectTo = `${location.pathname}${location.search}${location.hash}`;
+
+  return (
+    <Form action="/locale" className={className} method="post" onSubmit={onSelect}>
+      <input name="redirectTo" type="hidden" value={redirectTo} />
+      <div
+        aria-label={t('language.label')}
+        className="flex items-center text-xs font-medium tracking-[0.12em] text-primary"
+        role="group"
+      >
+        {LOCALE_CODES.map((code) => {
+          const active = code === activeCode;
+          return (
+            <button
+              aria-pressed={active}
+              className={`grid min-h-[44px] min-w-[44px] place-items-center underline-offset-4 hover:text-ink ${
+                active ? 'text-ink underline' : 'text-primary/70'
+              }`}
+              key={code}
+              name="locale"
+              type="submit"
+              value={code}
+            >
+              <span aria-hidden="true">{LOCALES[code].short}</span>
+              <span className="sr-only" lang={LOCALES[code].tag}>
+                {`${LOCALES[code].short} — ${LOCALES[code].name}`}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </Form>
   );
 }

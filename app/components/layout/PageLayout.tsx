@@ -7,7 +7,11 @@ import type {
 } from 'storefrontapi.generated';
 import {Aside, useAside} from '~/components/layout/Aside';
 import {Footer} from '~/components/layout/Footer';
-import {Header, HeaderMenu} from '~/components/layout/Header';
+import {
+  Header,
+  HeaderMenu,
+  LanguageSelector,
+} from '~/components/layout/Header';
 import {CartMain} from '~/components/cart/CartMain';
 import {
   SEARCH_ENDPOINT,
@@ -15,6 +19,7 @@ import {
 } from '~/components/search/SearchFormPredictive';
 import {SearchResultsPredictive} from '~/components/search/SearchResultsPredictive';
 import {Icon} from '~/components/shared/Icon';
+import {useTranslation} from '~/lib/i18n';
 
 interface PageLayoutProps {
   cart: Promise<CartApiQueryFragment | null>;
@@ -33,13 +38,15 @@ export function PageLayout({
   isLoggedIn,
   publicStoreDomain,
 }: PageLayoutProps) {
+  const t = useTranslation();
+
   return (
     <Aside.Provider>
       <a
         className="fixed left-4 top-4 z-[100] -translate-y-24 bg-ink px-4 py-2 text-sm text-white focus:translate-y-0"
         href="#main-content"
       >
-        Skip to content
+        {t('nav.skipToContent')}
       </a>
       <CartAside cart={cart} />
       <SearchAside />
@@ -61,8 +68,10 @@ export function PageLayout({
 }
 
 function CartAside({cart}: {cart: PageLayoutProps['cart']}) {
+  const t = useTranslation();
+
   return (
-    <Aside type="cart" heading="Shopping bag">
+    <Aside type="cart" heading={t('nav.shoppingBag')}>
       <div className="p-5 sm:p-8 h-full">
         <Suspense fallback={<CartSkeleton />}>
           <Await resolve={cart}>
@@ -195,8 +204,10 @@ function MobileMenuAside({
   publicStoreDomain: PageLayoutProps['publicStoreDomain'];
 }) {
   const {open, close} = useAside();
+  const t = useTranslation();
+
   return (
-    <Aside type="mobile" heading="Menu">
+    <Aside type="mobile" heading={t('nav.menu')}>
       <HeaderMenu
         menu={header.menu}
         viewport="mobile"
@@ -205,15 +216,16 @@ function MobileMenuAside({
       />
       <div className="mt-6 grid gap-3 px-5 text-xs font-medium uppercase tracking-[0.14em] text-primary">
         <Link className="flex min-h-11 items-center border-b border-line" to="/account" onClick={close}>
-          My account
+          {t('nav.myAccount')}
         </Link>
         <button
           type="button"
           className="flex min-h-11 items-center border-b border-line text-left text-xs font-medium uppercase tracking-[0.14em] text-primary"
           onClick={() => open('cart')}
         >
-          Shopping bag
+          {t('nav.shoppingBag')}
         </button>
+        <LanguageSelector onSelect={close} />
       </div>
     </Aside>
   );

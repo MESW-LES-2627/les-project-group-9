@@ -40,7 +40,7 @@ Watch mode:
 npm run test:watch
 ```
 
-Unit tests (`tests/unit`) cover the `app/lib` modules (allergens, i18n, materials, metafields, order filters, profile schema/preferences/customer, recommendation engine and traits, redirect, ring category, search filters, variants, fitting room) and the API routes (`api.profile*`, `api.recommendations`, fitting-room move to cart).
+Unit tests (`tests/unit`) cover the `app/lib` modules (allergens, i18n, materials, metafields, order filters, profile schema/preferences/customer, recommendation engine and traits, redirect, ring category, search filters, variants, fitting room) and the API/form routes (`api.profile*`, `api.recommendations`, `locale`, fitting-room move to cart).
 
 Component tests cover:
 
@@ -49,7 +49,7 @@ Component tests cover:
 | *(top level)* | `FittingRoomButton`, `FittingRoomView` |
 | `account` | `PreferencesForm`, `RingSizeForm` |
 | `cart` | `CartLineItem`, `CartSummary` |
-| `layout` | `MockShopNotice` |
+| `layout` | `LanguageSelector` (both languages, form fields, keyboard), `MockShopNotice` |
 | `product` | `AddToCartButton`, `AllergenBadge`, `FavoriteButton`, `ProductBadge`, `ProductForm`, `ProductGallery`, `ProductItem`, `ProductPrice`, `RecommendedProducts`, `RingSizeHelp`, swatch gallery |
 | `search` | `SearchForm`, `SearchResultsPredictive` |
 | `shared` | `ConfirmDialog` |
