@@ -40,7 +40,7 @@ Watch mode:
 npm run test:watch
 ```
 
-Unit tests (`tests/unit`) cover the `app/lib` modules (allergens, i18n, materials, metafields, order filters, profile schema/preferences/customer, recommendation engine and traits, redirect, ring category, search filters, variants, fitting room) and the API/form routes (`api.profile*`, `api.recommendations`, `locale`, fitting-room move to cart). `response.test.ts` checks the worker's response finishing (`app/lib/response.server.ts`): the language and session cookies both survive on one response, plus the `Vary` merging.
+Unit tests (`tests/unit`) cover the `app/lib` modules (allergens, i18n, materials, metafields, order filters, profile schema/preferences/customer, recommendation engine and traits, redirect, ring category, search filters, variants, fitting room) and the API/form routes (`api.profile*`, `api.recommendations`, `locale`, fitting-room move to cart). `response.test.ts` checks the worker's response finishing (`app/lib/response.server.ts`): the language and session cookies both survive on one response, plus the `Vary` merging. Localization: `messages.test.ts` (every key in EN, PT and FR, no empty messages, identical placeholders, plural shapes and valid plural categories, glossary terms, French no-break spacing), `i18n-format.test.ts` (money, dates and lists per locale with hand-written expectations; server and `meta` translators) and `translation-fallback.test.ts` (a PT request that gets English Shopify content renders it without error, with no hardcoded language in the query).
 
 Component tests cover:
 
@@ -50,6 +50,7 @@ Component tests cover:
 | `account` | `PreferencesForm`, `RingSizeForm` |
 | `cart` | `CartLineItem`, `CartSummary` |
 | `layout` | `LanguageSelector` dropdown (closed trigger with the localized current language in EN/PT/FR, EN/PT/FR options with flags, names, `lang` and `aria-current`, posting path, query and hash, arrow keys/Home/End/Escape with focus return, keyboard choice, outside click and focus-out closing, inline layout), `MockShopNotice` |
+| `i18n` | `LocalizedComponents`: `ProductItem` and `FittingRoomView` in EN, PT and FR (labels, plurals, try-on placeholder, price format) with untranslated catalog content |
 | `product` | `AddToCartButton`, `AllergenBadge`, `FavoriteButton`, `ProductBadge`, `ProductForm`, `ProductGallery`, `ProductItem`, `ProductPrice`, `RecommendedProducts`, `RingSizeHelp`, swatch gallery |
 | `search` | `SearchForm`, `SearchResultsPredictive` |
 | `shared` | `ConfirmDialog` |
@@ -90,12 +91,14 @@ npx playwright test --ui                     # step through tests in a browser
 | `footer.spec.ts` | Footer "Discover" links are on separate lines at 1280px and 375px, and open their pages |
 | `header.spec.ts` | Compact header at 375, 800 and 1279px and desktop header at 1280px, in EN, PT and FR: which controls are visible, actions available, menu contents, 44px language targets, no horizontal overflow, nav-to-actions gap |
 | `language.spec.ts` | Dropdown: opens above the page (not clipped), marks the current language, closes on Escape (focus returns) and outside click, works with the keyboard alone, and fits the phone menu. Application locale only (Portuguese and French content is not published in Shopify, so translated content is not asserted). Fresh `fr-FR` and `fr-CA` browsers get French; choosing French in `en-US` and `pt-PT` browsers keeps the path and query and persists after reload and navigation; choosing English in a French browser persists; French from the phone menu with the French plural cart label. A fresh `en-US` browser gets English and a fresh `pt-PT` browser gets Portuguese, with no cookie set; choosing English in the Portuguese browser survives reload and navigation; `<html lang>` matches; choosing PT keeps the path and query, sets the cookie (HttpOnly, SameSite=Lax) and persists after reload; choosing from the mobile menu at 375px (44px targets, no horizontal overflow); the cart, other cookies and currency are unchanged after switching; `/locale` rejects unsupported languages, external redirects and GET; pages send `Vary: Cookie, Accept-Language` |
+| `localized-flows.spec.ts` | In fresh `pt-PT` and `fr-FR` browsers: home (title, announcement, hero link), collection (sort and "pieces loaded" label), product page (add to bag or sold out, description accordion), empty bag, search, logged-out favorites, 404 page. Interface text only; catalog content is not asserted |
 
 Customer account routes (`/account/*`) are not covered, because they need Shopify Customer Account OAuth.
 
 ### Writing E2E tests
 
 - Shared helpers live in `tests/e2e/support/` (`cart.ts`: `addProductToBag`, `cartCount`, `openCartLabel`; `language.ts`: `languageTrigger`, `languageOption`, `chooseLanguage`, `expectCurrentLanguage` for the dropdown; `layout.ts`: `expectTouchTarget`, which retries until layout settles). Playwright collects only `*.spec.*`/`*.test.*` files (its default `testMatch`), so support files are not run as tests.
+- Prices are formatted per locale: when asserting them, set the locale explicitly (`LocaleContext.Provider`) and write the expected string out; pt-PT and fr-FR put a no-break space before `€`. Testing Library's default normalizer turns that into a normal space in the element text only, so use `{normalizer: (text) => text}` or compare `textContent`.
 - The browser language is pinned to `en-US` in `playwright.config.ts` (`use.locale`), because the storefront negotiates its language from `Accept-Language`. To test Portuguese, use `test.use({locale: 'pt-PT'})` or switch with the selector, as `language.spec.ts` does.
 - Find elements by role, label or text (`getByRole`, `getByText`), not by CSS classes.
 - Do not depend on store data: never assert product names or prices. Pick products at runtime (for example the first link in `/collections/all`) and assert structure and behaviour, such as the cart count going up.

@@ -24,7 +24,6 @@ vi.mock('react-router', () => ({
 
 vi.mock('@shopify/hydrogen', () => ({
   Image: ({alt}: {alt?: string}) => <img alt={alt ?? ''} />,
-  Money: ({data}: {data: {amount: string}}) => <span>{data.amount}</span>,
 }));
 
 vi.mock('~/components/layout/Aside', () => ({

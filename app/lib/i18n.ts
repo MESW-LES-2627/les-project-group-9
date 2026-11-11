@@ -302,7 +302,7 @@ export function translatorFor(i18n: Pick<I18nBase, 'language'>): Translate {
 }
 
 /**
- * Formats a date in the locale, by default as "12 November 2026" /
+ * Formats a date in the locale, by default as "November 12, 2026" /
  * "12 de novembro de 2026" / "12 novembre 2026".
  */
 export function formatDate(
