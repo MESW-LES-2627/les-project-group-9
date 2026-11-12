@@ -29,3 +29,10 @@ export type ListOperation = {
 };
 
 export type FavoriteOperation = ListOperation;
+
+export type CustomerProfile = {
+  customerId: string | null;
+  favorites: string[];
+  fittingRoom: string[];
+  preferences: PreferenceProfile;
+};

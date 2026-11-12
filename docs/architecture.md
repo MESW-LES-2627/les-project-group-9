@@ -145,10 +145,17 @@ metafields (namespace `custom`) through the Customer Account API.
 | `custom.fitting_room` | `profile/fitting-room.ts`, max 50 GIDs | `POST /api/profile/fitting-room` `{add?, remove?}` |
 | `custom.preferences` | `profile/preferences.ts` (allergies, skin tone/undertone, ring sizes per finger, preferred materials/colours/gemstones) | `POST /api/profile/preferences` |
 
+- **Fields** (Template Method): each metafield is a `ProfileField` subclass
+  (`profile/profile-field.ts`). The base class's `nextValue(profile, change)` is the shared
+  update algorithm (take the current value, merge the change, serialize); subclasses supply
+  the steps and the metafield `key`. `ProductIdList` adds the list behaviour from
+  `list-schema.ts` (dedupe, add to front, remove, cap) and is extended by `FavoritesList`
+  (`schema.ts`) and `FittingRoomList` (`fitting-room.ts`), which only set the key and cap.
+  `PreferencesField` (`preferences.ts`) merges a partial profile. The older functions
+  (`parseFavorites()`, `applyFittingRoomOperation()`…) delegate to these instances.
 - **Server**: `profile/customer.server.ts` reads the whole profile (`CUSTOMER_PROFILE_QUERY`)
   and writes with `metafieldsSet`. `profile/operation.server.ts` validates list
-  operations (method, login, JSON, product-GID format, size cap). `list-schema.ts` holds the
-  shared list logic (dedupe, add to front, remove, cap).
+  operations (method, login, JSON, product-GID format, size cap).
 - **Client**: `ProfileProvider` (`profile/ProfileProvider.tsx`) loads `GET /api/profile`
   once on mount and exposes optimistic toggles. If a write returns 401, it reloads the profile.
   `useFavorites()` (`lib/favorites.ts`) and `useFittingRoom()` (`lib/fitting-room.ts`)
