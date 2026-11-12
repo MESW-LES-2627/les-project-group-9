@@ -89,6 +89,8 @@ See [docs/architecture.md](docs/architecture.md) for the full picture.
   messages shown to users, and `meta` titles. Add the key to `app/lib/messages/en.ts`,
   `pt.ts` and `fr.ts` (all three required) and use `useTranslation()`, `translatorFor()` or
   `translatorFromMatches()`. Logic in `app/lib` returns codes, not display text.
+  `npm run lint` rejects literal JSX text and literal `aria-label`/`title`/`alt`/`placeholder`
+  values; `messages.test.ts` rejects unused keys.
 - Format prices with `components/shared/Money.tsx` (not Hydrogen's `<Money>`), dates with
   `formatDate()`, lists with `formatList()`, counts with plural messages.
 - Do not translate identifiers (handles, IDs, enum values, cookie values) or Shopify

@@ -1,3 +1,5 @@
+import {readdirSync, readFileSync, statSync} from 'node:fs';
+import {join} from 'node:path';
 import {describe, expect, it} from 'vitest';
 import {en, type PluralMessage} from '../../app/lib/messages/en';
 import {fr} from '../../app/lib/messages/fr';
@@ -19,6 +21,36 @@ function forms(message: Message): string[] {
   return typeof message === 'string' ? [message] : Object.values(message);
 }
 
+/** App source outside the catalogues, where keys are used. */
+function appSource(dir = join(__dirname, '../../app')): string {
+  return readdirSync(dir)
+    .map((name) => {
+      const path = join(dir, name);
+      if (statSync(path).isDirectory()) {
+        return path.endsWith(join('lib', 'messages')) ? '' : appSource(path);
+      }
+      return /\.(ts|tsx)$/.test(name) ? readFileSync(path, 'utf8') : '';
+    })
+    .join('\n');
+}
+
+/**
+ * A key is used when it appears as a string literal, or when its prefix is
+ * built in a template such as `allergen.${value}` (the last segment is a code).
+ */
+function isUsed(key: string, source: string): boolean {
+  const literal = new RegExp(`['"\`]${escapeRegExp(key)}['"\`]`);
+  const prefix = key.slice(0, key.lastIndexOf('.') + 1);
+  return (
+    literal.test(source) ||
+    (prefix !== '' && source.includes(`\`${prefix}\${`))
+  );
+}
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function placeholders(message: Message): string[] {
   const names = forms(message).flatMap((text) =>
     Array.from(text.matchAll(/\{(\w+)\}/g), (match) => match[1]),
@@ -35,6 +67,15 @@ describe('UI message catalogues', () => {
       );
     },
   );
+
+  it('has no unused keys', () => {
+    const source = appSource();
+    const unused = Object.keys(reference).filter(
+      (key) => !isUsed(key, source),
+    );
+
+    expect(unused).toEqual([]);
+  });
 
   it('has no empty message in any language', () => {
     for (const catalogue of [reference, pt as Catalogue, fr as Catalogue]) {

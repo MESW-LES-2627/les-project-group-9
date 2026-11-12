@@ -86,6 +86,11 @@ export const en = {
   'search.pages': 'Pages',
   'search.pieces': 'Pieces',
   'search.tryAnotherProduct': 'Try another product name, material or color.',
+  'search.close': 'Close search',
+  'search.viewAllCount': {
+    one: 'View {count} result',
+    other: 'View all {count} results',
+  },
 
   // Cart (shared layout)
   'cart.loading': 'Loading cart',

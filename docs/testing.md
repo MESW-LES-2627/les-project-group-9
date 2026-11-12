@@ -40,23 +40,23 @@ Watch mode:
 npm run test:watch
 ```
 
-Unit tests (`tests/unit`) cover the `app/lib` modules (allergens, i18n, materials, metafields, order filters, profile schema/preferences/customer, recommendation engine and traits, redirect, ring category, search filters, variants, fitting room) and the API/form routes (`api.profile*`, `api.recommendations`, `locale`, fitting-room move to cart). `response.test.ts` checks the worker's response finishing (`app/lib/response.server.ts`): the language and session cookies both survive on one response, plus the `Vary` merging. Localization: `messages.test.ts` (every key in EN, PT and FR, no empty messages, identical placeholders, plural shapes and valid plural categories, glossary terms, French no-break spacing), `i18n-format.test.ts` (money, dates and lists per locale with hand-written expectations; server and `meta` translators) `translation-fallback.test.ts` (a PT request that gets English Shopify content renders it without error, with no hardcoded language in the query) and `locale-propagation.test.ts` (every GraphQL operation passes `$language` through `@inContext`; Hydrogen's real storefront client sends the resolved language and caches each language separately).
+Unit tests (`tests/unit`) cover the `app/lib` modules (allergens, i18n, materials, metafields, order filters, profile schema/preferences/customer, recommendation engine and traits, redirect, ring category, search filters, variants, fitting room) and the API/form routes (`api.profile*`, `api.recommendations`, `locale`, fitting-room move to cart). `response.test.ts` checks the worker's response finishing (`app/lib/response.server.ts`): the language and session cookies both survive on one response, plus the `Vary` merging. Localization: `messages.test.ts` (every key in EN, PT and FR, no unused keys (a key counts as used when it appears as a literal in `app/` or its prefix is built in a template such as `` `allergen.${code}` ``), no empty messages, identical placeholders, plural shapes and valid plural categories, glossary terms, French no-break spacing), `i18n-format.test.ts` (money, dates and lists per locale with hand-written expectations; server and `meta` translators), `route-meta.test.ts` (each route's page title in EN, PT and FR, the English fallback without a root locale, and the Shopify product title left untranslated), `translation-fallback.test.ts` (a PT request that gets English Shopify content renders it without error, with no hardcoded language in the query) and `locale-propagation.test.ts` (every GraphQL operation passes `$language` through `@inContext`; Hydrogen's real storefront client sends the resolved language and caches each language separately).
 
 Component tests cover:
 
 | Folder | Components |
 | --- | --- |
 | *(top level)* | `FittingRoomButton`, `FittingRoomView` |
-| `account` | `PreferencesForm`, `RingSizeForm` |
+| `account` | `AccountProfile` (the profile route's form in EN, PT and FR, the "Profile updated." confirmation and the error instead of it), `PreferencesForm`, `RingSizeForm` |
 | `cart` | `CartLineItem`, `CartSummary` |
 | `collections` | `CatalogFilters`: app-named filter labels in EN, PT and FR; other filters keep the Shopify label |
-| `layout` | `LanguageSelector` dropdown (closed trigger with the localized current language in EN/PT/FR, EN/PT/FR options with flags, names, `lang` and `aria-current`, posting path, query and hash, arrow keys/Home/End/Escape with focus return, keyboard choice, outside click and focus-out closing, inline layout), `MockShopNotice` |
-| `i18n` | `LocalizedComponents`: `ProductItem` and `FittingRoomView` in EN, PT and FR (labels, plurals, try-on placeholder, price format) with untranslated catalog content |
+| `layout` | `LanguageSelector` dropdown (closed trigger with the localized current language in EN/PT/FR, EN/PT/FR options with flags, names, `lang` and `aria-current`, posting path, query and hash, arrow keys/Home/End/Escape with focus return, keyboard choice, outside click and focus-out closing, inline layout) |
+| `i18n` | `LocalizedComponents`: `ProductItem` and `FittingRoomView` in EN, PT and FR (labels, plurals, try-on placeholder, price format) with untranslated catalog content. `LocalizedCartAndSearch`: `CartMain` (empty bag), `CartSummary` (labels, applied codes, subtotal format) and `SearchResultsPredictive` (section headings, price format, no-results quotes) in EN, PT and FR |
 | `product` | `AddToCartButton`, `AllergenBadge`, `FavoriteButton`, `ProductBadge`, `ProductForm`, `ProductGallery`, `ProductItem`, `ProductPrice`, `RecommendedProducts`, `RingSizeHelp`, swatch gallery |
 | `search` | `SearchForm`, `SearchResultsPredictive` |
 | `shared` | `ConfirmDialog` |
 
-`AddToCartButton` and `MockShopNotice` are tested but not currently used by the app (see [architecture.md → Known issues](architecture.md#known-issues)).
+`AddToCartButton` is tested but not currently used by the app (see [architecture.md → Known issues](architecture.md#known-issues)).
 
 ### What the localization tests do and do not prove
 
@@ -103,6 +103,7 @@ npx playwright test --ui                     # step through tests in a browser
 | `footer.spec.ts` | Footer "Discover" links are on separate lines at 1280px and 375px, and open their pages |
 | `header.spec.ts` | Compact header at 375, 800 and 1279px and desktop header at 1280px, in EN, PT and FR: which controls are visible, actions available, menu contents, 44px language targets, no horizontal overflow, nav-to-actions gap |
 | `language.spec.ts` | Dropdown: opens above the page (not clipped), marks the current language, closes on Escape (focus returns) and outside click, works with the keyboard alone, and fits the phone menu. Application locale only (Portuguese and French content is not published in Shopify, so translated content is not asserted). Fresh `fr-FR` and `fr-CA` browsers get French; choosing French in `en-US` and `pt-PT` browsers keeps the path and query and persists after reload and navigation; choosing English in a French browser persists; French from the phone menu with the French plural cart label. A fresh `en-US` browser gets English and a fresh `pt-PT` browser gets Portuguese, with no cookie set; choosing English in the Portuguese browser survives reload and navigation; `<html lang>` matches; choosing PT keeps the path and query, sets the cookie (HttpOnly, SameSite=Lax) and persists after reload; choosing from the mobile menu at 375px (44px targets, no horizontal overflow); the cart, other cookies and currency are unchanged after switching; `/locale` rejects unsupported languages, external redirects and GET; pages send `Vary: Cookie, Accept-Language` |
+| `language-layout.spec.ts` | In PT and FR at 375px: home, collections, all pieces, bag, search and a product page do not scroll sideways; header, menu drawer and product page controls stay on screen and their text does not overflow (text cut on purpose with an ellipsis is allowed) |
 | `localized-flows.spec.ts` | In fresh `pt-PT` and `fr-FR` browsers: home (title, announcement, hero link), collection (sort and "pieces loaded" label), product page (add to bag or sold out, description accordion), empty bag, search, logged-out favorites, 404 page. Interface text only; catalog content is not asserted |
 
 Customer account routes (`/account/*`) are not covered, because they need Shopify Customer Account OAuth.
@@ -122,6 +123,8 @@ Customer account routes (`/account/*`) are not covered, because they need Shopif
 npm run lint
 npm run typecheck
 ```
+
+`npm run lint` also rejects untranslated UI text in `app/**/*.tsx`: literal text in JSX (`react/jsx-no-literals`, symbols such as `→` or `·` allowed) and literal `aria-label`, `title`, `alt` or `placeholder` values with letters (`no-restricted-syntax`). See [i18n.md → Adding a string](i18n.md#adding-a-string).
 
 ## Continuous integration
 

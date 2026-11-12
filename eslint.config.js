@@ -249,4 +249,31 @@ export default [
       'react-hooks/rules-of-hooks': 'off',
     },
   },
+  // Every user-visible string goes through the translation layer (docs/i18n.md).
+  {
+    files: ['app/**/*.tsx'],
+    rules: {
+      'react/jsx-no-literals': [
+        'error',
+        {
+          noStrings: false,
+          ignoreProps: true,
+          // Symbols and numbering only: anything with letters must be translated.
+          allowedStrings: [
+            '→', '←', '↑', '↓', '↗', '·', '×', '+', '−', '-', '—', '/', '|',
+            '%', ':', '(', ')', '*', '©', '✦', '01',
+          ],
+        },
+      ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            'JSXAttribute[name.name=/^(aria-label|title|alt|placeholder)$/] > Literal[value=/[A-Za-z]/]',
+          message:
+            'Translate user-visible attributes with useTranslation() (docs/i18n.md).',
+        },
+      ],
+    },
+  },
 ];

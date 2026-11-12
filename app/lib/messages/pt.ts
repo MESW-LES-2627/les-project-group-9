@@ -76,6 +76,11 @@ export const pt: Messages = {
   'search.pieces': 'Peças',
   'search.tryAnotherProduct':
     'Experimente outro nome de produto, material ou cor.',
+  'search.close': 'Fechar pesquisa',
+  'search.viewAllCount': {
+    one: 'Ver {count} resultado',
+    other: 'Ver todos os {count} resultados',
+  },
 
   // Cart (shared layout)
   'cart.loading': 'A carregar o saco de compras',

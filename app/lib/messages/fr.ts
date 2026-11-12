@@ -80,6 +80,12 @@ export const fr: Messages = {
   'search.pieces': 'Pièces',
   'search.tryAnotherProduct':
     'Essayez un autre nom de produit, une autre matière ou une autre couleur.',
+  'search.close': 'Fermer la recherche',
+  'search.viewAllCount': {
+    one: 'Voir {count} résultat',
+    many: 'Voir les {count} de résultats',
+    other: 'Voir les {count} résultats',
+  },
 
   // Cart (shared layout)
   'cart.loading': 'Chargement du panier',
