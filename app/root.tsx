@@ -117,7 +117,7 @@ export function Layout({children}: {children?: React.ReactNode}) {
       <Links />
       <link rel="stylesheet" href={tailwindCss} />
     </head>
-    <body>
+    <body className="flex flex-col">
     <LocaleContext.Provider value={locale}>
     {data ? (
       <Analytics.Provider cart={data.cart} shop={data.shop} consent={data.consent}>

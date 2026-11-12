@@ -28,6 +28,17 @@ for (const viewport of [
   });
 }
 
+test('the footer reaches the bottom of the window on a short page', async ({
+  page,
+}) => {
+  await page.setViewportSize({width: 1280, height: 2000});
+  await page.goto('/fitting-room');
+
+  const footer = await page.getByRole('contentinfo').boundingBox();
+
+  expect(footer!.y + footer!.height).toBeCloseTo(2000, 0);
+});
+
 for (const [name, path] of [
   ['All pieces', '/collections/all'],
   ['Collections', '/collections'],
