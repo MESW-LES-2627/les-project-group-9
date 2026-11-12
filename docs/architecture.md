@@ -173,11 +173,21 @@ metafields (namespace `custom`) through the Customer Account API.
 - `recommendation/traits.ts` turns products into `ProductTraits`.
   `recommendation/signals.ts` derives weighted signals from favorites and preferences.
   `recommendation/weights.ts` holds the trait weights.
-- `recommendation/engine.ts` (`recommendProducts`, pure):
-  1. Drops favorites and anything matching a negative signal (allergies).
+- `recommendation/signal-source.ts` (Strategy pattern): the `SignalSource` interface
+  (`collect()` returns signals) and its implementations `FavoritesSignalSource` and
+  `PreferencesSignalSource`, which wrap the functions in `signals.ts`. A new kind of signal
+  (e.g. recently viewed products) is a new `SignalSource`; the engine does not change.
+- `recommendation/engine.ts` (pure): `RecommendationEngine` takes its signal sources plus
+  options (`excludedIds`, `fallbackToPopular`) and `recommend(products, limit)`:
+  1. Drops excluded products and anything matching a negative signal (allergies).
   2. Scores the rest by matching positive signals.
   3. Sorts by score, keeping catalog order on ties.
-  4. Falls back to the first candidates ("Popular piece") when nothing scores but there are favorites.
+  4. Falls back to the first candidates ("Popular piece") when nothing scores and the
+     fallback is enabled.
+
+  `recommendProducts()` (used by `api.recommendations`) builds the engine with a favorites
+  and a preferences source, excludes the favorites and enables the fallback only when there
+  are favorites.
 - UI: `components/product/RecommendedProducts.tsx` fetches the endpoint with `useFetcher`.
   Product pages also show Shopify's `productRecommendations` (separate query in
   `products.$handle.tsx`).
