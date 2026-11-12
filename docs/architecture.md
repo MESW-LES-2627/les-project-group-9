@@ -153,9 +153,12 @@ metafields (namespace `custom`) through the Customer Account API.
   (`schema.ts`) and `FittingRoomList` (`fitting-room.ts`), which only set the key and cap.
   `PreferencesField` (`preferences.ts`) merges a partial profile. The older functions
   (`parseFavorites()`, `applyFittingRoomOperation()`…) delegate to these instances.
-- **Server**: `profile/customer.server.ts` reads the whole profile (`CUSTOMER_PROFILE_QUERY`)
-  and writes with `metafieldsSet`. `profile/operation.server.ts` validates list
-  operations (method, login, JSON, product-GID format, size cap).
+- **Server** (Repository): `CustomerProfileRepository` (`profile/customer.server.ts`) reads
+  the whole profile (`CUSTOMER_PROFILE_QUERY`) and `update(field, change)` writes one field
+  with `metafieldsSet`, so a new profile field needs no repository change. The routes call
+  `readCustomerProfile()`, `updateCustomerFavorites()`, `updateCustomerFittingRoom()` and
+  `writeCustomerPreferences()`, which use the repository. `profile/operation.server.ts`
+  validates list operations (method, login, JSON, product-GID format, size cap).
 - **Client**: `ProfileProvider` (`profile/ProfileProvider.tsx`) loads `GET /api/profile`
   once on mount and exposes optimistic toggles. If a write returns 401, it reloads the profile.
   `useFavorites()` (`lib/favorites.ts`) and `useFittingRoom()` (`lib/fitting-room.ts`)

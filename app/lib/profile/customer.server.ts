@@ -1,157 +1,136 @@
 import type {HydrogenRouterContextProvider} from '@shopify/hydrogen';
 import {CUSTOMER_PROFILE_QUERY} from '~/graphql/customer-account/CustomerProfileQueries';
 import {METAFIELDS_SET_MUTATION} from '~/graphql/customer-account/CustomerProfileMutations';
-import {
-  normalizePreferences,
-  parsePreferences,
-  serializePreferences,
-} from './preferences';
-import {
-  applyFavoriteOperation,
-  parseFavorites,
-  serializeFavorites,
-} from './schema';
-import {
-  applyFittingRoomOperation,
-  parseFittingRoom,
-  serializeFittingRoom,
-} from './fitting-room';
-import type {ListOperation, PreferenceProfile} from './types';
+import {normalizePreferences, preferencesField} from './preferences';
+import type {ProfileField} from './profile-field';
+import {favoritesList} from './schema';
+import {fittingRoomList} from './fitting-room';
+import type {
+  CustomerProfile,
+  ListOperation,
+  PreferenceProfile,
+} from './types';
 
 type Context = Pick<HydrogenRouterContextProvider, 'customerAccount'>;
 
-type CustomerProfile = {
-  customerId: string | null;
-  favorites: string[];
-  fittingRoom: string[];
-  preferences: PreferenceProfile;
-};
+/**
+ * Reads and writes the logged-in customer's profile (Repository). Hides the
+ * Customer Account API and the metafield storage: callers work with
+ * `CustomerProfile` values and `ProfileField`s only.
+ */
+export class CustomerProfileRepository {
+  readonly #context: Context;
 
-export async function readCustomerProfile(context: Context): Promise<CustomerProfile> {
-  const {data, errors} = await context.customerAccount.query(
-    CUSTOMER_PROFILE_QUERY,
-  );
-
-  if (errors?.length) {
-    throw new Error(errors[0].message);
+  constructor(context: Context) {
+    this.#context = context;
   }
 
-  const customer = data?.customer;
-  if (!customer) {
+  async read(): Promise<CustomerProfile> {
+    const {data, errors} = await this.#context.customerAccount.query(
+      CUSTOMER_PROFILE_QUERY,
+    );
+
+    if (errors?.length) {
+      throw new Error(errors[0].message);
+    }
+
+    const customer = data?.customer;
+    if (!customer) {
+      return {
+        customerId: null,
+        favorites: [],
+        fittingRoom: [],
+        preferences: normalizePreferences(null),
+      };
+    }
+
     return {
-      customerId: null,
-      favorites: [],
-      fittingRoom: [],
-      preferences: normalizePreferences(null),
+      customerId: customer.id,
+      favorites: favoritesList.parse(customer.favorites?.value ?? null),
+      fittingRoom: fittingRoomList.parse(customer.fittingRoom?.value ?? null),
+      preferences: preferencesField.parse(customer.preferences?.value ?? null),
     };
   }
 
-  return {
-    customerId: customer.id,
-    favorites: parseFavorites(customer.favorites?.value ?? null),
-    fittingRoom: parseFittingRoom(customer.fittingRoom?.value ?? null),
-    preferences: parsePreferences(customer.preferences?.value ?? null),
-  };
+  async update<T, Change>(
+    field: ProfileField<T, Change>,
+    change: Change,
+  ): Promise<T> {
+    const profile = await this.read();
+    if (!profile.customerId) {
+      throw new Error('Customer not found');
+    }
+
+    const saved = await this.#writeMetafield(
+      profile.customerId,
+      field.key,
+      field.nextValue(profile, change),
+    );
+
+    return field.parse(saved);
+  }
+
+  async #writeMetafield(
+    customerId: string,
+    key: string,
+    value: string,
+  ): Promise<string> {
+    const {data, errors} = await this.#context.customerAccount.mutate(
+      METAFIELDS_SET_MUTATION,
+      {
+        variables: {
+          metafields: [
+            {
+              ownerId: customerId,
+              namespace: 'custom',
+              key,
+              type: 'json',
+              value,
+            },
+          ],
+        },
+      },
+    );
+
+    if (errors?.length) {
+      throw new Error(errors[0].message);
+    }
+
+    const result = data?.metafieldsSet;
+    if (result?.userErrors?.length) {
+      throw new Error(result.userErrors[0].message);
+    }
+
+    return result?.metafields?.[0]?.value ?? value;
+  }
 }
 
-export async function updateCustomerFavorites(
+export function readCustomerProfile(
+  context: Context,
+): Promise<CustomerProfile> {
+  return new CustomerProfileRepository(context).read();
+}
+
+export function updateCustomerFavorites(
   context: Context,
   operation: ListOperation,
 ): Promise<string[]> {
-  const profile = await readCustomerProfile(context);
-  if (!profile.customerId) {
-    throw new Error('Customer not found');
-  }
-
-  const value = serializeFavorites(
-    applyFavoriteOperation(profile.favorites, operation),
-  );
-  const saved = await writeCustomerMetafield(
-    context,
-    profile.customerId,
-    'favorites',
-    value,
-  );
-
-  return parseFavorites(saved);
+  return new CustomerProfileRepository(context).update(favoritesList, operation);
 }
 
-export async function updateCustomerFittingRoom(
+export function updateCustomerFittingRoom(
   context: Context,
   operation: ListOperation,
 ): Promise<string[]> {
-  const profile = await readCustomerProfile(context);
-  if (!profile.customerId) {
-    throw new Error('Customer not found');
-  }
-
-  const value = serializeFittingRoom(
-    applyFittingRoomOperation(profile.fittingRoom, operation),
+  return new CustomerProfileRepository(context).update(
+    fittingRoomList,
+    operation,
   );
-  const saved = await writeCustomerMetafield(
-    context,
-    profile.customerId,
-    'fitting_room',
-    value,
-  );
-
-  return parseFittingRoom(saved);
 }
 
-export async function writeCustomerPreferences(
+export function writeCustomerPreferences(
   context: Context,
   patch: Partial<PreferenceProfile>,
 ): Promise<PreferenceProfile> {
-  const profile = await readCustomerProfile(context);
-  if (!profile.customerId) {
-    throw new Error('Customer not found');
-  }
-
-  const value = serializePreferences({
-    ...profile.preferences,
-    ...patch,
-  });
-  const saved = await writeCustomerMetafield(
-    context,
-    profile.customerId,
-    'preferences',
-    value,
-  );
-
-  return parsePreferences(saved);
-}
-
-async function writeCustomerMetafield(
-  context: Context,
-  customerId: string,
-  key: string,
-  value: string,
-): Promise<string> {
-  const {data, errors} = await context.customerAccount.mutate(
-    METAFIELDS_SET_MUTATION,
-    {
-      variables: {
-        metafields: [
-          {
-            ownerId: customerId,
-            namespace: 'custom',
-            key,
-            type: 'json',
-            value,
-          },
-        ],
-      },
-    },
-  );
-
-  if (errors?.length) {
-    throw new Error(errors[0].message);
-  }
-
-  const result = data?.metafieldsSet;
-  if (result?.userErrors?.length) {
-    throw new Error(result.userErrors[0].message);
-  }
-
-  return result?.metafields?.[0]?.value ?? value;
+  return new CustomerProfileRepository(context).update(preferencesField, patch);
 }
