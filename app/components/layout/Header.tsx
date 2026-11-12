@@ -12,6 +12,7 @@ import {Icon} from '~/components/shared/Icon';
 import {useFavorites} from '~/lib/favorites';
 import {useFittingRoom} from '~/lib/fitting-room';
 import {useTranslation, type Translate} from '~/lib/i18n';
+import {toMenuPath} from '~/lib/menu';
 
 interface HeaderProps {
   header: HeaderQuery;
@@ -114,12 +115,7 @@ export function HeaderMenu({
       )}
       {(menu || fallbackHeaderMenu(t)).items.map((item, index) => {
         if (!item.url) return null;
-        const url =
-          item.url.includes('myshopify.com') ||
-          item.url.includes(publicStoreDomain) ||
-          item.url.includes(primaryDomainUrl)
-            ? new URL(item.url).pathname
-            : item.url;
+        const url = toMenuPath(item.url, [publicStoreDomain, primaryDomainUrl]);
 
         return (
           <NavLink

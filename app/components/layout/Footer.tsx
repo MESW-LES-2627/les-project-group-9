@@ -4,6 +4,7 @@ import type {FooterQuery, HeaderQuery} from 'storefrontapi.generated';
 import {Icon} from '~/components/shared/Icon';
 import {useAside} from '~/components/layout/Aside';
 import {useTranslation, type Translate} from '~/lib/i18n';
+import {toMenuPath} from '~/lib/menu';
 
 interface FooterProps {
   footer: Promise<FooterQuery | null>;
@@ -128,12 +129,7 @@ function FooterMenu({
     <nav className="flex flex-col items-start gap-3 text-sm text-white/75">
       {(menu || fallbackFooterMenu(t)).items.map((item) => {
         if (!item.url) return null;
-        const url =
-          item.url.includes('myshopify.com') ||
-          item.url.includes(publicStoreDomain) ||
-          item.url.includes(primaryDomainUrl)
-            ? new URL(item.url).pathname
-            : item.url;
+        const url = toMenuPath(item.url, [publicStoreDomain, primaryDomainUrl]);
         if (url.startsWith('/') && url.split('?')[0] === '/search') {
           return (
             <button

@@ -255,7 +255,7 @@ See [testing.md](testing.md). In short:
 | Add a language | Add an entry to `LOCALES` and a message object in `app/lib/i18n.ts`, then publish the language in the Shopify admin. |
 | Change the language selector | `app/components/layout/LanguageSelector.tsx` (dropdown + flags; one component for header and mobile menu). Language list, short codes and flag keys come from `LOCALES` in `app/lib/i18n.ts`. See [i18n.md](i18n.md#language-selector). |
 | Change a theme color/font/breakpoint | `@theme` in `app/styles/tailwind.css`. |
-| Change header/footer navigation | Shopify admin menus `main-menu` / `footer`. The code fallback is `FALLBACK_HEADER_MENU` in `Header.tsx`. Layout is in `components/layout/`. |
+| Change header/footer navigation | Shopify admin menus `main-menu` / `footer`. The code fallback is `FALLBACK_HEADER_MENU` in `Header.tsx`. Layout is in `components/layout/`. Menu URLs become app paths in `toMenuPath()` (`app/lib/menu.ts`). |
 | Add a test | Unit: `tests/unit/<module>.test.ts`. Component: `tests/components/<group>/<Component>.test.tsx`. E2E: `tests/e2e/<flow>.spec.ts`. See [testing.md](testing.md). |
 | Add an environment variable | `.env.example` (no real secrets), `env.d.ts` if it needs typing, and the Oxygen environment. |
 
