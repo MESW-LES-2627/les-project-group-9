@@ -1,4 +1,5 @@
 import type {Route} from './+types/collections.all';
+import {translatorFromMatches, useTranslation} from '~/lib/i18n';
 import {useLoaderData} from 'react-router';
 import {getPaginationVariables} from '@shopify/hydrogen';
 import {PaginatedResourceSection} from '~/components/shared/PaginatedResourceSection';
@@ -6,8 +7,8 @@ import {ProductItem} from '~/components/product/ProductItem';
 import {JEWELIETTE_PRODUCT_CARD_FRAGMENT} from '~/lib/jeweliette-catalog';
 import type {JewelietteProductCardFragment} from 'storefrontapi.generated';
 
-export const meta: Route.MetaFunction = () => [
-  {title: 'All pieces | Jeweliette'},
+export const meta: Route.MetaFunction = ({matches}) => [
+  {title: `${translatorFromMatches(matches)('common.allPieces')} | Jeweliette`},
 ];
 
 export async function loader(args: Route.LoaderArgs) {
@@ -32,7 +33,7 @@ async function loadCriticalData({context, request}: Route.LoaderArgs) {
 
   const [{products}] = await Promise.all([
     storefront.query(CATALOG_QUERY, {
-      variables: {...paginationVariables, language: 'EN'},
+      variables: {...paginationVariables},
     }),
     // Add other queries here, so that they are loaded in parallel
   ]);
@@ -50,21 +51,21 @@ function loadDeferredData({context}: Route.LoaderArgs) {
 
 export default function Collection() {
   const {products} = useLoaderData<typeof loader>();
+  const t = useTranslation();
 
   return (
     <section className="mx-auto max-w-[1400px] px-[4vw] pb-20 pt-12">
       <header className="mb-12 text-center">
         <p className="text-xs uppercase tracking-[0.2em] text-primary">
-          The Jeweliette collection
+          {t('catalog.allEyebrow')}
         </p>
 
         <h1 className="mt-4 font-display text-[clamp(2.5rem,5vw,4rem)] leading-none">
-          All pieces
+          {t('common.allPieces')}
         </h1>
 
         <p className="mx-auto mt-5 max-w-md text-sm leading-7 text-primary">
-          Find your next favorite. Explore pieces to wear,
-          layer and make your own.
+          {t('catalog.allIntro')}
         </p>
       </header>
 

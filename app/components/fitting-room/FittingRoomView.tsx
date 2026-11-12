@@ -1,5 +1,7 @@
-import {Image, Money} from '@shopify/hydrogen';
+import {Image} from '@shopify/hydrogen';
+import {Money} from '~/components/shared/Money';
 import type {CatalogImage, CatalogProduct} from '~/lib/jeweliette-catalog';
+import {useTranslation} from '~/lib/i18n';
 
 type FittingRoomViewProps = {
   products: CatalogProduct[];
@@ -26,6 +28,7 @@ export function FittingRoomView({
   onSelectAll,
   onClear,
 }: FittingRoomViewProps) {
+  const t = useTranslation();
   const selected = products.filter((product) =>
     selectedIds.includes(product.id),
   );
@@ -33,12 +36,12 @@ export function FittingRoomView({
   return (
     <div className="mt-8 grid gap-6 lg:grid-cols-2">
       <section
-        aria-label="Pieces in your fitting room"
+        aria-label={t('fittingRoom.listLabel')}
         className="lg:sticky lg:top-24 lg:h-[calc(100svh-190px)] lg:overflow-y-auto lg:pr-2"
       >
         <div className="flex items-center justify-between gap-4 border-b border-line pb-3">
           <p className="text-[11px] uppercase tracking-[0.2em] text-primary">
-            {products.length} piece{products.length === 1 ? '' : 's'}
+            {t('fittingRoom.count', {count: products.length})}
           </p>
           <div className="flex items-center gap-4 text-[11px] uppercase tracking-widest text-primary">
             <button
@@ -46,10 +49,10 @@ export function FittingRoomView({
               onClick={onSelectAll}
               type="button"
             >
-              Select all
+              {t('fittingRoom.selectAll')}
             </button>
             <button className="hover:text-ink" onClick={onClear} type="button">
-              Clear
+              {t('fittingRoom.clear')}
             </button>
           </div>
         </div>
@@ -70,7 +73,7 @@ export function FittingRoomView({
                   }`}
                 >
                   <input
-                    aria-label={`Select ${product.title}`}
+                    aria-label={t('fittingRoom.select', {title: product.title})}
                     checked={checked}
                     className="h-4 w-4 shrink-0 accent-ink"
                     onChange={() => onToggle(product.id)}
@@ -102,25 +105,29 @@ export function FittingRoomView({
                 <div className="mt-3 flex items-center gap-4 pl-8 text-[11px] uppercase tracking-widest text-primary">
                   <button
                     type="button"
-                    aria-label={`Remove ${product.title} from fitting room`}
+                    aria-label={t('product.fittingRoomRemove', {
+                      title: product.title,
+                    })}
                     disabled={movingId !== null}
                     onClick={() => onRemove(product.id)}
                     className="underline underline-offset-4 transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    Remove
+                    {t('common.remove')}
                   </button>
                   <button
                     type="button"
-                    aria-label={`Move ${product.title} to cart`}
+                    aria-label={t('fittingRoom.moveLabel', {
+                      title: product.title,
+                    })}
                     disabled={!available || movingId !== null}
                     onClick={() => onMoveToCart(product.id)}
                     className="underline underline-offset-4 transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {moving
-                      ? 'Moving…'
+                      ? t('fittingRoom.moving')
                       : available
-                        ? 'Move to cart'
-                        : 'Sold out'}
+                        ? t('fittingRoom.moveToCart')
+                        : t('product.soldOut')}
                   </button>
                 </div>
               </li>
@@ -130,17 +137,18 @@ export function FittingRoomView({
       </section>
 
       <aside
-        aria-label="Virtual try-on"
+        aria-label={t('fittingRoom.tryOn')}
         className="flex min-h-[420px] flex-col border border-dashed border-line bg-secondary/40 p-6 lg:sticky lg:top-24 lg:h-[calc(100svh-190px)]"
       >
         <div>
           <p className="text-[11px] uppercase tracking-[0.2em] text-primary">
-            Virtual try-on
+            {t('fittingRoom.tryOn')}
           </p>
-          <h2 className="mt-2 font-display text-2xl text-ink">See it on you</h2>
+          <h2 className="mt-2 font-display text-2xl text-ink">
+            {t('fittingRoom.tryOnTitle')}
+          </h2>
           <p className="mt-2 max-w-[48ch] text-sm leading-7 text-primary">
-            Choose the pieces you want to try together. The virtual fitting
-            experience is coming soon.
+            {t('fittingRoom.tryOnText')}
           </p>
         </div>
 
@@ -163,13 +171,12 @@ export function FittingRoomView({
                 })}
               </div>
               <p className="mt-4 text-sm text-primary">
-                {selected.length} piece{selected.length === 1 ? '' : 's'} ready
-                to try
+                {t('fittingRoom.readyToTry', {count: selected.length})}
               </p>
             </div>
           ) : (
             <p className="max-w-[30ch] text-center text-sm text-primary">
-              Select at least one piece on the left to build your look.
+              {t('fittingRoom.selectHint')}
             </p>
           )}
         </div>

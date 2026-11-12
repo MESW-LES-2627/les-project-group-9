@@ -3,32 +3,29 @@ import {useProfile} from '~/lib/profile/ProfileProvider';
 import {
   RING_FINGERS,
   RING_FINGER_NAMES,
-  RING_HAND_LABELS,
   RING_HANDS,
   US_RING_SIZES,
-  ringFingerLabel,
 } from '~/lib/profile/preferences';
 import type {RingFinger} from '~/lib/profile/types';
+import {useTranslation} from '~/lib/i18n';
 
 type RingSizes = Partial<Record<RingFinger, string>>;
 
 export function RingSizeForm() {
   const {status, preferences, savePreferences} = useProfile();
+  const t = useTranslation();
 
   return (
     <section>
-      <h2 className="font-display text-2xl text-ink">Ring sizes</h2>
-      <p className="mt-2 text-sm leading-7 text-primary">
-        Save your US ring size for each finger. Ring products will show your
-        saved sizes.
-      </p>
+      <h2 className="font-display text-2xl text-ink">{t('ring.title')}</h2>
+      <p className="mt-2 text-sm leading-7 text-primary">{t('ring.intro')}</p>
       <a
         href="https://www.ringsize.app/"
         target="_blank"
         rel="noreferrer"
         className="mt-2 inline-block text-[11px] uppercase tracking-widest text-primary underline underline-offset-4 hover:text-ink"
       >
-        How to measure your finger
+        {t('ring.howToMeasure')}
       </a>
 
       {status === 'ready' ? (
@@ -38,10 +35,10 @@ export function RingSizeForm() {
         />
       ) : status === 'error' ? (
         <p role="alert" className="mt-4 text-sm text-red-700">
-          Could not load ring sizes. Refresh the page to try again.
+          {t('ring.loadError')}
         </p>
       ) : (
-        <p className="mt-4 text-sm text-primary">Loading ring sizes…</p>
+        <p className="mt-4 text-sm text-primary">{t('ring.loading')}</p>
       )}
     </section>
   );
@@ -54,6 +51,7 @@ export function RingSizeFields({
   ringSizes: RingSizes;
   onSave: (ringSizes: RingSizes) => Promise<void>;
 }) {
+  const t = useTranslation();
   const [sizes, setSizes] = useState<RingSizes>(ringSizes);
   const [state, setState] = useState<'idle' | 'saving' | 'saved' | 'error'>(
     'idle',
@@ -84,7 +82,7 @@ export function RingSizeFields({
       {RING_HANDS.map((hand) => (
         <fieldset key={hand}>
           <legend className="text-[11px] uppercase tracking-[0.15em] text-primary">
-            {RING_HAND_LABELS[hand]}
+            {t(`ring.hand.${hand}`)}
           </legend>
 
           <div className="mt-3 grid gap-4 sm:grid-cols-5">
@@ -95,7 +93,7 @@ export function RingSizeFields({
               return (
                 <label key={finger} htmlFor={id} className="block">
                   <span className="text-[11px] uppercase tracking-[0.15em] text-primary">
-                    {ringFingerLabel(finger)}
+                    {t(`ring.finger.${name}`)}
                   </span>
                   <select
                     id={id}
@@ -103,7 +101,7 @@ export function RingSizeFields({
                     onChange={(event) => change(finger, event.target.value)}
                     className="mt-1 w-full border border-line bg-paper px-3 py-2 text-sm text-ink outline-none focus:border-ink"
                   >
-                    <option value="">Not set</option>
+                    <option value="">{t('common.notSet')}</option>
                     {US_RING_SIZES.map((size) => (
                       <option key={size} value={size}>
                         {size}
@@ -123,7 +121,7 @@ export function RingSizeFields({
           disabled={state === 'saving'}
           className="bg-primary px-6 py-3 text-[11px] uppercase tracking-widest text-white transition-colors hover:bg-ink disabled:opacity-60"
         >
-          {state === 'saving' ? 'Saving…' : 'Save ring sizes'}
+          {state === 'saving' ? t('common.saving') : t('ring.save')}
         </button>
 
         <p
@@ -133,9 +131,9 @@ export function RingSizeFields({
           }`}
         >
           {state === 'saved'
-            ? 'Ring sizes saved.'
+            ? t('ring.saved')
             : state === 'error'
-              ? 'Could not save ring sizes.'
+              ? t('ring.saveError')
               : null}
         </p>
       </div>

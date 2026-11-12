@@ -5,6 +5,7 @@ import {useVariantUrl} from '~/lib/variants';
 import {Link} from 'react-router';
 import {ProductPrice} from '~/components/product/ProductPrice';
 import {useAside} from '~/components/layout/Aside';
+import {useTranslation} from '~/lib/i18n';
 import type {CartApiQueryFragment} from 'storefrontapi.generated';
 
 export type CartLine = OptimisticCartLine<CartApiQueryFragment>;
@@ -22,6 +23,7 @@ export function CartLineItem({
   const {product, title, image, selectedOptions} = merchandise;
   const lineItemUrl = useVariantUrl(product.handle, selectedOptions);
   const {close} = useAside();
+  const t = useTranslation();
   const lineItemChildren = childrenMap[id];
   const childrenLabelId = `cart-line-children-${id}`;
 
@@ -84,7 +86,7 @@ export function CartLineItem({
       {lineItemChildren ? (
         <div className="mt-4 pl-[116px]">
           <p id={childrenLabelId} className="sr-only">
-            Line items with {product.title}
+            {t('cart.lineChildren', {title: product.title})}
           </p>
           <ul
             aria-labelledby={childrenLabelId}
@@ -106,6 +108,7 @@ export function CartLineItem({
 }
 
 function CartLineQuantity({line}: {line: CartLine}) {
+  const t = useTranslation();
   if (!line || typeof line?.quantity === 'undefined') return null;
   const {id: lineId, quantity, isOptimistic} = line;
   const prevQuantity = Number(Math.max(0, quantity - 1).toFixed(0));
@@ -120,7 +123,7 @@ function CartLineQuantity({line}: {line: CartLine}) {
         <CartLineUpdateButton lines={[{id: lineId, quantity: prevQuantity}]}>
           <button
             type="submit"
-            aria-label="Decrease quantity"
+            aria-label={t('cart.decrease')}
             disabled={quantity <= 1 || !!isOptimistic}
             name="decrease-quantity"
             value={prevQuantity}
@@ -140,7 +143,7 @@ function CartLineQuantity({line}: {line: CartLine}) {
         <CartLineUpdateButton lines={[{id: lineId, quantity: nextQuantity}]}>
           <button
             type="submit"
-            aria-label="Increase quantity"
+            aria-label={t('cart.increase')}
             name="increase-quantity"
             value={nextQuantity}
             disabled={!!isOptimistic}
@@ -163,6 +166,7 @@ function CartLineRemoveButton({
   lineIds: string[];
   disabled: boolean;
 }) {
+  const t = useTranslation();
   return (
     <CartForm
       fetcherKey={getUpdateKey(lineIds)}
@@ -175,7 +179,7 @@ function CartLineRemoveButton({
         type="submit"
         className="min-h-11 text-xs uppercase tracking-widest text-primary underline underline-offset-4 transition-colors hover:text-ink disabled:opacity-40"
       >
-        Remove
+        {t('common.remove')}
       </button>
     </CartForm>
   );

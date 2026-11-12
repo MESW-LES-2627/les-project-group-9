@@ -42,7 +42,7 @@ describe('recommendProducts', () => {
     });
 
     expect(results.map((result) => result.id)).toEqual(['warm']);
-    expect(results[0].reasons).toContain('Matches your undertone');
+    expect(results[0].reasons).toContainEqual({code: 'undertone'});
   });
 
   it('uses skin tone preferences without favorites', () => {
@@ -56,7 +56,7 @@ describe('recommendProducts', () => {
     });
 
     expect(results.map((result) => result.id)).toEqual(['medium']);
-    expect(results[0].reasons).toContain('Matches your skin tone');
+    expect(results[0].reasons).toContainEqual({code: 'skinTone'});
   });
 
   it('does not fall back to popular products for preferences-only requests', () => {
@@ -94,7 +94,7 @@ describe('recommendProducts', () => {
     expect(results.map((result) => result.id)).toEqual([
       'material-match',
     ]);
-    expect(results[0].reasons).toContain('Same material: gold plated');
+    expect(results[0].reasons).toContainEqual({code: 'sameMaterial', value: 'gold plated'});
   });
 
   it('matches the standard category', () => {
@@ -107,7 +107,7 @@ describe('recommendProducts', () => {
     });
 
     expect(results[0].id).toBe('candidate');
-    expect(results[0].reasons).toContain('Similar jewellery category');
+    expect(results[0].reasons).toContainEqual({code: 'similarCategory'});
   });
 
   it('falls back to popular products when nothing matches', () => {
@@ -125,7 +125,7 @@ describe('recommendProducts', () => {
       'first',
       'second',
     ]);
-    expect(results[0].reasons).toEqual(['Popular piece']);
+    expect(results[0].reasons).toEqual([{code: 'popular'}]);
   });
 
   it('excludes products that match an allergy', () => {
@@ -153,7 +153,7 @@ describe('recommendProducts', () => {
     });
 
     expect(results[0].id).toBe('candidate');
-    expect(results[0].reasons).toContain('Matches your preferred materials');
+    expect(results[0].reasons).toContainEqual({code: 'preferredMaterials'});
   });
 
   it('uses undertone preferences', () => {
@@ -168,7 +168,7 @@ describe('recommendProducts', () => {
     });
 
     expect(results[0].id).toBe('warm');
-    expect(results[0].reasons).toContain('Matches your undertone');
+    expect(results[0].reasons).toContainEqual({code: 'undertone'});
   });
 
   it('supports a new preference through the registry', () => {
@@ -182,7 +182,7 @@ describe('recommendProducts', () => {
     });
 
     expect(results[0].id).toBe('candidate');
-    expect(results[0].reasons).toContain('Matches your preferred gemstones');
+    expect(results[0].reasons).toContainEqual({code: 'preferredGemstones'});
   });
 
   it('respects the limit', () => {

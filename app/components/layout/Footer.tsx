@@ -3,6 +3,8 @@ import {Await, NavLink} from 'react-router';
 import type {FooterQuery, HeaderQuery} from 'storefrontapi.generated';
 import {Icon} from '~/components/shared/Icon';
 import {useAside} from '~/components/layout/Aside';
+import {useTranslation, type Translate} from '~/lib/i18n';
+import {toMenuPath} from '~/lib/menu';
 
 interface FooterProps {
   footer: Promise<FooterQuery | null>;
@@ -16,6 +18,7 @@ export function Footer({
   publicStoreDomain,
 }: FooterProps) {
   const {open} = useAside();
+  const t = useTranslation();
   return (
     <Suspense>
       <Await resolve={footerPromise}>
@@ -30,16 +33,16 @@ export function Footer({
                   {header.shop.name || 'Jeweliette'}
                 </NavLink>
                 <p className="mt-5 max-w-[32ch] text-sm leading-7 text-white/65">
-                  Modern jewelry to layer, gift and keep.
+                  {t('footer.tagline')}
                 </p>
               </div>
 
               <div>
                 <p className="mb-5 text-xs font-medium uppercase tracking-[0.18em] text-secondary">
-                  Discover
+                  {t('footer.discover')}
                 </p>
                 <nav
-                  aria-label="Discover"
+                  aria-label={t('footer.discover')}
                   className="flex flex-col items-start gap-3 text-sm text-white/75"
                 >
                   <NavLink
@@ -48,7 +51,7 @@ export function Footer({
                     prefetch="intent"
                     to="/collections/all"
                   >
-                    All pieces
+                    {t('common.allPieces')}
                   </NavLink>
                   <NavLink
                     className="hover:text-white"
@@ -56,14 +59,14 @@ export function Footer({
                     prefetch="intent"
                     to="/collections"
                   >
-                    Collections
+                    {t('common.collections')}
                   </NavLink>
                 </nav>
               </div>
 
               <div>
                 <p className="mb-5 text-xs font-medium uppercase tracking-[0.18em] text-secondary">
-                  Information
+                  {t('footer.information')}
                 </p>
                 {footer?.menu && header.shop.primaryDomain?.url ? (
                   <FooterMenu
@@ -76,21 +79,21 @@ export function Footer({
 
               <div>
                 <p className="text-xs font-medium uppercase tracking-[0.18em] text-secondary">
-                  Stories in your inbox
+                  {t('footer.newsletterTitle')}
                 </p>
                 <p className="mt-4 text-sm leading-7 text-white/65">
-                  News, style guides and early access.
+                  {t('footer.newsletterText')}
                 </p>
                 <div className="mt-7 flex border-b border-white/40 pb-2">
                   <input
-                    aria-label="Email address"
+                    aria-label={t('footer.email')}
                     className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/45"
                     disabled
-                    placeholder="Newsletter coming soon"
+                    placeholder={t('footer.newsletterSoon')}
                     type="email"
                   />
                   <button
-                    aria-label="Subscribe to newsletter"
+                    aria-label={t('footer.subscribe')}
                     className="grid size-11 place-items-center text-secondary opacity-50"
                     disabled
                     type="button"
@@ -103,7 +106,7 @@ export function Footer({
 
             <div className="flex flex-col gap-2 pt-6 text-xs uppercase tracking-[0.12em] text-white/45 sm:flex-row sm:items-center sm:justify-between">
               <span>© {new Date().getFullYear()} {header.shop.name || 'Jeweliette'}</span>
-              <span>Designed to be kept</span>
+              <span>{t('footer.signature')}</span>
             </div>
           </footer>
         )}
@@ -121,16 +124,12 @@ function FooterMenu({
   primaryDomainUrl: FooterProps['header']['shop']['primaryDomain']['url'];
   publicStoreDomain: string;
 }) {
+  const t = useTranslation();
   return (
     <nav className="flex flex-col items-start gap-3 text-sm text-white/75">
-      {(menu || FALLBACK_FOOTER_MENU).items.map((item) => {
+      {(menu || fallbackFooterMenu(t)).items.map((item) => {
         if (!item.url) return null;
-        const url =
-          item.url.includes('myshopify.com') ||
-          item.url.includes(publicStoreDomain) ||
-          item.url.includes(primaryDomainUrl)
-            ? new URL(item.url).pathname
-            : item.url;
+        const url = toMenuPath(item.url, [publicStoreDomain, primaryDomainUrl]);
         if (url.startsWith('/') && url.split('?')[0] === '/search') {
           return (
             <button
@@ -139,7 +138,7 @@ function FooterMenu({
               onClick={() => open('search')}
               className="hover:text-white"
             >
-              Search
+              {t('nav.search')}
             </button>
           );
         }
@@ -171,12 +170,15 @@ function FooterMenu({
   );
 }
 
-const FALLBACK_FOOTER_MENU = {
-  id: 'fallback-footer-menu',
-  items: [
-    {id: 'privacy', resourceId: null, tags: [], title: 'Privacy policy', type: 'SHOP_POLICY', url: '/policies/privacy-policy', items: []},
-    {id: 'refund', resourceId: null, tags: [], title: 'Refund policy', type: 'SHOP_POLICY', url: '/policies/refund-policy', items: []},
-    {id: 'shipping', resourceId: null, tags: [], title: 'Shipping policy', type: 'SHOP_POLICY', url: '/policies/shipping-policy', items: []},
-    {id: 'terms', resourceId: null, tags: [], title: 'Terms of service', type: 'SHOP_POLICY', url: '/policies/terms-of-service', items: []},
-  ],
-};
+/** Used when Shopify returns no `footer` menu; titles come from the dictionary. */
+function fallbackFooterMenu(t: Translate) {
+  return {
+    id: 'fallback-footer-menu',
+    items: [
+      {id: 'privacy', resourceId: null, tags: [], title: t('policy.privacy'), type: 'SHOP_POLICY', url: '/policies/privacy-policy', items: []},
+      {id: 'refund', resourceId: null, tags: [], title: t('policy.refund'), type: 'SHOP_POLICY', url: '/policies/refund-policy', items: []},
+      {id: 'shipping', resourceId: null, tags: [], title: t('policy.shipping'), type: 'SHOP_POLICY', url: '/policies/shipping-policy', items: []},
+      {id: 'terms', resourceId: null, tags: [], title: t('policy.terms'), type: 'SHOP_POLICY', url: '/policies/terms-of-service', items: []},
+    ],
+  };
+}

@@ -7,6 +7,7 @@ import {
   useState,
 } from 'react';
 import {Icon} from '~/components/shared/Icon';
+import {useTranslation} from '~/lib/i18n';
 
 type AsideType = 'search' | 'cart' | 'mobile' | 'closed';
 type AsideContextValue = {
@@ -25,6 +26,7 @@ export function Aside({
   heading: React.ReactNode;
 }) {
   const {type: activeType, close} = useAside();
+  const t = useTranslation();
   const expanded = type === activeType;
   const id = useId();
   const isSearch = type === 'search';
@@ -59,7 +61,7 @@ export function Aside({
       role="dialog"
     >
       <button
-        aria-label="Close panel"
+        aria-label={t('nav.closePanel')}
         className="absolute inset-0 h-full w-full cursor-default"
         onClick={close}
         type="button"
@@ -79,7 +81,7 @@ export function Aside({
             {heading}
           </h2>
           <button
-            aria-label="Close"
+            aria-label={t('nav.close')}
             className="grid size-11 place-items-center text-primary hover:text-ink"
             onClick={close}
             type="button"

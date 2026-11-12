@@ -1,5 +1,6 @@
 import {Icon} from '~/components/shared/Icon';
 import {useFavorites} from '~/lib/favorites';
+import {useTranslation} from '~/lib/i18n';
 import {ProductActionButton} from './ProductActionButton';
 
 export function FavoriteButton({
@@ -13,6 +14,7 @@ export function FavoriteButton({
 }) {
   const {has, toggle, isLoggedIn} = useFavorites();
   const active = has(productId);
+  const t = useTranslation();
 
   return (
     <ProductActionButton
@@ -21,9 +23,9 @@ export function FavoriteButton({
       label={
         isLoggedIn
           ? active
-            ? `Remove ${title} from favorites`
-            : `Add ${title} to favorites`
-          : `Log in to save ${title} to favorites`
+            ? t('product.favoriteRemove', {title})
+            : t('product.favoriteAdd', {title})
+          : t('product.favoriteLogin', {title})
       }
       onClick={() => {
         if (!isLoggedIn) {

@@ -1,6 +1,7 @@
 import {Suspense} from 'react';
 import {Await, Link, redirect, useLoaderData} from 'react-router';
 import type {Route} from './+types/products.$handle';
+import {translatorFromMatches, useTranslation} from '~/lib/i18n';
 import {
   getSelectedProductOptions,
   Analytics,
@@ -26,8 +27,10 @@ import {materialsForColor, parseProductMaterials} from '~/lib/materials';
 import {isColorOption} from '~/lib/options';
 import {isRingProduct} from '~/lib/profile/ringCategory';
 
-export const meta: Route.MetaFunction = ({data}) => [
-  {title: `${data?.product.title ?? 'Product'} | Jeweliette`},
+export const meta: Route.MetaFunction = ({data, matches}) => [
+  {
+    title: `${data?.product.title ?? translatorFromMatches(matches)('meta.productFallback')} | Jeweliette`,
+  },
   {
     name: 'description',
     content: data?.product.seo.description ?? data?.product.description ?? '',
@@ -40,7 +43,7 @@ export async function loader(args: Route.LoaderArgs) {
 
   const recommendations = args.context.storefront
     .query(RECOMMENDATIONS_QUERY, {
-      variables: {productId: product.id, language: 'EN'},
+      variables: {productId: product.id},
     })
     .then((result) => result.productRecommendations ?? [])
     .catch(() => []);
@@ -55,7 +58,6 @@ async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
   const {product} = await context.storefront.query(PRODUCT_QUERY, {
     variables: {
       handle,
-      language: 'EN',
       selectedOptions: getSelectedProductOptions(request),
     },
   });
@@ -68,6 +70,7 @@ async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
 
 export default function Product() {
   const {product, recommendations} = useLoaderData<typeof loader>();
+  const t = useTranslation();
 
   const selectedVariant = useOptimisticVariant(
     product.selectedOrFirstAvailableVariant,
@@ -96,10 +99,10 @@ export default function Product() {
   );
 
   const productDetails = [
-    {label: 'Type', value: product.productType},
-    {label: 'Metal', value: product.metal?.value},
-    {label: 'Gemstone', value: product.gemstone?.value},
-    {label: 'Gem color', value: product.gemColor?.value},
+    {label: t('product.detail.type'), value: product.productType},
+    {label: t('product.detail.metal'), value: product.metal?.value},
+    {label: t('product.detail.gemstone'), value: product.gemstone?.value},
+    {label: t('product.detail.gemColor'), value: product.gemColor?.value},
   ]
     .map((item) => ({
       ...item,
@@ -110,11 +113,11 @@ export default function Product() {
   return (
     <div className="mx-auto max-w-[1280px] px-[4vw] pb-20 pt-6">
       <nav
-        aria-label="Breadcrumb"
+        aria-label={t('product.breadcrumb')}
         className="mb-6 flex flex-wrap gap-2 text-[11px] uppercase tracking-widest text-primary"
       >
         <Link to="/" className="hover:text-ink">
-          Home
+          {t('nav.home')}
         </Link>
         {collection ? (
           <>
@@ -172,7 +175,7 @@ export default function Product() {
           <div className="mt-10 divide-y divide-line border-y border-line text-sm">
             <details open className="group py-4">
               <summary className="flex cursor-pointer list-none items-center justify-between text-[11px] uppercase tracking-widest [&::-webkit-details-marker]:hidden">
-                Description
+                {t('product.description')}
                 <span aria-hidden="true" className="group-open:hidden">
                   +
                 </span>
@@ -189,7 +192,7 @@ export default function Product() {
             {productDetails.length > 0 ? (
               <details className="group py-4">
                 <summary className="flex cursor-pointer list-none items-center justify-between text-xs uppercase tracking-widest [&::-webkit-details-marker]:hidden">
-                  Details
+                  {t('product.details')}
                   <span aria-hidden="true" className="group-open:hidden">
                     +
                   </span>
@@ -214,7 +217,7 @@ export default function Product() {
 
             <details className="group py-4">
               <summary className="flex cursor-pointer list-none items-center justify-between text-[11px] uppercase tracking-widest [&::-webkit-details-marker]:hidden">
-                Shipping
+                {t('product.shipping')}
                 <span aria-hidden="true" className="group-open:hidden">
                   +
                 </span>
@@ -223,14 +226,14 @@ export default function Product() {
                 </span>
               </summary>
               <p className="mt-4 leading-7 text-primary">
-                Shipping options and taxes are calculated at checkout.
+                {t('product.shippingText')}
               </p>
             </details>
 
             {visibleMaterials.length > 0 ? (
               <details className="group py-4">
                 <summary className="flex cursor-pointer list-none items-center justify-between text-[11px] uppercase tracking-widest [&::-webkit-details-marker]:hidden">
-                  Materials
+                  {t('product.materials')}
                   <span aria-hidden="true" className="group-open:hidden">
                     +
                   </span>
@@ -255,7 +258,7 @@ export default function Product() {
             items.length ? (
               <section className="mt-20" aria-labelledby="related-heading">
                 <h2 id="related-heading" className="font-display text-2xl">
-                  You may also like
+                  {t('product.related')}
                 </h2>
                 <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-4">
                   {items.slice(0, 4).map((item) => (

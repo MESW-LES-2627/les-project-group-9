@@ -45,7 +45,9 @@ app/routes/                File-based routes (@react-router/fs-routes); api.* ar
 app/components/<group>/    UI grouped by area: account, cart, collections, fitting-room,
                            layout, product, search, shared (+ RichText.tsx)
 app/lib/                   Domain logic and utilities (pure where possible)
-  context.ts, session.ts, i18n.ts     Hydrogen context, cookie session, locale
+  context.ts, session.ts, i18n.ts     Hydrogen context, cookie session, locale + translator
+  messages/{en,pt,fr}.ts              UI dictionaries (en defines the keys)
+  response.server.ts                  Final response headers (session cookie, Vary)
   jeweliette-catalog.ts               Shared product fragments and catalog types
   profile/                            Favorites, fitting room, preferences (customer metafields)
   recommendation/                     Recommendation engine (pure) + candidate loader
@@ -81,7 +83,18 @@ See [docs/architecture.md](docs/architecture.md) for the full picture.
 
 **Content and language**
 - Never hardcode a language in queries or UI. Let `context.storefront.i18n` supply
-  `$language`/`$country` (see [docs/i18n.md](docs/i18n.md)).
+  `$language`/`$country`.
+- **Every user-visible string goes through the translation layer**: JSX text, button
+  labels, `aria-label`/`title`/`alt`/`placeholder`, empty states, validation and error
+  messages shown to users, and `meta` titles. Add the key to `app/lib/messages/en.ts`,
+  `pt.ts` and `fr.ts` (all three required) and use `useTranslation()`, `translatorFor()` or
+  `translatorFromMatches()`. Logic in `app/lib` returns codes, not display text.
+  `npm run lint` rejects literal JSX text and literal `aria-label`/`title`/`alt`/`placeholder`
+  values; `messages.test.ts` rejects unused keys.
+- Format prices with `components/shared/Money.tsx` (not Hydrogen's `<Money>`), dates with
+  `formatDate()`, lists with `formatList()`, counts with plural messages.
+- Do not translate identifiers (handles, IDs, enum values, cookie values) or Shopify
+  content; Shopify content is translated in the Shopify admin. See [docs/i18n.md](docs/i18n.md).
 - Never hardcode shop-specific handles or product data.
 
 **Styling and accessibility**

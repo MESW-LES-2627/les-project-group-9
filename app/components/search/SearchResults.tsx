@@ -2,6 +2,7 @@ import {Link} from 'react-router';
 import {Pagination} from '@shopify/hydrogen';
 import {urlWithTrackingParams, type RegularSearchReturn} from '~/lib/search';
 import {ProductItem} from '~/components/product/ProductItem';
+import {useTranslation} from '~/lib/i18n';
 
 type SearchItems = RegularSearchReturn['result']['items'];
 type PartialSearchResult<ItemType extends keyof SearchItems> = Pick<
@@ -35,13 +36,14 @@ function SearchResultsArticles({
   term,
   articles,
 }: PartialSearchResult<'articles'>) {
+  const t = useTranslation();
   if (!articles?.nodes.length) {
     return null;
   }
 
   return (
     <div className="space-y-4 [&_h2]:font-display [&_h2]:text-2xl">
-      <h2>Articles</h2>
+      <h2>{t('search.articles')}</h2>
       <div>
         {articles?.nodes?.map((article) => {
           const articleUrl = urlWithTrackingParams({
@@ -65,13 +67,14 @@ function SearchResultsArticles({
 }
 
 function SearchResultsPages({term, pages}: PartialSearchResult<'pages'>) {
+  const t = useTranslation();
   if (!pages?.nodes.length) {
     return null;
   }
 
   return (
     <div className="space-y-4 [&_h2]:font-display [&_h2]:text-2xl">
-      <h2>Pages</h2>
+      <h2>{t('search.pages')}</h2>
       <div>
         {pages?.nodes?.map((page) => {
           const pageUrl = urlWithTrackingParams({
@@ -97,6 +100,7 @@ function SearchResultsPages({term, pages}: PartialSearchResult<'pages'>) {
 function SearchResultsProducts({
                                  products,
                                }: PartialSearchResult<'products'>) {
+  const t = useTranslation();
   if (!products?.nodes.length) return null;
 
   const paginationClass =
@@ -104,13 +108,13 @@ function SearchResultsProducts({
 
   return (
     <section>
-      <h2 className="mb-6 font-display text-2xl">Pieces</h2>
+      <h2 className="mb-6 font-display text-2xl">{t('search.pieces')}</h2>
 
       <Pagination connection={products}>
         {({nodes, isLoading, NextLink, PreviousLink}) => (
           <>
             <PreviousLink className={paginationClass}>
-              {isLoading ? 'Loading…' : 'Load previous'}
+              {isLoading ? t('common.loading') : t('common.loadPrevious')}
             </PreviousLink>
 
             <div className="grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 xl:grid-cols-4">
@@ -123,7 +127,7 @@ function SearchResultsProducts({
             </div>
 
             <NextLink className={paginationClass}>
-              {isLoading ? 'Loading…' : 'Load more'}
+              {isLoading ? t('common.loading') : t('common.loadMore')}
             </NextLink>
           </>
         )}
@@ -133,11 +137,12 @@ function SearchResultsProducts({
 }
 
 function SearchResultsEmpty() {
+  const t = useTranslation();
   return (
     <div className="border-y border-line py-12 text-center">
-      <h2 className="font-display text-3xl">No results</h2>
+      <h2 className="font-display text-3xl">{t('search.noResults')}</h2>
       <p className="mt-4 text-sm text-primary">
-        Try another product name, material or color.
+        {t('search.tryAnotherProduct')}
       </p>
     </div>
   );

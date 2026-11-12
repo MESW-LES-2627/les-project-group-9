@@ -1,5 +1,6 @@
 import {useLoaderData, Link} from 'react-router';
 import type {Route} from './+types/policies._index';
+import {useTranslation} from '~/lib/i18n';
 import type {PoliciesQuery, PolicyItemFragment} from 'storefrontapi.generated';
 
 export async function loader({context}: Route.LoaderArgs) {
@@ -23,15 +24,16 @@ export async function loader({context}: Route.LoaderArgs) {
 
 export default function Policies() {
   const {policies} = useLoaderData<typeof loader>();
+  const t = useTranslation();
 
   return (
     <section className="mx-auto max-w-6xl px-[5vw] pb-24 pt-12">
       <p className="text-xs uppercase tracking-[0.2em] text-primary">
-        Information
+        {t('policies.eyebrow')}
       </p>
 
       <h1 className="mb-10 mt-4 font-display text-4xl">
-        Store policies
+        {t('policies.title')}
       </h1>
 
       <ul className="divide-y divide-line border-y border-line">

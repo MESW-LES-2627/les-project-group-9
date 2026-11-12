@@ -23,7 +23,6 @@ vi.mock('@shopify/hydrogen', () => {
 
   return {
     CartForm,
-    Money: ({data}: {data: {amount: string}}) => <span>{data.amount}</span>,
   };
 });
 

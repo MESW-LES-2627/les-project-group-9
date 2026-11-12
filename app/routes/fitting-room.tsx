@@ -1,6 +1,7 @@
 import {useEffect, useRef, useState} from 'react';
 import {data, Link, useFetcher} from 'react-router';
 import type {Route} from './+types/fitting-room';
+import {translatorFor, translatorFromMatches, useTranslation} from '~/lib/i18n';
 import {FittingRoomView} from '~/components/fitting-room/FittingRoomView';
 import {useFittingRoom} from '~/lib/fitting-room';
 import {updateCustomerFittingRoom} from '~/lib/profile/customer.server';
@@ -8,8 +9,8 @@ import {MAX_FITTING_ROOM} from '~/lib/profile/fitting-room';
 import {isProductGid} from '~/lib/profile/list-schema';
 import {loadProductsByIds, parseProductIds} from '~/lib/products.server';
 
-export const meta: Route.MetaFunction = () => [
-  {title: 'Fitting room | Jeweliette'},
+export const meta: Route.MetaFunction = ({matches}) => [
+  {title: `${translatorFromMatches(matches)('nav.fittingRoom')} | Jeweliette`},
   {name: 'robots', content: 'noindex'},
 ];
 
@@ -23,23 +24,25 @@ export async function loader({request, context}: Route.LoaderArgs) {
 }
 
 export async function action({request, context}: Route.ActionArgs) {
+  // Messages are shown on the page, so they are translated here.
+  const t = translatorFor(context.storefront.i18n);
   const loggedIn = await context.customerAccount.isLoggedIn();
   if (!loggedIn) {
-    return data({error: 'Unauthorized'}, {status: 401});
+    return data({error: t('fittingRoom.error.unauthorized')}, {status: 401});
   }
 
   const formData = await request.formData();
   const productId = formData.get('productId');
 
   if (typeof productId !== 'string' || !isProductGid(productId)) {
-    return data({error: 'Invalid product'}, {status: 400});
+    return data({error: t('fittingRoom.error.invalid')}, {status: 400});
   }
 
   const [product] = await loadProductsByIds(context, [productId]);
   const variant = product?.selectedOrFirstAvailableVariant;
 
   if (!variant?.availableForSale) {
-    return data({error: 'This piece is sold out'}, {status: 400});
+    return data({error: t('fittingRoom.error.soldOut')}, {status: 400});
   }
 
   try {
@@ -64,30 +67,23 @@ export async function action({request, context}: Route.ActionArgs) {
       });
       return data({fittingRoom, cart: result.cart}, {headers});
     } catch (error) {
+      // Internal messages are not localized: log them, show a translated one.
+      console.error('Could not update the fitting room', error);
       return data(
-        {
-          error:
-            error instanceof Error
-              ? error.message
-              : 'Could not remove from fitting room',
-        },
+        {error: t('fittingRoom.error.remove')},
         {status: 400, headers},
       );
     }
   } catch (error) {
-    return data(
-      {
-        error:
-          error instanceof Error ? error.message : 'Could not move to cart',
-      },
-      {status: 400},
-    );
+    console.error('Could not move the piece to the cart', error);
+    return data({error: t('fittingRoom.error.move')}, {status: 400});
   }
 }
 
 export default function FittingRoom() {
   const {ids, ready, isLoggedIn, toggle: toggleFittingRoom, setIds} =
     useFittingRoom();
+  const t = useTranslation();
   const fetcher = useFetcher<typeof loader>();
   const moveFetcher = useFetcher<typeof action>();
   const key = ids.join(',');
@@ -155,56 +151,56 @@ export default function FittingRoom() {
     <section className="mx-auto max-w-[1500px] px-[4vw] pb-20 pt-10 tablet:pt-14">
       <header>
         <p className="text-[11px] uppercase tracking-[0.2em] text-primary">
-          Your selection
+          {t('common.yourSelection')}
         </p>
         <h1 className="mt-3 font-display text-[clamp(2.25rem,4vw,3.5rem)] leading-none">
-          Fitting room
+          {t('nav.fittingRoom')}
         </h1>
       </header>
 
       {!ready ? (
         <div className="mx-auto mt-14 max-w-md border-y border-line py-14 text-center text-sm text-primary">
-          Loading your fitting room…
+          {t('fittingRoom.loading')}
         </div>
       ) : !isLoggedIn ? (
         <div className="mx-auto mt-14 max-w-md border-y border-line py-14 text-center">
           <h2 className="font-display text-2xl">
-            Log in to use the fitting room.
+            {t('fittingRoom.loginTitle')}
           </h2>
           <p className="mt-3 text-sm text-primary">
-            Sign in to keep the pieces you want to try across devices.
+            {t('fittingRoom.loginText')}
           </p>
           <Link
             to="/account/login"
             className="mt-6 inline-flex min-h-11 items-center bg-primary px-6 text-[11px] uppercase tracking-widest text-white hover:bg-ink"
           >
-            Log in
+            {t('common.logIn')}
           </Link>
         </div>
       ) : ids.length === 0 ? (
         <div className="mx-auto mt-14 max-w-md border-y border-line py-14 text-center">
-          <h2 className="font-display text-2xl">Your fitting room is empty.</h2>
+          <h2 className="font-display text-2xl">{t('fittingRoom.emptyTitle')}</h2>
           <p className="mt-3 text-sm text-primary">
-            Use the hanger button on any piece to add it here.
+            {t('fittingRoom.emptyText')}
           </p>
           <Link
             to="/collections/all"
             className="mt-6 inline-flex min-h-11 items-center bg-primary px-6 text-[11px] uppercase tracking-widest text-white hover:bg-ink"
           >
-            Explore the collection
+            {t('home.exploreCollection')}
           </Link>
         </div>
       ) : !fetcher.data ? (
         <div className="mx-auto mt-14 max-w-md border-y border-line py-14 text-center text-sm text-primary">
-          Loading pieces…
+          {t('fittingRoom.loadingPieces')}
         </div>
       ) : products.length === 0 ? (
         <div className="mx-auto mt-14 max-w-md border-y border-line py-14 text-center">
           <h2 className="font-display text-2xl">
-            These pieces are unavailable.
+            {t('fittingRoom.unavailableTitle')}
           </h2>
           <p className="mt-3 text-sm text-primary">
-            They may have been removed from the store.
+            {t('fittingRoom.unavailableText')}
           </p>
         </div>
       ) : (

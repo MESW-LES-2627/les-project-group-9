@@ -1,6 +1,6 @@
 import {useState, type MouseEvent, type ReactNode} from 'react';
 import {ConfirmDialog} from '~/components/shared/ConfirmDialog';
-import {ALLERGY_LABELS} from '~/lib/profile/preferences';
+import {formatList, useLocale, useTranslation} from '~/lib/i18n';
 import {useAllergenMatches} from '~/lib/profile/useAllergenMatches';
 
 type AddToBagGuardProps = {
@@ -25,6 +25,8 @@ export function AddToBagGuard({
   children,
 }: AddToBagGuardProps) {
   const {matches, loading} = useAllergenMatches(allergens);
+  const t = useTranslation();
+  const {tag} = useLocale();
   const [warningOpen, setWarningOpen] = useState(false);
   const [pendingForm, setPendingForm] = useState<HTMLFormElement | null>(null);
 
@@ -52,20 +54,22 @@ export function AddToBagGuard({
     setWarningOpen(false);
   };
 
-  const names = matches.map((allergen) => ALLERGY_LABELS[allergen]).join(', ');
+  const names = formatList(
+    matches.map((allergen) => t(`allergen.${allergen}`)),
+    tag,
+  );
 
   return (
     <>
       {children({onClick, loading})}
       <ConfirmDialog
-        confirmLabel="Yes, add to bag"
+        confirmLabel={t('allergy.confirm')}
         onCancel={cancel}
         onConfirm={confirm}
         open={warningOpen}
-        title="Allergy warning"
+        title={t('allergy.title')}
       >
-        This piece contains {names}, which matches your allergy profile. Do you
-        want to add it to your bag anyway?
+        {t('allergy.message', {allergens: names})}
       </ConfirmDialog>
     </>
   );

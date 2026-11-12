@@ -1,8 +1,10 @@
 import {useState} from 'react';
 import {Link} from 'react-router';
-import {CartForm, Image, Money} from '@shopify/hydrogen';
+import {CartForm, Image} from '@shopify/hydrogen';
+import {Money} from '~/components/shared/Money';
 import {type CatalogImage, type CatalogProduct} from '~/lib/jeweliette-catalog';
 import {isColorOption} from '~/lib/options';
+import {useTranslation} from '~/lib/i18n';
 import {FavoriteButton} from '~/components/product/FavoriteButton';
 import {ProductBadge} from '~/components/product/ProductBadge';
 import {AllergenBadge} from '~/components/product/AllergenBadge';
@@ -11,6 +13,7 @@ import {AddToBagGuard} from '~/components/product/AddToBagGuard';
 type Props = {product: CatalogProduct; loading?: 'eager' | 'lazy'};
 
 export function ProductItem({product, loading = 'lazy'}: Props) {
+  const t = useTranslation();
   const [variantImage, setVariantImage] = useState<CatalogImage | null>(null);
 
   const url = `/products/${product.handle}`;
@@ -48,7 +51,7 @@ export function ProductItem({product, loading = 'lazy'}: Props) {
         <Link
           to={url}
           prefetch="intent"
-          aria-label={`View ${product.title}`}
+          aria-label={t('product.view', {title: product.title})}
           className="absolute inset-0 block"
         >
           {primary ? (
@@ -99,7 +102,9 @@ export function ProductItem({product, loading = 'lazy'}: Props) {
                       onClick={onClick}
                       className={`${buttonBase} bg-primary text-white hover:bg-ink disabled:opacity-60`}
                     >
-                      {fetcher.state !== 'idle' ? 'Adding…' : 'Add to bag'}
+                      {fetcher.state !== 'idle'
+                        ? t('product.adding')
+                        : t('product.addToBag')}
                     </button>
                   )}
                 </AddToBagGuard>
@@ -112,10 +117,10 @@ export function ProductItem({product, loading = 'lazy'}: Props) {
               className={`${buttonBase} bg-paper text-primary hover:bg-white`}
             >
               {hasMultipleVariants
-                ? 'Choose options'
+                ? t('product.chooseOptions')
                 : variant && !variant.availableForSale
-                  ? 'Sold out'
-                  : 'View piece'}
+                  ? t('product.soldOut')
+                  : t('product.viewPiece')}
             </Link>
           )}
         </div>
@@ -134,7 +139,9 @@ export function ProductItem({product, loading = 'lazy'}: Props) {
 
         <div className="shrink-0 text-sm text-ink">
           {isRange ? (
-            <span className="mr-1 text-xs text-primary">From</span>
+            <span className="mr-1 text-xs text-primary">
+              {t('product.from')}
+            </span>
           ) : null}
           <Money data={min} withoutTrailingZeros />
         </div>
@@ -157,7 +164,10 @@ export function ProductItem({product, loading = 'lazy'}: Props) {
                 <Link
                   to={optionUrl}
                   prefetch="intent"
-                  aria-label={`${colorOption.name}: ${value.name}`}
+                  aria-label={t('product.optionValue', {
+                    option: colorOption.name,
+                    value: value.name,
+                  })}
                   title={value.name}
                   onMouseEnter={() =>
                     setVariantImage(value.firstSelectableVariant?.image ?? null)

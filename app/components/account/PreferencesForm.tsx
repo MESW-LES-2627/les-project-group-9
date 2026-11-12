@@ -1,26 +1,23 @@
 import {useState, type FormEvent} from 'react';
 import {useProfile} from '~/lib/profile/ProfileProvider';
 import {
-  ALLERGY_LABELS,
   ALLERGY_OPTIONS,
   normalizePreferences,
   SKIN_TONES,
   UNDERTONES,
 } from '~/lib/profile/preferences';
 import type {PreferenceProfile} from '~/lib/profile/types';
-
-function label(value: string): string {
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
+import {useTranslation} from '~/lib/i18n';
 
 export function PreferencesForm() {
   const {status, preferences, savePreferences} = useProfile();
+  const t = useTranslation();
 
   return (
     <section>
-      <h2 className="font-display text-2xl text-ink">Preferences</h2>
+      <h2 className="font-display text-2xl text-ink">{t('preferences.title')}</h2>
       <p className="mt-2 text-sm leading-7 text-primary">
-        Tell us what suits your skin so suggestions can fit you better.
+        {t('preferences.intro')}
       </p>
 
       {status === 'ready' ? (
@@ -30,10 +27,10 @@ export function PreferencesForm() {
         />
       ) : status === 'error' ? (
         <p role="alert" className="mt-4 text-sm text-red-700">
-          Could not load preferences. Refresh the page to try again.
+          {t('preferences.loadError')}
         </p>
       ) : (
-        <p className="mt-4 text-sm text-primary">Loading preferences…</p>
+        <p className="mt-4 text-sm text-primary">{t('preferences.loading')}</p>
       )}
     </section>
   );
@@ -46,6 +43,7 @@ export function PreferencesFields({
   preferences: PreferenceProfile | null;
   onSave: (preferences: PreferenceProfile) => Promise<void>;
 }) {
+  const t = useTranslation();
   const [allergies, setAllergies] = useState(preferences?.allergies ?? []);
   const [tone, setTone] = useState(preferences?.skin?.tone ?? '');
   const [undertone, setUndertone] = useState(
@@ -85,7 +83,7 @@ export function PreferencesFields({
     <form onSubmit={submit} className="mt-5 space-y-6">
       <fieldset>
         <legend className="text-[11px] uppercase tracking-[0.15em] text-primary">
-          Allergies
+          {t('preferences.allergies')}
         </legend>
 
         <div className="mt-3 grid gap-2 sm:grid-cols-3">
@@ -100,7 +98,7 @@ export function PreferencesFields({
                 onChange={() => toggleAllergy(value)}
                 className="h-4 w-4 accent-ink"
               />
-              {ALLERGY_LABELS[value]}
+              {t(`allergen.${value}`)}
             </label>
           ))}
         </div>
@@ -109,7 +107,7 @@ export function PreferencesFields({
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block">
           <span className="text-[11px] uppercase tracking-[0.15em] text-primary">
-            Skin tone
+            {t('preferences.skinTone')}
           </span>
           <select
             id="skin-tone"
@@ -120,10 +118,10 @@ export function PreferencesFields({
             }}
             className="mt-1 w-full border border-line bg-paper px-3 py-2 text-sm text-ink outline-none focus:border-ink"
           >
-            <option value="">Not set</option>
+            <option value="">{t('common.notSet')}</option>
             {SKIN_TONES.map((value) => (
               <option key={value} value={value}>
-                {label(value)}
+                {t(`preferences.tone.${value}`)}
               </option>
             ))}
           </select>
@@ -131,7 +129,7 @@ export function PreferencesFields({
 
         <label className="block">
           <span className="text-[11px] uppercase tracking-[0.15em] text-primary">
-            Undertone
+            {t('preferences.undertone')}
           </span>
           <select
             id="undertone"
@@ -142,10 +140,10 @@ export function PreferencesFields({
             }}
             className="mt-1 w-full border border-line bg-paper px-3 py-2 text-sm text-ink outline-none focus:border-ink"
           >
-            <option value="">Not set</option>
+            <option value="">{t('common.notSet')}</option>
             {UNDERTONES.map((value) => (
               <option key={value} value={value}>
-                {label(value)}
+                {t(`preferences.undertone.${value}`)}
               </option>
             ))}
           </select>
@@ -158,7 +156,7 @@ export function PreferencesFields({
           disabled={state === 'saving'}
           className="bg-primary px-6 py-3 text-[11px] uppercase tracking-widest text-white transition-colors hover:bg-ink disabled:opacity-60"
         >
-          {state === 'saving' ? 'Saving…' : 'Save preferences'}
+          {state === 'saving' ? t('common.saving') : t('preferences.save')}
         </button>
 
         <p
@@ -168,9 +166,9 @@ export function PreferencesFields({
           }`}
         >
           {state === 'saved'
-            ? 'Preferences saved.'
+            ? t('preferences.saved')
             : state === 'error'
-              ? 'Could not save preferences.'
+              ? t('preferences.saveError')
               : null}
         </p>
       </div>

@@ -1,5 +1,6 @@
 import {useLoaderData} from 'react-router';
 import type {Route} from './+types/search';
+import {translatorFromMatches, useTranslation} from '~/lib/i18n';
 import {getPaginationVariables, Analytics} from '@shopify/hydrogen';
 import {SearchForm} from '~/components/search/SearchForm';
 import {SearchResults} from '~/components/search/SearchResults';
@@ -8,8 +9,8 @@ import type {RegularSearchQuery, PredictiveSearchQuery,} from 'storefrontapi.gen
 import {JEWELIETTE_PRODUCT_CARD_FRAGMENT,} from '~/lib/jeweliette-catalog';
 import {CatalogFilters} from '~/components/collections/CatalogFilters';
 
-export const meta: Route.MetaFunction = () => {
-  return [{title: `Search | Jeweliette`}];
+export const meta: Route.MetaFunction = ({matches}) => {
+  return [{title: `${translatorFromMatches(matches)('nav.search')} | Jeweliette`}];
 };
 
 export async function loader({request, context}: Route.LoaderArgs) {
@@ -32,6 +33,7 @@ export async function loader({request, context}: Route.LoaderArgs) {
  */
 export default function SearchPage() {
   const data = useLoaderData<typeof loader>();
+  const t = useTranslation();
 
   // Predictive requests are consumed by the search fetcher.
   if (data.type === 'predictive') return null;
@@ -60,7 +62,7 @@ export default function SearchPage() {
     <section className="mx-auto max-w-[1280px] px-[4vw] pb-24 pt-12">
       <div className="mx-auto max-w-2xl">
         <h1 className="text-xs uppercase tracking-[0.2em] text-primary">
-          Search Jeweliette
+          {t('search.title')}
         </h1>
 
         <SearchForm
@@ -71,10 +73,10 @@ export default function SearchPage() {
           {({inputRef}) => (
             <>
               <input
-                aria-label="Search products"
+                aria-label={t('search.inputLabel')}
                 defaultValue={term}
                 name="q"
-                placeholder="What are you looking for?"
+                placeholder={t('search.placeholder')}
                 ref={inputRef}
                 type="search"
                 autoComplete="off"
@@ -85,7 +87,7 @@ export default function SearchPage() {
                 type="submit"
                 className="min-h-11 px-3 text-xs uppercase tracking-widest text-primary hover:text-ink"
               >
-                Search
+                {t('nav.search')}
               </button>
             </>
           )}
@@ -97,8 +99,7 @@ export default function SearchPage() {
           role="alert"
           className="mt-8 text-sm text-red-800"
         >
-          Search is temporarily unavailable. Please try
-          again.
+          {t('search.unavailable')}
         </p>
       ) : null}
 
@@ -117,7 +118,7 @@ export default function SearchPage() {
       <div className="mt-12">
         {!term ? (
           <p className="text-center text-sm text-primary">
-            Search for a piece, material or collection.
+            {t('search.prompt')}
           </p>
         ) : !result.total ? (
           <SearchResults.Empty />
@@ -133,8 +134,7 @@ export default function SearchPage() {
                 {products.nodes.length === 0 ? (
                   <div className="border-y border-line py-8 text-center">
                     <p className="text-sm text-primary">
-                      No products match your search and
-                      selected filters.
+                      {t('search.noFilteredProducts')}
                     </p>
                   </div>
                 ) : null}

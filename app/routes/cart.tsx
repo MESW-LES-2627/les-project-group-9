@@ -1,11 +1,12 @@
 import {useLoaderData, data, type HeadersFunction} from 'react-router';
 import type {Route} from './+types/cart';
+import {translatorFromMatches, useTranslation} from '~/lib/i18n';
 import type {CartQueryDataReturn} from '@shopify/hydrogen';
 import {CartForm} from '@shopify/hydrogen';
 import {CartMain} from '~/components/cart/CartMain';
 
-export const meta: Route.MetaFunction = () => {
-  return [{title: `Shopping bag | Jeweliette`}];
+export const meta: Route.MetaFunction = ({matches}) => {
+  return [{title: `${translatorFromMatches(matches)('nav.shoppingBag')} | Jeweliette`}];
 };
 
 export const headers: HeadersFunction = ({actionHeaders}) => actionHeaders;
@@ -103,15 +104,16 @@ export async function loader({context}: Route.LoaderArgs) {
 
 export default function Cart() {
   const cart = useLoaderData<typeof loader>();
+  const t = useTranslation();
 
   return (
     <div className="pb-12">
       <header className="mx-auto max-w-3xl px-[5vw] pt-12">
         <p className="text-xs uppercase tracking-[0.2em] text-primary">
-          Your selection
+          {t('common.yourSelection')}
         </p>
         <h1 className="mt-4 font-display text-4xl">
-          Shopping bag
+          {t('nav.shoppingBag')}
         </h1>
       </header>
 

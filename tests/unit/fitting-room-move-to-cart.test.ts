@@ -19,7 +19,10 @@ type ActionArgs = Parameters<typeof action>[0];
 const PRODUCT_ID = 'gid://shopify/Product/1';
 const VARIANT_ID = 'gid://shopify/ProductVariant/1';
 
-function contextWith({loggedIn = true} = {}) {
+function contextWith({
+  loggedIn = true,
+  language = 'EN',
+}: {loggedIn?: boolean; language?: 'EN' | 'PT_PT' | 'FR'} = {}) {
   const addLines = vi.fn().mockResolvedValue({cart: {id: 'cart-1'}});
   const setCartId = vi
     .fn()
@@ -27,6 +30,7 @@ function contextWith({loggedIn = true} = {}) {
   const context = {
     customerAccount: {isLoggedIn: async () => loggedIn},
     cart: {addLines, setCartId},
+    storefront: {i18n: {language, country: 'US'}},
   } as unknown as ActionArgs['context'];
 
   return {context, addLines, setCartId};
@@ -116,6 +120,21 @@ describe('POST /fitting-room', () => {
     expect(addLines).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ['PT_PT', 'Esta peça está esgotada'],
+    ['FR', 'Cette pièce est épuisée'],
+  ] as const)(
+    'returns the sold-out message in the shopper language (%s)',
+    async (language, message) => {
+      vi.mocked(loadProductsByIds).mockResolvedValue([product(false)]);
+      const {context} = contextWith({language});
+
+      const result = await callAction(context);
+
+      expect(result.data).toEqual({error: message});
+    },
+  );
+
   it('does not remove the piece when the cart add fails', async () => {
     vi.mocked(loadProductsByIds).mockResolvedValue([product()]);
     const {context, addLines} = contextWith();
@@ -156,7 +175,8 @@ describe('POST /fitting-room', () => {
     const result = await callAction(context);
 
     expect(result.init?.status).toBe(400);
-    expect(result.data).toEqual({error: 'No access'});
+    // The internal message is logged, not shown.
+    expect(result.data).toEqual({error: 'Could not remove from fitting room'});
     expect(new Headers(result.init?.headers).get('Set-Cookie')).toBe('cart=1');
   });
 });

@@ -4,6 +4,7 @@ import type {CartApiQueryFragment} from 'storefrontapi.generated';
 import {useAside} from '~/components/layout/Aside';
 import {CartLineItem, type CartLine} from '~/components/cart/CartLineItem';
 import {CartSummary} from '~/components/cart/CartSummary';
+import {useTranslation} from '~/lib/i18n';
 
 export type CartLayout = 'page' | 'aside';
 
@@ -35,6 +36,7 @@ function getLineItemChildrenMap(lines: CartLine[]): LineItemChildrenMap {
 
 export function CartMain({layout, cart: originalCart}: CartMainProps) {
   const cart = useOptimisticCart(originalCart);
+  const t = useTranslation();
 
   const hasLines = Boolean(cart?.lines?.nodes?.length);
   const cartHasItems = cart?.totalQuantity ? cart.totalQuantity > 0 : false;
@@ -42,7 +44,9 @@ export function CartMain({layout, cart: originalCart}: CartMainProps) {
 
   return (
     <section
-      aria-label={layout === 'page' ? 'Cart page' : 'Cart drawer'}
+      aria-label={
+        layout === 'page' ? t('cart.region.page') : t('cart.region.drawer')
+      }
       className={
         layout === 'page'
           ? 'mx-auto w-full max-w-3xl px-[5vw] py-16'
@@ -54,7 +58,7 @@ export function CartMain({layout, cart: originalCart}: CartMainProps) {
       {hasLines ? (
         <div className="flex min-h-0 flex-1 flex-col">
           <p id="cart-lines" className="sr-only">
-            Line items
+            {t('cart.lines')}
           </p>
 
           <ul
@@ -88,15 +92,15 @@ export function CartMain({layout, cart: originalCart}: CartMainProps) {
 
 function CartEmpty() {
   const {close} = useAside();
+  const t = useTranslation();
 
   return (
     <div className="flex flex-col items-start gap-4 py-10">
       <h2 className="font-display text-3xl leading-tight text-ink">
-        Your bag is empty
+        {t('cart.empty')}
       </h2>
       <p className="max-w-[32ch] text-sm leading-6 text-primary">
-        Looks like you haven&rsquo;t added anything yet. Explore the
-        collections and find a piece you love.
+        {t('cart.emptyText')}
       </p>
       <Link
         to="/collections"
@@ -104,7 +108,7 @@ function CartEmpty() {
         prefetch="viewport"
         className="inline-flex min-h-11 items-center bg-primary px-6 text-xs font-medium uppercase tracking-widest text-white transition-colors hover:bg-ink"
       >
-        Continue shopping
+        {t('cart.continueShopping')}
       </Link>
     </div>
   );

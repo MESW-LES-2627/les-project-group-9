@@ -7,9 +7,12 @@ import {
 } from '@shopify/hydrogen';
 import type {HeaderQuery, CartApiQueryFragment} from 'storefrontapi.generated';
 import {useAside} from '~/components/layout/Aside';
+import {LanguageSelector} from '~/components/layout/LanguageSelector';
 import {Icon} from '~/components/shared/Icon';
 import {useFavorites} from '~/lib/favorites';
 import {useFittingRoom} from '~/lib/fitting-room';
+import {useTranslation, type Translate} from '~/lib/i18n';
+import {toMenuPath} from '~/lib/menu';
 
 interface HeaderProps {
   header: HeaderQuery;
@@ -38,20 +41,21 @@ export function Header({
   publicStoreDomain,
 }: HeaderProps) {
   const {shop, menu} = header;
+  const t = useTranslation();
 
   return (
     <>
       <div className="flex h-6 items-center justify-center bg-primary px-4 text-center text-xs uppercase tracking-[0.16em] text-white">
-        <span>Free shipping on orders over €100</span>
-        <span className="hidden sm:inline"> · Made to last</span>
+        <span>{t('layout.announcement')}</span>
+        <span className="hidden sm:inline"> · {t('layout.tagline')}</span>
       </div>
-      <header className="sticky top-0 z-50 grid h-[66px] grid-cols-[44px_1fr_auto] items-center border-b border-line bg-paper px-4 tablet:grid-cols-[minmax(140px,1fr)_auto_minmax(140px,1fr)] tablet:px-[3vw]">
-        <div className="tablet:hidden">
+      <header className="sticky top-0 z-50 grid h-[66px] grid-cols-[44px_1fr_auto] items-center border-b border-line bg-paper px-4 xl:grid-cols-[minmax(140px,1fr)_auto_minmax(140px,1fr)] xl:px-[3vw]">
+        <div className="xl:hidden">
           <HeaderMenuMobileToggle />
         </div>
         <NavLink
-          aria-label={`${shop.name} — home`}
-          className="justify-self-center font-display text-2xl font-medium tracking-[-0.04em] text-primary tablet:justify-self-start"
+          aria-label={t('nav.homeOf', {shop: shop.name})}
+          className="justify-self-center font-display text-2xl font-medium tracking-[-0.04em] text-primary xl:justify-self-start"
           prefetch="intent"
           to="/"
           end
@@ -82,15 +86,16 @@ export function HeaderMenu({
   publicStoreDomain: HeaderProps['publicStoreDomain'];
 }) {
   const {close} = useAside();
+  const t = useTranslation();
   const mobile = viewport === 'mobile';
 
   return (
     <nav
-      aria-label={mobile ? 'Mobile menu' : 'Main navigation'}
+      aria-label={mobile ? t('nav.mobile') : t('nav.main')}
       className={
         mobile
           ? 'flex flex-col gap-1 px-5 py-6'
-          : 'hidden items-center justify-center gap-3 tablet:flex xl:gap-7'
+          : 'hidden items-center justify-center gap-7 xl:flex'
       }
     >
       {mobile && (
@@ -102,19 +107,15 @@ export function HeaderMenu({
           to="/"
         >
           <span>
-            <span className="mr-4 font-sans text-xs">01</span>Home
+            <span className="mr-4 font-sans text-xs">01</span>
+            {t('nav.home')}
           </span>
           <Icon name="arrow" size={18} />
         </NavLink>
       )}
-      {(menu || FALLBACK_HEADER_MENU).items.map((item, index) => {
+      {(menu || fallbackHeaderMenu(t)).items.map((item, index) => {
         if (!item.url) return null;
-        const url =
-          item.url.includes('myshopify.com') ||
-          item.url.includes(publicStoreDomain) ||
-          item.url.includes(primaryDomainUrl)
-            ? new URL(item.url).pathname
-            : item.url;
+        const url = toMenuPath(item.url, [publicStoreDomain, primaryDomainUrl]);
 
         return (
           <NavLink
@@ -153,18 +154,21 @@ function HeaderCtas({
   isLoggedIn,
   cart,
 }: Pick<HeaderProps, 'isLoggedIn' | 'cart'>) {
+  const t = useTranslation();
+
   return (
     <nav
-      aria-label="Account actions"
+      aria-label={t('nav.accountActions')}
       className="flex items-center justify-end gap-1 text-primary sm:gap-2"
     >
+      <LanguageSelector className="hidden xl:flex" />
       <SearchToggle />
       <FavoritesLink />
       <FittingRoomLink />
 
       <NavLink
-        aria-label="Account"
-        className="hidden size-11 place-items-center hover:text-ink tablet:grid"
+        aria-label={t('nav.account')}
+        className="hidden size-11 place-items-center hover:text-ink xl:grid"
         prefetch="intent"
         to="/account"
       >
@@ -181,9 +185,10 @@ function HeaderCtas({
 
 function HeaderMenuMobileToggle() {
   const {open} = useAside();
+  const t = useTranslation();
   return (
     <button
-      aria-label="Open menu"
+      aria-label={t('nav.openMenu')}
       className="grid size-11 place-items-center text-primary"
       onClick={() => open('mobile')}
       type="button"
@@ -195,9 +200,10 @@ function HeaderMenuMobileToggle() {
 
 function SearchToggle() {
   const {open} = useAside();
+  const t = useTranslation();
   return (
     <button
-      aria-label="Search"
+      aria-label={t('nav.search')}
       className="grid size-11 place-items-center hover:text-ink"
       onClick={() => open('search')}
       type="button"
@@ -210,10 +216,11 @@ function SearchToggle() {
 function CartBadge({count}: {count: number}) {
   const {open} = useAside();
   const {publish, shop, cart, prevCart} = useAnalytics();
+  const t = useTranslation();
 
   return (
     <a
-      aria-label={`Open cart with ${count} items`}
+      aria-label={t('nav.openCart', {count})}
       className="relative grid size-11 place-items-center hover:text-ink"
       href="/cart"
       onClick={(event) => {
@@ -253,63 +260,67 @@ function CartBanner() {
   return <CartBadge count={cart?.totalQuantity ?? 0} />;
 }
 
-const FALLBACK_HEADER_MENU = {
-  id: 'fallback-header-menu',
-  items: [
-    {
-      id: 'trending',
-      resourceId: null,
-      tags: [],
-      title: 'Trending',
-      type: 'HTTP',
-      url: '/',
-      items: [],
-    },
-    {
-      id: 'watches',
-      resourceId: null,
-      tags: [],
-      title: 'Watches',
-      type: 'HTTP',
-      url: '/collections/watches',
-      items: [],
-    },
-    {
-      id: 'charms',
-      resourceId: null,
-      tags: [],
-      title: 'Charms',
-      type: 'HTTP',
-      url: '/collections/charms',
-      items: [],
-    },
-    {
-      id: 'jewelry',
-      resourceId: null,
-      tags: [],
-      title: 'Jewelry',
-      type: 'HTTP',
-      url: '/collections/jewelry',
-      items: [],
-    },
-    {
-      id: 'collections',
-      resourceId: null,
-      tags: [],
-      title: 'Collections',
-      type: 'HTTP',
-      url: '/collections',
-      items: [],
-    },
-  ],
-};
+/** Used when Shopify returns no `main-menu`; titles come from the dictionary. */
+function fallbackHeaderMenu(t: Translate) {
+  return {
+    id: 'fallback-header-menu',
+    items: [
+      {
+        id: 'trending',
+        resourceId: null,
+        tags: [],
+        title: t('menu.trending'),
+        type: 'HTTP',
+        url: '/',
+        items: [],
+      },
+      {
+        id: 'watches',
+        resourceId: null,
+        tags: [],
+        title: t('menu.watches'),
+        type: 'HTTP',
+        url: '/collections/watches',
+        items: [],
+      },
+      {
+        id: 'charms',
+        resourceId: null,
+        tags: [],
+        title: t('menu.charms'),
+        type: 'HTTP',
+        url: '/collections/charms',
+        items: [],
+      },
+      {
+        id: 'jewelry',
+        resourceId: null,
+        tags: [],
+        title: t('menu.jewelry'),
+        type: 'HTTP',
+        url: '/collections/jewelry',
+        items: [],
+      },
+      {
+        id: 'collections',
+        resourceId: null,
+        tags: [],
+        title: t('common.collections'),
+        type: 'HTTP',
+        url: '/collections',
+        items: [],
+      },
+    ],
+  };
+}
 
 function FavoritesLink() {
   const {ids} = useFavorites();
+  const t = useTranslation();
   return (
     <Link
       to="/favorites"
-      aria-label={`Favorites${ids.length ? ` (${ids.length})` : ''}`}
+      aria-label={`${t('nav.favorites')}${ids.length ? ` (${ids.length})` : ''}`}
       className="relative flex h-10 w-10 items-center justify-center hover:text-ink"
     >
       <Icon name="heart" size={20} />
@@ -324,10 +335,11 @@ function FavoritesLink() {
 
 function FittingRoomLink() {
   const {ids} = useFittingRoom();
+  const t = useTranslation();
   return (
     <Link
       to="/fitting-room"
-      aria-label={`Fitting room${ids.length ? ` (${ids.length})` : ''}`}
+      aria-label={`${t('nav.fittingRoom')}${ids.length ? ` (${ids.length})` : ''}`}
       className="relative flex h-10 w-10 items-center justify-center hover:text-ink"
     >
       <Icon name="hanger" size={20} />

@@ -1,6 +1,11 @@
 import {normalizeValue} from '~/lib/metafields';
 import type {PreferenceProfile} from '~/lib/profile/types';
-import type {PreferenceSignal, ProductTraits, TraitKey} from './types';
+import type {
+  PreferenceSignal,
+  ProductTraits,
+  RecommendationReason,
+  TraitKey,
+} from './types';
 import {TRAIT_WEIGHTS} from './weights';
 
 type PreferenceSource =
@@ -16,49 +21,49 @@ export const PREFERENCE_TRAITS: Array<{
   trait: TraitKey;
   polarity: 'positive' | 'negative';
   weight: number;
-  reason: string;
+  reason: RecommendationReason;
 }> = [
   {
     source: 'allergies',
     trait: 'allergens',
     polarity: 'negative',
     weight: 1000,
-    reason: 'Allergy',
+    reason: {code: 'allergy'},
   },
   {
     source: 'preferredMaterials',
     trait: 'material',
     polarity: 'positive',
     weight: 4,
-    reason: 'Matches your preferred materials',
+    reason: {code: 'preferredMaterials'},
   },
   {
     source: 'preferredColors',
     trait: 'metal',
     polarity: 'positive',
     weight: 3,
-    reason: 'Matches your preferred colours',
+    reason: {code: 'preferredColors'},
   },
   {
     source: 'preferredGemstones',
     trait: 'gemstones',
     polarity: 'positive',
     weight: 2,
-    reason: 'Matches your preferred gemstones',
+    reason: {code: 'preferredGemstones'},
   },
   {
     source: 'skinTone',
     trait: 'skinTones',
     polarity: 'positive',
     weight: 1,
-    reason: 'Matches your skin tone',
+    reason: {code: 'skinTone'},
   },
   {
     source: 'undertone',
     trait: 'undertones',
     polarity: 'positive',
     weight: 2,
-    reason: 'Matches your undertone',
+    reason: {code: 'undertone'},
   },
 ];
 
@@ -71,24 +76,25 @@ const FAVORITE_TRAITS: TraitKey[] = [
   'gemColors',
 ];
 
-function labelForTrait(trait: TraitKey, value: string): string {
+/** Reason for a favorite-derived signal; the catalog value is kept for display. */
+function reasonForTrait(trait: TraitKey, value: string): RecommendationReason {
   const label = value.replace(/-/g, ' ');
 
   switch (trait) {
     case 'material':
-      return `Same material: ${label}`;
+      return {code: 'sameMaterial', value: label};
     case 'metal':
-      return `Same metal: ${label}`;
+      return {code: 'sameMetal', value: label};
     case 'category':
-      return 'Similar jewellery category';
+      return {code: 'similarCategory'};
     case 'collections':
-      return 'From the same collection';
+      return {code: 'sameCollection'};
     case 'gemstones':
-      return `Same gemstone: ${label}`;
+      return {code: 'sameGemstone', value: label};
     case 'gemColors':
-      return `Same gem colour: ${label}`;
+      return {code: 'sameGemColor', value: label};
     default:
-      return 'Similar to your favorites';
+      return {code: 'similarFavorite'};
   }
 }
 
@@ -113,7 +119,7 @@ export function signalsFromFavorites(
         values: [value],
         polarity: 'positive',
         weight,
-        reason: labelForTrait(trait, value),
+        reason: reasonForTrait(trait, value),
       });
     }
   }

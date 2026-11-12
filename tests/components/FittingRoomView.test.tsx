@@ -6,7 +6,6 @@ import type {CatalogProduct} from '~/lib/jeweliette-catalog';
 
 vi.mock('@shopify/hydrogen', () => ({
   Image: ({alt}: {alt?: string}) => <img alt={alt ?? ''} />,
-  Money: ({data}: {data: {amount: string}}) => <span>{data.amount}</span>,
 }));
 
 import {FittingRoomView} from '../../app/components/fitting-room/FittingRoomView';

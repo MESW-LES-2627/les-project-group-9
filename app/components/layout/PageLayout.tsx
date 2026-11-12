@@ -8,6 +8,7 @@ import type {
 import {Aside, useAside} from '~/components/layout/Aside';
 import {Footer} from '~/components/layout/Footer';
 import {Header, HeaderMenu} from '~/components/layout/Header';
+import {LanguageSelector} from '~/components/layout/LanguageSelector';
 import {CartMain} from '~/components/cart/CartMain';
 import {
   SEARCH_ENDPOINT,
@@ -15,6 +16,7 @@ import {
 } from '~/components/search/SearchFormPredictive';
 import {SearchResultsPredictive} from '~/components/search/SearchResultsPredictive';
 import {Icon} from '~/components/shared/Icon';
+import {useTranslation} from '~/lib/i18n';
 
 interface PageLayoutProps {
   cart: Promise<CartApiQueryFragment | null>;
@@ -33,13 +35,15 @@ export function PageLayout({
   isLoggedIn,
   publicStoreDomain,
 }: PageLayoutProps) {
+  const t = useTranslation();
+
   return (
     <Aside.Provider>
       <a
         className="fixed left-4 top-4 z-[100] -translate-y-24 bg-ink px-4 py-2 text-sm text-white focus:translate-y-0"
         href="#main-content"
       >
-        Skip to content
+        {t('nav.skipToContent')}
       </a>
       <CartAside cart={cart} />
       <SearchAside />
@@ -50,7 +54,9 @@ export function PageLayout({
         isLoggedIn={isLoggedIn}
         publicStoreDomain={publicStoreDomain}
       />
-      <main id="main-content">{children}</main>
+      <main id="main-content" className="flex-1">
+        {children}
+      </main>
       <Footer
         footer={footer}
         header={header}
@@ -61,8 +67,10 @@ export function PageLayout({
 }
 
 function CartAside({cart}: {cart: PageLayoutProps['cart']}) {
+  const t = useTranslation();
+
   return (
-    <Aside type="cart" heading="Shopping bag">
+    <Aside type="cart" heading={t('nav.shoppingBag')}>
       <div className="p-5 sm:p-8 h-full">
         <Suspense fallback={<CartSkeleton />}>
           <Await resolve={cart}>
@@ -75,8 +83,9 @@ function CartAside({cart}: {cart: PageLayoutProps['cart']}) {
 }
 
 function CartSkeleton() {
+  const t = useTranslation();
   return (
-    <div aria-label="Loading cart" className="animate-pulse space-y-5">
+    <div aria-label={t('cart.loading')} className="animate-pulse space-y-5">
       {[0, 1].map((item) => (
         <div className="flex gap-4" key={item}>
           <div className="h-28 w-24 bg-secondary/60" />
@@ -92,9 +101,10 @@ function CartSkeleton() {
 
 function SearchAside() {
   const queriesDatalistId = useId();
+  const t = useTranslation();
 
   return (
-    <Aside type="search" heading="Search Jeweliette">
+    <Aside type="search" heading={t('search.title')}>
       <div className="mx-auto max-w-[940px] px-5 py-10 sm:px-8 sm:py-16">
         <SearchFormPredictive className="flex items-center border-b border-primary pb-3">
           {({fetchResults, goToSearch, inputRef}) => (
@@ -107,12 +117,12 @@ function SearchAside() {
                 name="q"
                 onChange={fetchResults}
                 onFocus={fetchResults}
-                placeholder="What are you looking for?"
+                placeholder={t('search.placeholder')}
                 ref={inputRef}
                 type="search"
               />
               <button
-                aria-label="See all results"
+                aria-label={t('search.seeAll')}
                 className="grid size-11 shrink-0 place-items-center text-primary hover:text-ink"
                 onClick={goToSearch}
                 type="button"
@@ -129,19 +139,19 @@ function SearchAside() {
               const {articles, collections, pages, products, queries} = items;
 
               if (state === 'loading' && term.current) {
-                return <p className="text-sm text-primary">Searching…</p>;
+                return <p className="text-sm text-primary">{t('search.searching')}</p>;
               }
 
               if (!term.current) {
                 return (
                   <div>
                     <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
-                      Explore
+                      {t('search.explore')}
                     </p>
                     <div className="mt-5 flex flex-wrap gap-x-8 gap-y-3 font-display text-xl text-primary sm:text-2xl">
-                      <Link onClick={closeSearch} to="/collections/all">All pieces</Link>
-                      <Link onClick={closeSearch} to="/collections/jewelry">Jewelry</Link>
-                      <Link onClick={closeSearch} to="/collections">Collections</Link>
+                      <Link onClick={closeSearch} to="/collections/all">{t('common.allPieces')}</Link>
+                      <Link onClick={closeSearch} to="/collections/jewelry">{t('menu.jewelry')}</Link>
+                      <Link onClick={closeSearch} to="/collections">{t('common.collections')}</Link>
                     </div>
                   </div>
                 );
@@ -150,9 +160,9 @@ function SearchAside() {
               if (!total) {
                 return (
                   <div className="py-12 text-center">
-                    <p className="font-display text-3xl text-primary">No results</p>
+                    <p className="font-display text-3xl text-primary">{t('search.noResults')}</p>
                     <p className="mt-3 text-sm text-primary/70">
-                      Try another term for <q>{term.current}</q>.
+                      {t('search.tryAnotherTerm', {term: term.current})}
                     </p>
                   </div>
                 );
@@ -175,7 +185,7 @@ function SearchAside() {
                     onClick={closeSearch}
                     to={`${SEARCH_ENDPOINT}?q=${encodeURIComponent(term.current)}`}
                   >
-                    See all results <Icon name="arrow" size={16} />
+                    {t('search.seeAll')} <Icon name="arrow" size={16} />
                   </Link>
                 </>
               );
@@ -195,8 +205,10 @@ function MobileMenuAside({
   publicStoreDomain: PageLayoutProps['publicStoreDomain'];
 }) {
   const {open, close} = useAside();
+  const t = useTranslation();
+
   return (
-    <Aside type="mobile" heading="Menu">
+    <Aside type="mobile" heading={t('nav.menu')}>
       <HeaderMenu
         menu={header.menu}
         viewport="mobile"
@@ -205,15 +217,16 @@ function MobileMenuAside({
       />
       <div className="mt-6 grid gap-3 px-5 text-xs font-medium uppercase tracking-[0.14em] text-primary">
         <Link className="flex min-h-11 items-center border-b border-line" to="/account" onClick={close}>
-          My account
+          {t('nav.myAccount')}
         </Link>
         <button
           type="button"
           className="flex min-h-11 items-center border-b border-line text-left text-xs font-medium uppercase tracking-[0.14em] text-primary"
           onClick={() => open('cart')}
         >
-          Shopping bag
+          {t('nav.shoppingBag')}
         </button>
+        <LanguageSelector layout="inline" onSelect={close} />
       </div>
     </Aside>
   );

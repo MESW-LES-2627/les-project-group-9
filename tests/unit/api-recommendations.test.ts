@@ -92,10 +92,10 @@ describe('GET /api/recommendations', () => {
     const result = await callLoader(context);
     const data = result.data as {
       products: Array<{id: string}>;
-      reasons: Record<string, string[]>;
+      reasons: Record<string, Array<{code: string; value?: string}>>;
     };
 
     expect(data.products.map((item) => item.id)).toEqual([warm.id]);
-    expect(data.reasons[warm.id]).toContain('Matches your undertone');
+    expect(data.reasons[warm.id]).toContainEqual({code: 'undertone'});
   });
 });

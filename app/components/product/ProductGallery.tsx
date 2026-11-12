@@ -1,6 +1,7 @@
 import {useEffect, useState} from 'react';
 import {Image} from '@shopify/hydrogen';
 import type {CatalogImage} from '~/lib/jeweliette-catalog';
+import {useTranslation} from '~/lib/i18n';
 
 type Props = {
   images: CatalogImage[];
@@ -9,6 +10,7 @@ type Props = {
 };
 
 export function ProductGallery({images, variantImage, title}: Props) {
+  const t = useTranslation();
   const [manual, setManual] = useState<number | null>(null);
 
   const variantIndex = variantImage?.id
@@ -20,7 +22,7 @@ export function ProductGallery({images, variantImage, title}: Props) {
   if (!images.length) {
     return (
       <div className="flex aspect-[4/5] items-center justify-center bg-secondary text-sm text-primary">
-        No image available
+        {t('product.noImage')}
       </div>
     );
   }
@@ -43,7 +45,10 @@ export function ProductGallery({images, variantImage, title}: Props) {
               <button
                 type="button"
                 onClick={() => setManual(index)}
-                aria-label={`Show image ${index + 1} of ${images.length}`}
+                aria-label={t('product.showImage', {
+                  index: index + 1,
+                  total: images.length,
+                })}
                 aria-current={index === active}
                 className={`block h-[72px] w-[58px] overflow-hidden bg-secondary ring-offset-2 md:h-[88px] md:w-[72px] ${
                   index === active ? 'ring-1 ring-ink' : 'opacity-70 hover:opacity-100'

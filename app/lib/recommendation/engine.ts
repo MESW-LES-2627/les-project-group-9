@@ -2,6 +2,7 @@ import {signalsFromFavorites, signalsFromPreferences} from './signals';
 import type {
   PreferenceSignal,
   ProductTraits,
+  RecommendationReason,
   RecommendationInput,
   RecommendationResult,
 } from './types';
@@ -47,18 +48,22 @@ export function recommendProducts({
   const scored = candidates
     .map((product) => {
       let score = 0;
-      const reasons: string[] = [];
+      // Unique by code and value, in signal order.
+      const reasons = new Map<string, RecommendationReason>();
 
       for (const signal of positiveSignals) {
         if (!matches(product, signal)) continue;
         score += signal.weight;
-        reasons.push(signal.reason);
+        reasons.set(
+          `${signal.reason.code}:${signal.reason.value ?? ''}`,
+          signal.reason,
+        );
       }
 
       return {
         id: product.id,
         score,
-        reasons: Array.from(new Set(reasons)),
+        reasons: Array.from(reasons.values()),
       };
     })
     .filter((result) => result.score > 0);
@@ -76,6 +81,6 @@ export function recommendProducts({
   return candidates.slice(0, resultLimit).map((product) => ({
     id: product.id,
     score: 0,
-    reasons: ['Popular piece'],
+    reasons: [{code: 'popular'}],
   }));
 }

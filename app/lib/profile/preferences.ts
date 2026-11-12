@@ -9,12 +9,6 @@ export const ALLERGY_OPTIONS = ['nickel', 'zinc', 'cobalt'] as const;
 export const SKIN_TONES = ['fair', 'light', 'medium', 'tan', 'deep'] as const;
 export const UNDERTONES = ['cool', 'warm', 'neutral'] as const;
 
-export const ALLERGY_LABELS: Record<(typeof ALLERGY_OPTIONS)[number], string> = {
-  nickel: 'Nickel',
-  zinc: 'Zinc',
-  cobalt: 'Cobalt',
-};
-
 export const RING_HANDS: readonly RingHand[] = ['left', 'right'];
 export const RING_FINGER_NAMES: readonly RingFingerName[] = [
   'thumb',
@@ -34,14 +28,9 @@ export const US_RING_SIZES: readonly string[] = Array.from(
   (_, index) => String(4 + index * 0.5),
 );
 
-export const RING_HAND_LABELS: Record<RingHand, string> = {
-  left: 'Left hand',
-  right: 'Right hand',
-};
-
-export function ringFingerLabel(finger: RingFinger): string {
-  const name = finger.split('-')[1];
-  return name.charAt(0).toUpperCase() + name.slice(1);
+/** The finger id (`thumb`, `index`…) of a hand-finger key; translate it in the UI. */
+export function ringFingerOf(finger: RingFinger): RingFingerName {
+  return finger.split('-')[1] as RingFingerName;
 }
 
 export function ringHandOf(finger: RingFinger): RingHand {

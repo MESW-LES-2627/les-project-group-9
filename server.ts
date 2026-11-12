@@ -1,6 +1,7 @@
 import * as serverBuild from 'virtual:react-router/server-build';
 import {createRequestHandler, storefrontRedirect} from '@shopify/hydrogen';
 import {createHydrogenRouterContext} from '~/lib/context';
+import {finalizeResponse} from '~/lib/response.server';
 
 /**
  * Export a fetch handler in module format.
@@ -28,14 +29,10 @@ export default {
         getLoadContext: () => hydrogenContext,
       });
 
-      const response = await handleRequest(request);
-
-      if (hydrogenContext.session.isPending) {
-        response.headers.set(
-          'Set-Cookie',
-          await hydrogenContext.session.commit(),
-        );
-      }
+      const response = await finalizeResponse(
+        await handleRequest(request),
+        hydrogenContext.session,
+      );
 
       if (response.status === 404) {
         /**

@@ -6,6 +6,7 @@ import {
 } from '@shopify/hydrogen';
 import type {ProductFragment} from 'storefrontapi.generated';
 import {useAside} from '~/components/layout/Aside';
+import {useTranslation} from '~/lib/i18n';
 import {AddToBagGuard} from '~/components/product/AddToBagGuard';
 import {RingSizeHelp} from '~/components/product/RingSizeHelp';
 import {isColorOption} from '~/lib/options';
@@ -26,6 +27,7 @@ export function ProductForm({
 }: Props) {
   const navigate = useNavigate();
   const {open} = useAside();
+  const t = useTranslation();
 
   const lines: OptimisticCartLineInput[] = selectedVariant
     ? [{merchandiseId: selectedVariant.id, quantity: 1, selectedVariant}]
@@ -112,7 +114,9 @@ export function ProductForm({
                       disabled={!exists}
                       aria-label={name}
                       aria-pressed={selected}
-                      title={available ? name : `${name} (sold out)`}
+                      title={
+                        available ? name : t('product.optionSoldOut', {name})
+                      }
                       className={`${classes} disabled:cursor-not-allowed disabled:opacity-30`}
                       style={style}
                       onClick={() => {
@@ -157,10 +161,10 @@ export function ProductForm({
                   className="flex min-h-12 w-full items-center justify-center bg-primary px-6 text-xs font-medium uppercase tracking-widest text-white transition-colors hover:bg-ink disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {!selectedVariant?.availableForSale
-                    ? 'Sold out'
+                    ? t('product.soldOut')
                     : fetcher.state !== 'idle'
-                      ? 'Adding…'
-                      : 'Add to bag'}
+                      ? t('product.adding')
+                      : t('product.addToBag')}
                 </button>
               )}
             </AddToBagGuard>

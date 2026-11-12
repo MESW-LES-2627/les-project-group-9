@@ -11,10 +11,17 @@ import {
   useRouteLoaderData,
 } from 'react-router';
 import type {Route} from './+types/root';
+import {useEffect} from 'react';
 import logo from '~/assets/logo.svg';
 import tailwindCss from '~/styles/tailwind.css?url';
 import {PageLayout} from '~/components/layout/PageLayout';
 import {ProfileProvider} from '~/lib/profile/ProfileProvider';
+import {
+  DEFAULT_APP_LOCALE,
+  LocaleContext,
+  toAppLocale,
+  useTranslation,
+} from '~/lib/i18n';
 
 export type RootLoader = typeof loader;
 
@@ -51,6 +58,7 @@ export async function loader(args: Route.LoaderArgs) {
     ...deferredData,
     ...criticalData,
     publicStoreDomain: env.PUBLIC_STORE_DOMAIN,
+    locale: toAppLocale(storefront.i18n),
     shop: getShopAnalytics({
       storefront,
       publicStorefrontId: env.PUBLIC_STOREFRONT_ID,
@@ -98,9 +106,10 @@ function loadDeferredData({context}: Route.LoaderArgs) {
 export function Layout({children}: {children?: React.ReactNode}) {
   const nonce = useNonce();
   const data = useRouteLoaderData<RootLoader>('root');
+  const locale = data?.locale ?? DEFAULT_APP_LOCALE;
 
   return (
-    <html lang="en">
+    <html lang={locale.tag}>
     <head>
       <meta charSet="utf-8" />
       <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -108,7 +117,8 @@ export function Layout({children}: {children?: React.ReactNode}) {
       <Links />
       <link rel="stylesheet" href={tailwindCss} />
     </head>
-    <body>
+    <body className="flex flex-col">
+    <LocaleContext.Provider value={locale}>
     {data ? (
       <Analytics.Provider cart={data.cart} shop={data.shop} consent={data.consent}>
         <ProfileProvider>
@@ -118,6 +128,7 @@ export function Layout({children}: {children?: React.ReactNode}) {
     ) : (
       children
     )}
+    </LocaleContext.Provider>
     <ScrollRestoration nonce={nonce} />
     <Scripts nonce={nonce} />
     </body>
@@ -129,26 +140,36 @@ export default function App() {
   return <Outlet />;
 }
 
+/**
+ * Shows a translated message chosen by status. Raw server messages are logged,
+ * not shown: they are English-only and may reveal internal details.
+ */
 export function ErrorBoundary() {
   const error = useRouteError();
-  let errorMessage = 'Unexpected error';
-  let errorStatus = 500;
+  const t = useTranslation();
+  const errorStatus = isRouteErrorResponse(error) ? error.status : 500;
 
-  if (isRouteErrorResponse(error)) {
-    errorMessage = error?.data?.message ?? error.data;
-    errorStatus = error.status;
-  } else if (error instanceof Error) {
-    errorMessage = error.message;
-  }
+  useEffect(() => {
+    console.error(error);
+  }, [error]);
+
+  const title =
+    errorStatus === 404 ? t('error.notFoundTitle') : t('error.title');
+  const message =
+    errorStatus === 404
+      ? t('error.notFoundText')
+      : errorStatus >= 400 && errorStatus < 500
+        ? t('error.badRequestText')
+        : t('error.unexpectedText');
 
   return (
     <main className="grid min-h-dvh place-items-center bg-cream px-6 py-20 text-center">
       <div>
-        <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">Error {errorStatus}</p>
-        <h1 className="mt-4 font-display text-5xl text-primary">Something went wrong.</h1>
-        <p className="mx-auto mt-5 max-w-[55ch] text-sm leading-7 text-primary/75">{errorMessage}</p>
+        <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">{t('error.label', {status: errorStatus})}</p>
+        <h1 className="mt-4 font-display text-5xl text-primary">{title}</h1>
+        <p className="mx-auto mt-5 max-w-[55ch] text-sm leading-7 text-primary/75">{message}</p>
         <a className="mt-8 inline-flex min-h-11 items-center border-b border-ink text-xs font-medium uppercase tracking-[0.13em]" href="/">
-          Back to home
+          {t('error.backHome')}
         </a>
       </div>
     </main>

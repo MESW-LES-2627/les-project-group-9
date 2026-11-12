@@ -1,5 +1,6 @@
 import {useState} from 'react';
 import {parseFilterObject} from '~/lib/search';
+import {useTranslation} from '~/lib/i18n';
 
 type Props = {
   values: Array<{input: unknown}>;
@@ -25,6 +26,7 @@ const rangeClass =
   '[&::-moz-range-thumb]:bg-primary';
 
 export function PriceRange(props: Props) {
+  const t = useTranslation();
   const object = parseFilterObject(props.values[0]?.input);
   const price = parseFilterObject(object.price);
 
@@ -38,7 +40,7 @@ export function PriceRange(props: Props) {
   ) {
     return (
       <p className="text-sm text-primary">
-        No price range available.
+        {t('price.noRange')}
       </p>
     );
   }
@@ -71,6 +73,7 @@ function PriceRangeFields({
                             priceMax,
                             currencyCode,
                           }: Props & {min: number; max: number}) {
+  const t = useTranslation();
   const [lower, setLower] = useState(
     priceMin || String(min),
   );
@@ -129,7 +132,7 @@ function PriceRangeFields({
 
         <input
           type="range"
-          aria-label="Minimum price"
+          aria-label={t('price.minLabel')}
           min={min}
           max={max}
           step="0.01"
@@ -150,7 +153,7 @@ function PriceRangeFields({
 
         <input
           type="range"
-          aria-label="Maximum price"
+          aria-label={t('price.maxLabel')}
           min={min}
           max={max}
           step="0.01"
@@ -172,7 +175,7 @@ function PriceRangeFields({
 
       <div className="grid grid-cols-2 gap-3">
         <label className="text-xs text-primary">
-          Minimum
+          {t('price.min')}
           <input
             name="priceMin"
             type="number"
@@ -189,7 +192,7 @@ function PriceRangeFields({
         </label>
 
         <label className="text-xs text-primary">
-          Maximum
+          {t('price.max')}
           <input
             name="priceMax"
             type="number"
@@ -208,7 +211,7 @@ function PriceRangeFields({
 
       {!valid ? (
         <p role="status" className="text-xs text-red-800">
-          Enter a valid minimum and maximum price.
+          {t('price.invalid')}
         </p>
       ) : null}
 
@@ -217,7 +220,7 @@ function PriceRangeFields({
         disabled={!valid}
         className="min-h-11 w-full bg-primary px-4 text-xs uppercase tracking-widest text-white disabled:opacity-50"
       >
-        Apply price
+        {t('price.apply')}
       </button>
     </div>
   );

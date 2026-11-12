@@ -1,21 +1,29 @@
 import {useEffect} from 'react';
 import {Link} from 'react-router';
-import {Image, Money} from '@shopify/hydrogen';
+import {Image} from '@shopify/hydrogen';
 import {SearchFormPredictive} from '~/components/search/SearchFormPredictive';
 import {SearchResultsPredictive} from '~/components/search/SearchResultsPredictive';
 import {Icon} from '~/components/shared/Icon';
+import {Money} from '~/components/shared/Money';
+import {useTranslation} from '~/lib/i18n';
 
 type Suggestion = {title: string; to: string};
 
+/** Full-screen predictive search dialog with suggestions, results and a link to the search page. */
 export function SearchOverlay({
-                                open,
-                                onClose,
-                                suggestions,
-                              }: {
+  open,
+  onClose,
+  shopName,
+  suggestions,
+}: {
   open: boolean;
   onClose: () => void;
+  /** Shop name from Shopify, shown in the dialog header. */
+  shopName: string;
   suggestions: Suggestion[];
 }) {
+  const t = useTranslation();
+
   useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent) => event.key === 'Escape' && onClose();
@@ -34,15 +42,15 @@ export function SearchOverlay({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Search Jeweliette"
+      aria-label={t('search.title')}
       className="fixed inset-0 z-50 overflow-y-auto bg-cream"
     >
       <div className="flex h-16 items-center justify-between border-b border-line px-[4vw]">
-        <span className="font-display text-xl">Jeweliette</span>
+        <span className="font-display text-xl">{shopName}</span>
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close search"
+          aria-label={t('search.close')}
           className="flex h-10 w-10 items-center justify-center text-2xl leading-none"
         >
           ×
@@ -50,7 +58,9 @@ export function SearchOverlay({
       </div>
 
       <div className="mx-auto max-w-2xl px-[4vw] pb-20 pt-14">
-        <p className="text-[11px] uppercase tracking-[0.2em] text-primary">Search Jeweliette</p>
+        <p className="text-[11px] uppercase tracking-[0.2em] text-primary">
+          {t('search.title')}
+        </p>
 
         <SearchFormPredictive className="mt-4">
           {({fetchResults, goToSearch, inputRef}) => (
@@ -60,7 +70,8 @@ export function SearchOverlay({
                 name="q"
                 type="search"
                 autoComplete="off"
-                placeholder="What are you looking for?"
+                aria-label={t('search.inputLabel')}
+                placeholder={t('search.placeholder')}
                 onChange={fetchResults}
                 onFocus={fetchResults}
                 className="w-full bg-transparent py-3 font-display text-[clamp(1.5rem,3vw,2.25rem)] placeholder:text-primary/40 focus:outline-none"
@@ -68,7 +79,7 @@ export function SearchOverlay({
               <button
                 type="button"
                 onClick={goToSearch}
-                aria-label="Search"
+                aria-label={t('nav.search')}
                 className="flex h-10 w-10 shrink-0 items-center justify-center"
               >
                 <Icon name="search" size={22} />
@@ -87,7 +98,9 @@ export function SearchOverlay({
             if (!term.current) {
               return (
                 <div className="mt-10">
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-primary">Explore</p>
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-primary">
+                    {t('search.explore')}
+                  </p>
                   <ul className="mt-3 divide-y divide-line border-y border-line">
                     {suggestions.map((s) => (
                       <li key={s.to}>
@@ -107,13 +120,17 @@ export function SearchOverlay({
             }
 
             if (state === 'loading') {
-              return <p className="mt-10 text-sm text-primary">Searching…</p>;
+              return (
+                <p className="mt-10 text-sm text-primary">
+                  {t('search.searching')}
+                </p>
+              );
             }
 
             if (!total) {
               return (
                 <p className="mt-10 text-sm text-primary">
-                  No results for “{term.current}”.
+                  {t('search.noResultsFor', {term: term.current})}
                 </p>
               );
             }
@@ -122,7 +139,9 @@ export function SearchOverlay({
               <div className="mt-10">
                 {items.products.length ? (
                   <>
-                    <p className="text-[11px] uppercase tracking-[0.2em] text-primary">Pieces</p>
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-primary">
+                      {t('search.pieces')}
+                    </p>
                     <ul className="mt-3 divide-y divide-line border-y border-line">
                       {items.products.map((product) => {
                         const variant = product.selectedOrFirstAvailableVariant;
@@ -180,7 +199,7 @@ export function SearchOverlay({
                   onClick={done}
                   className="mt-8 inline-flex min-h-11 items-center border-b border-ink text-[11px] uppercase tracking-widest"
                 >
-                  View all {total} results
+                  {t('search.viewAllCount', {count: total})}
                 </Link>
               </div>
             );

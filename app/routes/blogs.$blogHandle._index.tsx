@@ -1,12 +1,14 @@
 import {Link, useLoaderData} from 'react-router';
 import type {Route} from './+types/blogs.$blogHandle._index';
+import {formatDate, translatorFromMatches, useLocale} from '~/lib/i18n';
 import {Image, getPaginationVariables} from '@shopify/hydrogen';
 import type {ArticleItemFragment} from 'storefrontapi.generated';
 import {PaginatedResourceSection} from '~/components/shared/PaginatedResourceSection';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 
-export const meta: Route.MetaFunction = ({data}) => {
-  return [{title: `Hydrogen | ${data?.blog.title ?? ''} blog`}];
+export const meta: Route.MetaFunction = ({data, matches}) => {
+  const fallback = translatorFromMatches(matches)('meta.blogs');
+  return [{title: `${data?.blog.title ?? fallback} | Jeweliette`}];
 };
 
 export async function loader(args: Route.LoaderArgs) {
@@ -89,11 +91,8 @@ function ArticleItem({
   article: ArticleItemFragment;
   loading?: HTMLImageElement['loading'];
 }) {
-  const publishedAt = new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  }).format(new Date(article.publishedAt!));
+  const {tag} = useLocale();
+  const publishedAt = formatDate(article.publishedAt, tag);
   return (
     <div className="blog-article" key={article.id}>
       <Link to={`/blogs/${article.blog.handle}/${article.handle}`}>
