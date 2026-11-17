@@ -2,7 +2,7 @@ import type {HydrogenRouterContextProvider} from '@shopify/hydrogen';
 import type {JeweliettePreferenceOptionsQuery} from 'storefrontapi.generated';
 import {JEWELIETTE_MATERIAL_METAFIELD_FRAGMENT} from '~/lib/jeweliette-catalog';
 import {parseProductMaterials} from '~/lib/materials';
-import {parseTextMetafield} from '~/lib/metafields';
+import {productColorValues} from '~/lib/product-colors';
 import type {
   PreferenceOption,
   PreferenceOptions,
@@ -21,6 +21,12 @@ const PREFERENCE_OPTIONS_QUERY = `#graphql
       nodes {
         metal: metafield(namespace: "custom", key: "metal") {
           value
+        }
+        options {
+          name
+          optionValues {
+            name
+          }
         }
         jewelryMaterial: metafield(
           namespace: "shopify"
@@ -67,7 +73,7 @@ export async function getPreferenceOptions(
     const materials = new Map<string, PreferenceOption>();
 
     for (const product of products.nodes) {
-      for (const value of parseTextMetafield(product.metal?.value)) {
+      for (const value of productColorValues(product)) {
         if (!colors.has(value)) {
           colors.set(value, {value, label: labelizeOption(value)});
         }

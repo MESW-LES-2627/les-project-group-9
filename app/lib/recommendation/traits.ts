@@ -1,11 +1,8 @@
 import {parseProductAllergens} from '~/lib/allergens';
 import type {CatalogProductWithTraits} from '~/lib/jeweliette-catalog';
 import {parseProductMaterials} from '~/lib/materials';
-import {
-  normalizeValue,
-  parseListMetafield,
-  parseTextMetafield,
-} from '~/lib/metafields';
+import {normalizeValue, parseListMetafield} from '~/lib/metafields';
+import {productColorValues} from '~/lib/product-colors';
 import type {ProductTraits} from './types';
 
 function undertonesFromMetal(metal: string[]): string[] {
@@ -22,7 +19,7 @@ function undertonesFromMetal(metal: string[]): string[] {
 export function toProductTraits(
   product: CatalogProductWithTraits,
 ): ProductTraits {
-  const metal = parseTextMetafield(product.metal?.value);
+  const metal = productColorValues(product);
 
   return {
     id: product.id,

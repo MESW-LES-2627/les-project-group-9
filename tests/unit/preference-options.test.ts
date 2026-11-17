@@ -73,6 +73,34 @@ describe('getPreferenceOptions', () => {
     ]);
   });
 
+  it('uses product colour options when custom.metal is not set', async () => {
+    const {context} = contextWith({
+      products: {
+        nodes: [
+          {
+            metal: null,
+            options: [
+              {
+                name: 'Color',
+                optionValues: [{name: 'Gold'}, {name: 'Silver'}],
+              },
+              {name: 'Size', optionValues: [{name: '6'}]},
+            ],
+            jewelryMaterial: null,
+            watchMaterial: null,
+          },
+        ],
+      },
+    });
+
+    const options = await getPreferenceOptions(context);
+
+    expect(options.colors).toEqual([
+      {value: 'gold', label: 'Gold'},
+      {value: 'silver', label: 'Silver'},
+    ]);
+  });
+
   it('ignores null products and missing metafields', async () => {
     const {context} = contextWith({
       products: {nodes: [null, {}, {metal: null}]},

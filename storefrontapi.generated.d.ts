@@ -644,6 +644,11 @@ export type JeweliettePreferenceOptionsQuery = {
   products: {
     nodes: Array<{
       metal?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+      options: Array<
+        Pick<StorefrontAPI.ProductOption, 'name'> & {
+          optionValues: Array<Pick<StorefrontAPI.ProductOptionValue, 'name'>>;
+        }
+      >;
       jewelryMaterial?: StorefrontAPI.Maybe<{
         references?: StorefrontAPI.Maybe<{
           nodes: Array<
@@ -2344,7 +2349,7 @@ interface GeneratedQueryTypes {
     return: JewelietteProductsByIdsQuery;
     variables: JewelietteProductsByIdsQueryVariables;
   };
-  '#graphql\n  #graphql\n  fragment JewelietteMaterialMetafield on Metafield {\n    references(first: 10) {\n      nodes {\n        ... on Metaobject {\n          handle\n          fields { key value }\n        }\n      }\n    }\n  }\n\n\n  query JeweliettePreferenceOptions(\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    products(first: 250) {\n      nodes {\n        metal: metafield(namespace: "custom", key: "metal") {\n          value\n        }\n        jewelryMaterial: metafield(\n          namespace: "shopify"\n          key: "jewelry-material"\n        ) {\n          ...JewelietteMaterialMetafield\n        }\n        watchMaterial: metafield(\n          namespace: "shopify"\n          key: "watch-material"\n        ) {\n          ...JewelietteMaterialMetafield\n        }\n      }\n    }\n  }\n': {
+  '#graphql\n  #graphql\n  fragment JewelietteMaterialMetafield on Metafield {\n    references(first: 10) {\n      nodes {\n        ... on Metaobject {\n          handle\n          fields { key value }\n        }\n      }\n    }\n  }\n\n\n  query JeweliettePreferenceOptions(\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    products(first: 250) {\n      nodes {\n        metal: metafield(namespace: "custom", key: "metal") {\n          value\n        }\n        options {\n          name\n          optionValues {\n            name\n          }\n        }\n        jewelryMaterial: metafield(\n          namespace: "shopify"\n          key: "jewelry-material"\n        ) {\n          ...JewelietteMaterialMetafield\n        }\n        watchMaterial: metafield(\n          namespace: "shopify"\n          key: "watch-material"\n        ) {\n          ...JewelietteMaterialMetafield\n        }\n      }\n    }\n  }\n': {
     return: JeweliettePreferenceOptionsQuery;
     variables: JeweliettePreferenceOptionsQueryVariables;
   };
