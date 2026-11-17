@@ -11,6 +11,9 @@ vi.mock('react-router', () => ({
   data: vi.fn(),
   Form: ({children}: {children: ReactNode}) => <form>{children}</form>,
   useActionData: () => mocks.actionData,
+  useLoaderData: () => ({
+    preferenceOptions: {colors: [], materials: []},
+  }),
   useNavigation: () => ({state: mocks.state}),
   useOutletContext: () => ({
     customer: {id: 'customer-1', firstName: 'Ana', lastName: 'Silva'},

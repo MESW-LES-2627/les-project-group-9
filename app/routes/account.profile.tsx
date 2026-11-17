@@ -5,12 +5,14 @@ import {
   data,
   Form,
   useActionData,
+  useLoaderData,
   useNavigation,
   useOutletContext,
 } from 'react-router';
 import type {Route} from './+types/account.profile';
 import {PreferencesForm} from '~/components/account/PreferencesForm';
 import {RingSizeForm} from '~/components/account/RingSizeForm';
+import {getPreferenceOptions} from '~/lib/profile/preference-options.server';
 import {translatorFor, translatorFromMatches, useTranslation} from '~/lib/i18n';
 
 export type ActionResponse = {
@@ -29,7 +31,9 @@ export const meta: Route.MetaFunction = ({matches}) => {
 export async function loader({context}: Route.LoaderArgs) {
   await context.customerAccount.handleAuthStatus();
 
-  return {};
+  const preferenceOptions = await getPreferenceOptions(context);
+
+  return {preferenceOptions};
 }
 
 export async function action({request, context}: Route.ActionArgs) {
@@ -85,6 +89,7 @@ export async function action({request, context}: Route.ActionArgs) {
 }
 
 export default function AccountProfile() {
+  const {preferenceOptions} = useLoaderData<typeof loader>();
   const account = useOutletContext<{customer: CustomerFragment}>();
   const {state} = useNavigation();
   const action = useActionData<ActionResponse>();
@@ -155,7 +160,7 @@ export default function AccountProfile() {
         </Form>
       </section>
 
-      <PreferencesForm />
+      <PreferencesForm options={preferenceOptions} />
       <RingSizeForm />
     </div>
   );

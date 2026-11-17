@@ -418,6 +418,8 @@ export const pt: Messages = {
   'preferences.undertone.cool': 'Frio',
   'preferences.undertone.warm': 'Quente',
   'preferences.undertone.neutral': 'Neutro',
+  'preferences.colors': 'Cores preferidas',
+  'preferences.materials': 'Materiais preferidos',
   'preferences.save': 'Guardar preferências',
   'preferences.saved': 'Preferências guardadas.',
   'preferences.saveError': 'Não foi possível guardar as preferências.',

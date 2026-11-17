@@ -425,6 +425,8 @@ export const fr: Messages = {
   'preferences.undertone.cool': 'Froid',
   'preferences.undertone.warm': 'Chaud',
   'preferences.undertone.neutral': 'Neutre',
+  'preferences.colors': 'Couleurs préférées',
+  'preferences.materials': 'Matières préférées',
   'preferences.save': 'Enregistrer les préférences',
   'preferences.saved': 'Préférences enregistrées.',
   'preferences.saveError': 'Impossible d’enregistrer les préférences.',

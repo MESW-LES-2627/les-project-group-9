@@ -37,8 +37,88 @@ describe('PreferencesFields', () => {
     expect(onSave).toHaveBeenCalledWith({
       allergies: ['nickel', 'zinc'],
       skin: {tone: 'medium', undertone: 'cool'},
+      preferredColors: [],
+      preferredMaterials: [],
     });
     expect(screen.getByText('Preferences saved.')).toBeInTheDocument();
+  });
+
+  it('saves selected colours and materials', async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <PreferencesFields
+        preferences={{
+          preferredColors: ['gold'],
+          preferredMaterials: [],
+          preferredGemstones: ['moonstone'],
+          ringSizes: {'left-ring': '6'},
+        }}
+        options={{
+          colors: [
+            {value: 'gold', label: 'Gold'},
+            {value: 'silver', label: 'Silver'},
+          ],
+          materials: [
+            {value: 'gold-plated', label: 'Gold-plated'},
+            {value: 'silver-plated', label: 'Silver-plated'},
+          ],
+        }}
+        onSave={onSave}
+      />,
+    );
+
+    await user.click(screen.getByLabelText('Silver'));
+    await user.click(screen.getByLabelText('Gold-plated'));
+    await user.click(
+      screen.getByRole('button', {name: 'Save preferences'}),
+    );
+
+    expect(onSave).toHaveBeenCalledWith({
+      allergies: [],
+      skin: {},
+      preferredColors: ['gold', 'silver'],
+      preferredMaterials: ['gold-plated'],
+    });
+  });
+
+  it('removes a colour when it is unchecked', async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <PreferencesFields
+        preferences={{preferredColors: ['gold']}}
+        options={{colors: [{value: 'gold', label: 'Gold'}], materials: []}}
+        onSave={onSave}
+      />,
+    );
+
+    await user.click(screen.getByLabelText('Gold'));
+    await user.click(
+      screen.getByRole('button', {name: 'Save preferences'}),
+    );
+
+    expect(onSave).toHaveBeenCalledWith({
+      allergies: [],
+      skin: {},
+      preferredColors: [],
+      preferredMaterials: [],
+    });
+  });
+
+  it('hides an option group when the catalog has no values for it', () => {
+    render(
+      <PreferencesFields
+        preferences={null}
+        options={{colors: [], materials: []}}
+        onSave={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText('Preferred colours')).not.toBeInTheDocument();
+    expect(screen.queryByText('Preferred materials')).not.toBeInTheDocument();
   });
 });
 

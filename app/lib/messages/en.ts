@@ -424,6 +424,8 @@ export const en = {
   'preferences.undertone.cool': 'Cool',
   'preferences.undertone.warm': 'Warm',
   'preferences.undertone.neutral': 'Neutral',
+  'preferences.colors': 'Preferred colours',
+  'preferences.materials': 'Preferred materials',
   'preferences.save': 'Save preferences',
   'preferences.saved': 'Preferences saved.',
   'preferences.saveError': 'Could not save preferences.',
