@@ -120,6 +120,33 @@ describe('PreferencesFields', () => {
     expect(screen.queryByText('Preferred colours')).not.toBeInTheDocument();
     expect(screen.queryByText('Preferred materials')).not.toBeInTheDocument();
   });
+
+  it('keeps saved values when the catalog has no options to show', async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <PreferencesFields
+        preferences={{
+          preferredColors: ['gold'],
+          preferredMaterials: ['gold-plated'],
+        }}
+        options={{colors: [], materials: []}}
+        onSave={onSave}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole('button', {name: 'Save preferences'}),
+    );
+
+    expect(onSave).toHaveBeenCalledWith({
+      allergies: [],
+      skin: {},
+      preferredColors: ['gold'],
+      preferredMaterials: ['gold-plated'],
+    });
+  });
 });
 
 describe('PreferencesForm', () => {
