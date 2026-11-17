@@ -3,6 +3,44 @@
 /* eslint-disable */
 import type * as StorefrontAPI from '@shopify/hydrogen/storefront-api-types';
 
+export type JewelietteVariantCustomizationQueryVariables = StorefrontAPI.Exact<{
+  ids:
+    | Array<StorefrontAPI.Scalars['ID']['input']>
+    | StorefrontAPI.Scalars['ID']['input'];
+  country?: StorefrontAPI.InputMaybe<StorefrontAPI.CountryCode>;
+  language?: StorefrontAPI.InputMaybe<StorefrontAPI.LanguageCode>;
+}>;
+
+export type JewelietteVariantCustomizationQuery = {
+  nodes: Array<
+    StorefrontAPI.Maybe<
+      Pick<StorefrontAPI.ProductVariant, 'id'> & {
+        product: {
+          customizable?: StorefrontAPI.Maybe<
+            Pick<StorefrontAPI.Metafield, 'value'>
+          >;
+          customizationGemColors?: StorefrontAPI.Maybe<
+            Pick<StorefrontAPI.Metafield, 'value'>
+          >;
+          engravingMaxLength?: StorefrontAPI.Maybe<
+            Pick<StorefrontAPI.Metafield, 'value'>
+          >;
+        };
+      }
+    >
+  >;
+};
+
+export type ProductCustomizationFieldsFragment = {
+  customizable?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+  customizationGemColors?: StorefrontAPI.Maybe<
+    Pick<StorefrontAPI.Metafield, 'value'>
+  >;
+  engravingMaxLength?: StorefrontAPI.Maybe<
+    Pick<StorefrontAPI.Metafield, 'value'>
+  >;
+};
+
 export type MoneyFragment = Pick<
   StorefrontAPI.MoneyV2,
   'currencyCode' | 'amount'
@@ -1694,6 +1732,13 @@ export type ProductFragment = Pick<
     }
   >;
   seo: Pick<StorefrontAPI.Seo, 'description' | 'title'>;
+  customizable?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+  customizationGemColors?: StorefrontAPI.Maybe<
+    Pick<StorefrontAPI.Metafield, 'value'>
+  >;
+  engravingMaxLength?: StorefrontAPI.Maybe<
+    Pick<StorefrontAPI.Metafield, 'value'>
+  >;
 };
 
 export type ProductQueryVariables = StorefrontAPI.Exact<{
@@ -1849,6 +1894,15 @@ export type ProductQuery = {
         }
       >;
       seo: Pick<StorefrontAPI.Seo, 'description' | 'title'>;
+      customizable?: StorefrontAPI.Maybe<
+        Pick<StorefrontAPI.Metafield, 'value'>
+      >;
+      customizationGemColors?: StorefrontAPI.Maybe<
+        Pick<StorefrontAPI.Metafield, 'value'>
+      >;
+      engravingMaxLength?: StorefrontAPI.Maybe<
+        Pick<StorefrontAPI.Metafield, 'value'>
+      >;
     }
   >;
 };
@@ -2262,6 +2316,10 @@ export type PredictiveSearchQuery = {
 };
 
 interface GeneratedQueryTypes {
+  '#graphql\n  #graphql\n  fragment ProductCustomizationFields on Product {\n    customizable: metafield(namespace: "custom", key: "customizable") { value }\n    customizationGemColors: metafield(namespace: "custom", key: "customization_gem_colors") { value }\n    engravingMaxLength: metafield(namespace: "custom", key: "engraving_max_length") { value }\n  }\n\n  query JewelietteVariantCustomization(\n    $ids: [ID!]!\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    nodes(ids: $ids) {\n      ... on ProductVariant {\n        id\n        product { ...ProductCustomizationFields }\n      }\n    }\n  }\n': {
+    return: JewelietteVariantCustomizationQuery;
+    variables: JewelietteVariantCustomizationQueryVariables;
+  };
   '#graphql\n  fragment Shop on Shop {\n    id\n    name\n    description\n    primaryDomain {\n      url\n    }\n    brand {\n      logo {\n        image {\n          url\n        }\n      }\n    }\n  }\n  query Header(\n    $country: CountryCode\n    $headerMenuHandle: String!\n    $language: LanguageCode\n  ) @inContext(language: $language, country: $country) {\n    shop {\n      ...Shop\n    }\n    menu(handle: $headerMenuHandle) {\n      ...Menu\n    }\n  }\n  #graphql\n  fragment MenuItem on MenuItem {\n    id\n    resourceId\n    tags\n    title\n    type\n    url\n  }\n  fragment ChildMenuItem on MenuItem {\n    ...MenuItem\n  }\n  fragment ParentMenuItem on MenuItem {\n    ...MenuItem\n    items {\n      ...ChildMenuItem\n    }\n  }\n  fragment Menu on Menu {\n    id\n    items {\n      ...ParentMenuItem\n    }\n  }\n\n': {
     return: HeaderQuery;
     variables: HeaderQueryVariables;
@@ -2322,7 +2380,7 @@ interface GeneratedQueryTypes {
     return: PoliciesQuery;
     variables: PoliciesQueryVariables;
   };
-  '#graphql\n  query Product(\n    $country: CountryCode\n    $handle: String!\n    $language: LanguageCode\n    $selectedOptions: [SelectedOptionInput!]!\n  ) @inContext(country: $country, language: $language) {\n    product(handle: $handle) { ...Product }\n  }\n  #graphql\n  fragment Product on Product {\n    id\n    title\n    vendor\n    handle\n    descriptionHtml\n    description\n    encodedVariantExistence\n    encodedVariantAvailability\n    productType\n    jewelryMaterial: metafield(namespace: "shopify", key: "jewelry-material") {\n      ...JewelietteMaterialMetafield\n    }\n    watchMaterial: metafield(namespace: "shopify", key: "watch-material") {\n      ...JewelietteMaterialMetafield\n    }\n    metal: metafield(namespace: "custom", key: "metal") { value }\n    gemstone: metafield(namespace: "custom", key: "gemstone") { value }\n    gemColor: metafield(namespace: "custom", key: "gem_color") { value }\n    allergens: metafield(namespace: "custom", key: "allergens") { value }\n    images(first: 10) { nodes { id url altText width height } }\n    collections(first: 1) { nodes { title handle } }\n    category { id name }\n    options {\n      name\n      optionValues {\n        name\n        firstSelectableVariant { ...ProductVariant }\n        swatch { color image { previewImage { url } } }\n      }\n    }\n    selectedOrFirstAvailableVariant(selectedOptions: $selectedOptions, ignoreUnknownOptions: true, caseInsensitiveMatch: true) {\n      ...ProductVariant\n    }\n    adjacentVariants(selectedOptions: $selectedOptions) { ...ProductVariant }\n    seo { description title }\n  }\n  #graphql\n  fragment ProductVariant on ProductVariant {\n    availableForSale\n    compareAtPrice { amount currencyCode }\n    id\n    image { __typename id url altText width height }\n    price { amount currencyCode }\n    product { title handle }\n    selectedOptions { name value }\n    sku\n    title\n    unitPrice { amount currencyCode }\n  }\n\n  #graphql\n  fragment JewelietteMaterialMetafield on Metafield {\n    references(first: 10) {\n      nodes {\n        ... on Metaobject {\n          handle\n          fields { key value }\n        }\n      }\n    }\n  }\n\n\n': {
+  '#graphql\n  query Product(\n    $country: CountryCode\n    $handle: String!\n    $language: LanguageCode\n    $selectedOptions: [SelectedOptionInput!]!\n  ) @inContext(country: $country, language: $language) {\n    product(handle: $handle) { ...Product }\n  }\n  #graphql\n  fragment Product on Product {\n    id\n    title\n    vendor\n    handle\n    descriptionHtml\n    description\n    encodedVariantExistence\n    encodedVariantAvailability\n    productType\n    jewelryMaterial: metafield(namespace: "shopify", key: "jewelry-material") {\n      ...JewelietteMaterialMetafield\n    }\n    watchMaterial: metafield(namespace: "shopify", key: "watch-material") {\n      ...JewelietteMaterialMetafield\n    }\n    metal: metafield(namespace: "custom", key: "metal") { value }\n    gemstone: metafield(namespace: "custom", key: "gemstone") { value }\n    gemColor: metafield(namespace: "custom", key: "gem_color") { value }\n    allergens: metafield(namespace: "custom", key: "allergens") { value }\n    ...ProductCustomizationFields\n    images(first: 10) { nodes { id url altText width height } }\n    collections(first: 1) { nodes { title handle } }\n    category { id name }\n    options {\n      name\n      optionValues {\n        name\n        firstSelectableVariant { ...ProductVariant }\n        swatch { color image { previewImage { url } } }\n      }\n    }\n    selectedOrFirstAvailableVariant(selectedOptions: $selectedOptions, ignoreUnknownOptions: true, caseInsensitiveMatch: true) {\n      ...ProductVariant\n    }\n    adjacentVariants(selectedOptions: $selectedOptions) { ...ProductVariant }\n    seo { description title }\n  }\n  #graphql\n  fragment ProductVariant on ProductVariant {\n    availableForSale\n    compareAtPrice { amount currencyCode }\n    id\n    image { __typename id url altText width height }\n    price { amount currencyCode }\n    product { title handle }\n    selectedOptions { name value }\n    sku\n    title\n    unitPrice { amount currencyCode }\n  }\n\n  #graphql\n  fragment JewelietteMaterialMetafield on Metafield {\n    references(first: 10) {\n      nodes {\n        ... on Metaobject {\n          handle\n          fields { key value }\n        }\n      }\n    }\n  }\n\n  #graphql\n  fragment ProductCustomizationFields on Product {\n    customizable: metafield(namespace: "custom", key: "customizable") { value }\n    customizationGemColors: metafield(namespace: "custom", key: "customization_gem_colors") { value }\n    engravingMaxLength: metafield(namespace: "custom", key: "engraving_max_length") { value }\n  }\n\n\n': {
     return: ProductQuery;
     variables: ProductQueryVariables;
   };

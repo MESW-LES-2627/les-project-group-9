@@ -201,6 +201,12 @@ export const en = {
   'product.detail.metal': 'Metal',
   'product.detail.gemstone': 'Gemstone',
   'product.detail.gemColor': 'Gem color',
+  'product.customize.title': 'Customize',
+  'product.customize.engraving': 'Engraving',
+  'product.customize.engravingRemaining': {
+    one: '{count} character left',
+    other: '{count} characters left',
+  },
 
   // Allergens and the allergy warning
   'allergen.nickel': 'Nickel',
