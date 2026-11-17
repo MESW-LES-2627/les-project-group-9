@@ -97,6 +97,7 @@ npx playwright test --ui                     # step through tests in a browser
 | `home.spec.ts` | Home loads; hero banner opens a collection; every featured product opens; the header logo goes back home |
 | `collection.spec.ts` | `/collections` opens a collection; a collection opens a product; home → collection → product |
 | `swatch.spec.ts` | Selecting a product option updates the selected variant |
+| `customization.spec.ts` | A product marked as customizable shows its Customize panel: the first allowed gem colour is selected and the engraving stops at its maximum length. Adding it with an engraving and a gem colour shows both on the bag line. Skips when no product in the store is customizable (mock.shop has none) |
 | `cart.spec.ts` | Empty cart; adding a product updates the cart count; change a line's quantity and remove it |
 | `search.spec.ts` | Empty search; no results; searching from the search page and from the header |
 | `favorites.spec.ts` | Logged-out shoppers are sent to log in from the favorites page, product page and product cards |

@@ -68,11 +68,12 @@ test('the chosen gem color and engraving appear in the bag', async ({page}) => {
     const text = 'Zq7'.slice(0, max);
     await engraving.fill(text);
 
-    const radios = panel.getByRole('radio');
-    const gemColor = (await radios.count())
-      ? ((await radios.last().locator('xpath=..').textContent()) ?? '').trim()
+    // The radios are visually hidden; shoppers click their labels.
+    const gemLabel = panel.locator('label:has(input[type="radio"])').last();
+    const gemColor = (await gemLabel.count())
+      ? ((await gemLabel.textContent()) ?? '').trim()
       : null;
-    if (gemColor) await radios.last().check();
+    if (gemColor) await gemLabel.click();
 
     const saved = page.waitForResponse(
       (response) =>
