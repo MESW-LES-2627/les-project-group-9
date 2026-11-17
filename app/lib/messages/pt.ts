@@ -141,6 +141,7 @@ export const pt: Messages = {
   'catalog.sort.newest': 'Novidades',
   'catalog.sort.priceAsc': 'Preço: do mais baixo ao mais alto',
   'catalog.sort.priceDesc': 'Preço: do mais alto ao mais baixo',
+  'catalog.sort.forYou': 'Para si',
   'filters.clear': 'Limpar filtros',
   'filters.sortBy': 'Ordenar por',
   'filters.inStock': 'Em stock',

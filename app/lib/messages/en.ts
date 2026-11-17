@@ -151,6 +151,7 @@ export const en = {
   'catalog.sort.newest': 'Newest',
   'catalog.sort.priceAsc': 'Price: low to high',
   'catalog.sort.priceDesc': 'Price: high to low',
+  'catalog.sort.forYou': 'For you',
   'filters.clear': 'Clear filters',
   'filters.sortBy': 'Sort by',
   'filters.inStock': 'In stock',

@@ -146,6 +146,7 @@ export const fr: Messages = {
   'catalog.sort.newest': 'Nouveautés',
   'catalog.sort.priceAsc': 'Prix croissant',
   'catalog.sort.priceDesc': 'Prix décroissant',
+  'catalog.sort.forYou': 'Pour vous',
   'filters.clear': 'Effacer les filtres',
   'filters.sortBy': 'Trier par',
   'filters.inStock': 'En stock',
