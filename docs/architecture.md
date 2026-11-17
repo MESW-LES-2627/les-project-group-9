@@ -145,10 +145,20 @@ metafields (namespace `custom`) through the Customer Account API.
 | `custom.fitting_room` | `profile/fitting-room.ts`, max 50 GIDs | `POST /api/profile/fitting-room` `{add?, remove?}` |
 | `custom.preferences` | `profile/preferences.ts` (allergies, skin tone/undertone, ring sizes per finger, preferred materials/colours/gemstones) | `POST /api/profile/preferences` |
 
-- **Server**: `profile/customer.server.ts` reads the whole profile (`CUSTOMER_PROFILE_QUERY`)
-  and writes with `metafieldsSet`. `profile/operation.server.ts` validates list
-  operations (method, login, JSON, product-GID format, size cap). `list-schema.ts` holds the
-  shared list logic (dedupe, add to front, remove, cap).
+- **Fields** (Template Method): each metafield is a `ProfileField` subclass
+  (`profile/profile-field.ts`). The base class's `nextValue(profile, change)` is the shared
+  update algorithm (take the current value, merge the change, serialize); subclasses supply
+  the steps and the metafield `key`. `ProductIdList` adds the list behaviour from
+  `list-schema.ts` (dedupe, add to front, remove, cap) and is extended by `FavoritesList`
+  (`schema.ts`) and `FittingRoomList` (`fitting-room.ts`), which only set the key and cap.
+  `PreferencesField` (`preferences.ts`) merges a partial profile. The older functions
+  (`parseFavorites()`, `applyFittingRoomOperation()`…) delegate to these instances.
+- **Server** (Repository): `CustomerProfileRepository` (`profile/customer.server.ts`) reads
+  the whole profile (`CUSTOMER_PROFILE_QUERY`) and `update(field, change)` writes one field
+  with `metafieldsSet`, so a new profile field needs no repository change. The routes call
+  `readCustomerProfile()`, `updateCustomerFavorites()`, `updateCustomerFittingRoom()` and
+  `writeCustomerPreferences()`, which use the repository. `profile/operation.server.ts`
+  validates list operations (method, login, JSON, product-GID format, size cap).
 - **Client**: `ProfileProvider` (`profile/ProfileProvider.tsx`) loads `GET /api/profile`
   once on mount and exposes optimistic toggles. If a write returns 401, it reloads the profile.
   `useFavorites()` (`lib/favorites.ts`) and `useFittingRoom()` (`lib/fitting-room.ts`)
@@ -173,11 +183,21 @@ metafields (namespace `custom`) through the Customer Account API.
 - `recommendation/traits.ts` turns products into `ProductTraits`.
   `recommendation/signals.ts` derives weighted signals from favorites and preferences.
   `recommendation/weights.ts` holds the trait weights.
-- `recommendation/engine.ts` (`recommendProducts`, pure):
-  1. Drops favorites and anything matching a negative signal (allergies).
+- `recommendation/signal-source.ts` (Strategy pattern): the `SignalSource` interface
+  (`collect()` returns signals) and its implementations `FavoritesSignalSource` and
+  `PreferencesSignalSource`, which wrap the functions in `signals.ts`. A new kind of signal
+  (e.g. recently viewed products) is a new `SignalSource`; the engine does not change.
+- `recommendation/engine.ts` (pure): `RecommendationEngine` takes its signal sources plus
+  options (`excludedIds`, `fallbackToPopular`) and `recommend(products, limit)`:
+  1. Drops excluded products and anything matching a negative signal (allergies).
   2. Scores the rest by matching positive signals.
   3. Sorts by score, keeping catalog order on ties.
-  4. Falls back to the first candidates ("Popular piece") when nothing scores but there are favorites.
+  4. Falls back to the first candidates ("Popular piece") when nothing scores and the
+     fallback is enabled.
+
+  `recommendProducts()` (used by `api.recommendations`) builds the engine with a favorites
+  and a preferences source, excludes the favorites and enables the fallback only when there
+  are favorites.
 - UI: `components/product/RecommendedProducts.tsx` fetches the endpoint with `useFetcher`.
   Product pages also show Shopify's `productRecommendations` (separate query in
   `products.$handle.tsx`).

@@ -1,4 +1,6 @@
+import {ProfileField} from './profile-field';
 import type {
+  CustomerProfile,
   PreferenceProfile,
   RingFinger,
   RingFingerName,
@@ -22,13 +24,11 @@ export const RING_FINGERS: readonly RingFinger[] = RING_HANDS.flatMap((hand) =>
   RING_FINGER_NAMES.map((finger) => `${hand}-${finger}` as RingFinger),
 );
 
-/** US ring sizes 4 to 13 in half steps, as stored and as shown on products. */
 export const US_RING_SIZES: readonly string[] = Array.from(
   {length: 19},
   (_, index) => String(4 + index * 0.5),
 );
 
-/** The finger id (`thumb`, `index`…) of a hand-finger key; translate it in the UI. */
 export function ringFingerOf(finger: RingFinger): RingFingerName {
   return finger.split('-')[1] as RingFingerName;
 }
@@ -99,10 +99,7 @@ function ringSizesRecord(
   return sizes;
 }
 
-/**
- * Parses a request payload. Only keys present in the input are returned, so a
- * partial save never overwrites fields it did not send.
- */
+
 export function normalizePreferencesPatch(
   input: unknown,
 ): Partial<PreferenceProfile> {
@@ -168,3 +165,35 @@ export function parsePreferences(
 export function serializePreferences(profile: PreferenceProfile): string {
   return JSON.stringify(normalizePreferences(profile));
 }
+
+/**
+ * The customer's preferences (`custom.preferences`). A change is a partial
+ * profile: fields it leaves out keep their stored value.
+ */
+export class PreferencesField extends ProfileField<
+  PreferenceProfile,
+  Partial<PreferenceProfile>
+> {
+  readonly key = 'preferences';
+
+  parse(raw: string | null | undefined): PreferenceProfile {
+    return parsePreferences(raw);
+  }
+
+  serialize(profile: PreferenceProfile): string {
+    return serializePreferences(profile);
+  }
+
+  protected current(profile: CustomerProfile): PreferenceProfile {
+    return profile.preferences;
+  }
+
+  protected merge(
+    current: PreferenceProfile,
+    patch: Partial<PreferenceProfile>,
+  ): PreferenceProfile {
+    return {...current, ...patch};
+  }
+}
+
+export const preferencesField = new PreferencesField();
