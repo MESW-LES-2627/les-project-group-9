@@ -24,3 +24,21 @@ export function isMobileRequest(request: Pick<Request, 'headers'>): boolean {
 
   return isMobileUserAgent(request.headers.get('user-agent'));
 }
+
+/**
+ * Client-side refinement of the server detection. iPadOS reports a macOS user
+ * agent, so `maxTouchPoints` is the only reliable signal there; Chromium's
+ * reduced client hints (`userAgentData.mobile`) are trusted when present.
+ */
+export function prefersMobileUi(initial: boolean): boolean {
+  if (initial) return true;
+  if (typeof navigator === 'undefined') return false;
+
+  const {userAgentData, maxTouchPoints, userAgent} = navigator as Navigator & {
+    userAgentData?: {mobile?: boolean};
+  };
+
+  if (userAgentData?.mobile === true) return true;
+
+  return maxTouchPoints > 1 && /macintosh/i.test(userAgent);
+}

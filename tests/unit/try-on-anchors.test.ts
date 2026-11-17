@@ -312,11 +312,13 @@ describe('necklaceTransform', () => {
     });
 
     const drop = 320 * NECKLACE_ANCHOR_RATIO;
+    const height = ((16 / FACE_WIDTH_CM) * 320) / 2;
 
     expect(transform?.x).toBeCloseTo(320);
-    expect(transform?.y).toBeCloseTo(400 + drop);
+    // The overlay is centred on the collarbone, so its top edge sits above it.
+    expect(transform?.y).toBeCloseTo(400 + drop - height / 2);
     expect(transform?.width).toBeCloseTo((16 / FACE_WIDTH_CM) * 320);
-    expect(transform?.height).toBeCloseTo(((16 / FACE_WIDTH_CM) * 320) / 2);
+    expect(transform?.height).toBeCloseTo(height);
     expect(transform?.rotation).toBeCloseTo(0);
   });
 
@@ -336,25 +338,19 @@ describe('necklaceTransform', () => {
 });
 
 describe('headMaskPolygon', () => {
-  it('closes the head band across the top of the frame', () => {
-    const mask = headMaskPolygon(landmarks(), BOUNDS);
+  it('traces the face oval so the chain can still lie on the neck', () => {
+    const mask = headMaskPolygon(landmarks());
 
-    expect(mask?.[0]).toEqual({x: 0, y: 0});
-    expect(mask?.at(-1)).toEqual({x: BOUNDS.width, y: 0});
-    expect(mask?.slice(1, -1)).toEqual([
-      {x: 140, y: 240},
-      {x: 180, y: 330},
-      {x: 320, y: 400},
-      {x: 460, y: 330},
-      {x: 460, y: 240},
-    ]);
+    expect(mask).toHaveLength(36);
+    expect(mask?.[0]).toEqual({x: 320, y: 240});
+    expect(mask).toContainEqual({x: 320, y: 400});
+    expect(mask).not.toContainEqual({x: 0, y: 0});
   });
 
-  it('returns null when a jaw landmark is missing', () => {
+  it('returns null when a face-oval landmark is missing', () => {
     expect(
       headMaskPolygon(
-        landmarks({[TRY_ON_LANDMARKS.jawB]: {x: Number.NaN, y: 330}}),
-        BOUNDS,
+        landmarks({[TRY_ON_LANDMARKS.chin]: {x: Number.NaN, y: 400}}),
       ),
     ).toBe(null);
   });

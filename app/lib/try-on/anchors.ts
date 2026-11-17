@@ -54,6 +54,17 @@ export const EAR_HYSTERESIS_FRAMES = 3;
 
 export const MAX_ROLL_RADIANS = (25 * Math.PI) / 180;
 
+/**
+ * MediaPipe's ordered face-oval contour (forehead, temples, jaw, chin). Used as
+ * the necklace mask so the chain stays off the face but can still lie on the
+ * neck; masking the whole top band would cut the chain at the jaw line.
+ */
+export const FACE_OVAL_LANDMARKS = [
+  10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378,
+  400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21,
+  54, 103, 67, 109,
+] as const;
+
 export const SMOOTHING_TAU_MS = 90;
 export const SMOOTHING_GAP_MS = 300;
 export const MAX_SCALE_STEP = 0.15;
@@ -230,7 +241,7 @@ export function earTransforms(
   };
 }
 
-/** Necklace transform, anchored at the projected collarbone. */
+/** Necklace transform: the overlay's centre sits on the projected collarbone. */
 export function necklaceTransform(
   points: readonly Point[],
   metrics: FaceMetrics | null,
@@ -248,7 +259,7 @@ export function necklaceTransform(
 
   return {
     x: chin.x + direction.x * drop,
-    y: chin.y + direction.y * drop,
+    y: chin.y + direction.y * drop - size.height / 2,
     width: size.width,
     height: size.height,
     rotation: metrics.roll,
@@ -257,31 +268,20 @@ export function necklaceTransform(
 }
 
 /**
- * Inverse mask polygon for the head: the renderer clips with
- * `rect(0, 0, width, height)` plus this path and `'evenodd'`, so the necklace
- * is hidden behind the whole head band, not just the face oval.
+ * Mask polygon for the face (MediaPipe's face oval), in pixel space. The
+ * renderer subtracts it with `evenodd`, so the chain cannot paint over the
+ * face while it still shows on the neck.
  */
-export function headMaskPolygon(
-  points: readonly Point[],
-  bounds: FrameBounds,
-): Point[] | null {
-  const faceA = pointAt(points, TRY_ON_LANDMARKS.faceA);
-  const jawA = pointAt(points, TRY_ON_LANDMARKS.jawA);
-  const chin = pointAt(points, TRY_ON_LANDMARKS.chin);
-  const jawB = pointAt(points, TRY_ON_LANDMARKS.jawB);
-  const faceB = pointAt(points, TRY_ON_LANDMARKS.faceB);
+export function headMaskPolygon(points: readonly Point[]): Point[] | null {
+  const oval: Point[] = [];
 
-  if (!faceA || !jawA || !chin || !jawB || !faceB) return null;
+  for (const index of FACE_OVAL_LANDMARKS) {
+    const point = pointAt(points, index);
+    if (!point) return null;
+    oval.push(point);
+  }
 
-  return [
-    {x: 0, y: 0},
-    faceA,
-    jawA,
-    chin,
-    jawB,
-    faceB,
-    {x: bounds.width, y: 0},
-  ];
+  return oval;
 }
 
 export function createSmoothingState(): SmoothingState {

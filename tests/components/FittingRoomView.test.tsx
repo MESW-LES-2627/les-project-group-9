@@ -8,6 +8,28 @@ vi.mock('@shopify/hydrogen', () => ({
   Image: ({alt}: {alt?: string}) => <img alt={alt ?? ''} />,
 }));
 
+vi.mock('~/lib/try-on/preload', () => ({
+  preloadTryOnAssets: vi.fn(),
+}));
+
+vi.mock('~/lib/try-on/camera', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('~/lib/try-on/camera')>();
+  return {
+    ...actual,
+    requestCamera: vi.fn().mockResolvedValue({stream: null, error: null}),
+  };
+});
+
+vi.mock('~/components/try-on/TryOnQrDialog', () => ({
+  TryOnQrDialog: () => <div data-testid="qr-dialog" />,
+}));
+
+vi.mock('~/components/try-on/TryOnDialog', () => ({
+  TryOnDialog: ({initialMode}: {initialMode: string}) => (
+    <div data-mode={initialMode} data-testid="camera-dialog" />
+  ),
+}));
+
 import {FittingRoomView} from '../../app/components/fitting-room/FittingRoomView';
 
 const products: CatalogProduct[] = [
@@ -40,6 +62,7 @@ function renderView(
 ) {
   return render(
     <FittingRoomView
+      isMobile={false}
       movingId={null}
       onClear={vi.fn()}
       onMoveToCart={vi.fn()}
@@ -163,5 +186,72 @@ describe('FittingRoomView', () => {
 
     expect(screen.getByText('See it on you')).toBeInTheDocument();
     expect(screen.getByText(/select at least one piece/i)).toBeInTheDocument();
+  });
+
+  it('offers try-on only for supported pieces', () => {
+    const tryOnProduct = {
+      ...products[1],
+      tryOn: {
+        kind: 'necklace' as const,
+        overlayUrl: 'https://cdn.example/necklace.png?cors=1',
+        sizeCm: 16,
+      },
+      tryOnLink: 'https://shop.example/products/silver-necklace?tryOn=1',
+    };
+
+    renderView({products: [products[0], tryOnProduct]});
+
+    expect(
+      screen.getByRole('button', {name: 'Try on Silver Necklace'}),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', {name: 'Try on Gold Ring'}),
+    ).not.toBeInTheDocument();
+  });
+
+  it('opens the QR code from the fitting room on a computer', async () => {
+    const user = userEvent.setup();
+    const tryOnProduct = {
+      ...products[1],
+      tryOn: {
+        kind: 'necklace' as const,
+        overlayUrl: 'https://cdn.example/necklace.png?cors=1',
+        sizeCm: 16,
+      },
+      tryOnLink: 'https://shop.example/products/silver-necklace?tryOn=1',
+    };
+
+    renderView({products: [tryOnProduct]});
+
+    await user.click(
+      screen.getByRole('button', {name: 'Try on Silver Necklace'}),
+    );
+
+    expect(screen.getByTestId('qr-dialog')).toBeInTheDocument();
+    expect(screen.queryByTestId('camera-dialog')).not.toBeInTheDocument();
+  });
+
+  it('opens the camera from the fitting room on a phone', async () => {
+    const user = userEvent.setup();
+    const tryOnProduct = {
+      ...products[1],
+      tryOn: {
+        kind: 'necklace' as const,
+        overlayUrl: 'https://cdn.example/necklace.png?cors=1',
+        sizeCm: 16,
+      },
+      tryOnLink: 'https://shop.example/products/silver-necklace?tryOn=1',
+    };
+
+    renderView({isMobile: true, products: [tryOnProduct]});
+
+    await user.click(
+      screen.getByRole('button', {name: 'Try on Silver Necklace'}),
+    );
+
+    expect(screen.getByTestId('camera-dialog')).toHaveAttribute(
+      'data-mode',
+      'camera',
+    );
   });
 });

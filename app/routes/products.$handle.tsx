@@ -17,6 +17,7 @@ import {ProductItem} from '~/components/product/ProductItem';
 import {AllergenBadge} from '~/components/product/AllergenBadge';
 import {FavoriteButton} from '~/components/product/FavoriteButton';
 import {FittingRoomButton} from '~/components/product/FittingRoomButton';
+import {TryOnButton} from '~/components/product/TryOnButton';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 import {
   JEWELIETTE_MATERIAL_METAFIELD_FRAGMENT,
@@ -28,6 +29,7 @@ import {isColorOption} from '~/lib/options';
 import {isRingProduct} from '~/lib/profile/ringCategory';
 import {resolveTryOn} from '~/lib/try-on/catalog';
 import {isMobileRequest} from '~/lib/try-on/device';
+import {tryOnPageUrl} from '~/lib/try-on/url';
 
 export const meta: Route.MetaFunction = ({data, matches}) => [
   {
@@ -54,6 +56,7 @@ export async function loader(args: Route.LoaderArgs) {
     product,
     recommendations,
     tryOn: resolveTryOn(product),
+    tryOnLink: tryOnPageUrl(args.request.url, product.handle),
     isMobile: isMobileRequest(args.request),
   };
 }
@@ -76,7 +79,8 @@ async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
 }
 
 export default function Product() {
-  const {product, recommendations} = useLoaderData<typeof loader>();
+  const {product, recommendations, tryOn, tryOnLink, isMobile} =
+    useLoaderData<typeof loader>();
   const t = useTranslation();
 
   const selectedVariant = useOptimisticVariant(
@@ -169,6 +173,17 @@ export default function Product() {
               compareAtPrice={selectedVariant?.compareAtPrice}
             />
           </div>
+
+          {tryOn ? (
+            <div className="mt-6">
+              <TryOnButton
+                isMobile={isMobile}
+                piece={tryOn}
+                title={product.title}
+                tryOnLink={tryOnLink}
+              />
+            </div>
+          ) : null}
 
           <div className="mt-8">
             <ProductForm

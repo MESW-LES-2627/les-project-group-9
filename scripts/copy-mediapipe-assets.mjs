@@ -2,15 +2,22 @@
  * Copies the MediaPipe vision WASM runtime into `public/` so the try-on dialog
  * can load it from our own origin (no third-party CDN at runtime).
  *
- * Only the ES module variant is copied: `FilesetResolver.forVisionTasks` is
- * called with `useModule: true`, which loads `wasm_module_internal.*`.
+ * The classic loader (`vision_wasm_internal.*`) is used: the ES-module variant
+ * (`*_module_internal.*`) fails at runtime with "ModuleFactory not set."
+ * because the loader is evaluated as a classic script (`import.meta` is not
+ * available there). `FilesetResolver.forVisionTasks` is called with
+ * `useModule: false`.
+ *
  * Runs from `postinstall`, `predev`, `prebuild` and `prepreview`.
  */
-import {cpSync, existsSync, mkdirSync, statSync} from 'node:fs';
+import {cpSync, existsSync, mkdirSync, rmSync, statSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 
-const FILES = [
+const FILES = ['vision_wasm_internal.js', 'vision_wasm_internal.wasm'];
+
+/** Files copied by an earlier version of this script. */
+const OBSOLETE_FILES = [
   'vision_wasm_module_internal.js',
   'vision_wasm_module_internal.wasm',
 ];
@@ -42,6 +49,11 @@ for (const file of FILES) {
   mkdirSync(target, {recursive: true});
   cpSync(from, to);
   copied += 1;
+}
+
+for (const file of OBSOLETE_FILES) {
+  const stale = path.join(target, file);
+  if (existsSync(stale)) rmSync(stale);
 }
 
 if (copied > 0) {

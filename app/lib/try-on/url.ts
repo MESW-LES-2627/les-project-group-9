@@ -33,3 +33,21 @@ export function tryOnPageUrl(requestUrl: string, handle: string): string {
   url.searchParams.set('tryOn', '1');
   return url.toString();
 }
+
+/**
+ * Keeps the QR/deep link on HTTPS when the page is served over HTTPS but the
+ * server built it from an internal `http://` request URL (dev tunnels and
+ * proxies terminate TLS and forward plain HTTP, which HSTS then has to fix).
+ */
+export function secureTryOnLink(
+  link: string,
+  pageProtocol?: string,
+): string {
+  const current =
+    pageProtocol ??
+    (typeof window === 'undefined' ? null : window.location.protocol);
+
+  if (current !== 'https:' || !link.startsWith('http://')) return link;
+
+  return `https://${link.slice('http://'.length)}`;
+}

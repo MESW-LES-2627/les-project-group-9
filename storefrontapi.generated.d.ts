@@ -437,6 +437,17 @@ export type JewelietteProductCardFragment = Pick<
   >;
 };
 
+export type JewelietteTryOnFragment = {
+  category?: StorefrontAPI.Maybe<Pick<StorefrontAPI.TaxonomyCategory, 'name'>>;
+  tryOnOverlay?: StorefrontAPI.Maybe<{
+    reference?: StorefrontAPI.Maybe<
+      | Pick<StorefrontAPI.GenericFile, 'url'>
+      | {image?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Image, 'url'>>}
+    >;
+  }>;
+  tryOnSize?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+};
+
 export type JewelietteRecommendationProductFragment = Pick<
   StorefrontAPI.Product,
   'id' | 'title' | 'handle' | 'productType'
@@ -629,6 +640,22 @@ export type JewelietteProductsByIdsQuery = {
             };
             selectedOrFirstAvailableVariant?: StorefrontAPI.Maybe<
               Pick<StorefrontAPI.ProductVariant, 'id' | 'availableForSale'>
+            >;
+            category?: StorefrontAPI.Maybe<
+              Pick<StorefrontAPI.TaxonomyCategory, 'name'>
+            >;
+            tryOnOverlay?: StorefrontAPI.Maybe<{
+              reference?: StorefrontAPI.Maybe<
+                | Pick<StorefrontAPI.GenericFile, 'url'>
+                | {
+                    image?: StorefrontAPI.Maybe<
+                      Pick<StorefrontAPI.Image, 'url'>
+                    >;
+                  }
+              >;
+            }>;
+            tryOnSize?: StorefrontAPI.Maybe<
+              Pick<StorefrontAPI.Metafield, 'value'>
             >;
           })
     >
@@ -2290,7 +2317,7 @@ interface GeneratedQueryTypes {
     return: FooterQuery;
     variables: FooterQueryVariables;
   };
-  '#graphql\n  #graphql\n  fragment JewelietteProductCard on Product {\n    id\n    title\n    handle\n    productType\n    allergens: metafield(namespace: "custom", key: "allergens") { value }\n    badge: metafield(namespace: "custom", key: "product_badge") { value }\n    featuredImage { id url altText width height }\n    images(first: 2) { nodes { id url altText width height } }\n    options {\n      name\n      optionValues {\n        name\n        swatch { color image { previewImage { url } } }\n        firstSelectableVariant {\n          id\n          availableForSale\n          image { id url altText width height }\n        }\n      }\n    }\n    priceRange {\n      minVariantPrice { amount currencyCode }\n      maxVariantPrice { amount currencyCode }\n    }\n    selectedOrFirstAvailableVariant { id availableForSale }\n  }\n\n  query JewelietteProductsByIds(\n    $ids: [ID!]!\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    nodes(ids: $ids) {\n      __typename\n      ... on Product { ...JewelietteProductCard }\n    }\n  }\n': {
+  '#graphql\n  #graphql\n  fragment JewelietteProductCard on Product {\n    id\n    title\n    handle\n    productType\n    allergens: metafield(namespace: "custom", key: "allergens") { value }\n    badge: metafield(namespace: "custom", key: "product_badge") { value }\n    featuredImage { id url altText width height }\n    images(first: 2) { nodes { id url altText width height } }\n    options {\n      name\n      optionValues {\n        name\n        swatch { color image { previewImage { url } } }\n        firstSelectableVariant {\n          id\n          availableForSale\n          image { id url altText width height }\n        }\n      }\n    }\n    priceRange {\n      minVariantPrice { amount currencyCode }\n      maxVariantPrice { amount currencyCode }\n    }\n    selectedOrFirstAvailableVariant { id availableForSale }\n  }\n\n  #graphql\n  fragment JewelietteTryOn on Product {\n    category { name }\n    tryOnOverlay: metafield(namespace: "custom", key: "try_on_overlay") {\n      reference {\n        ... on MediaImage { image { url } }\n        ... on GenericFile { url }\n      }\n    }\n    tryOnSize: metafield(namespace: "custom", key: "try_on_size_cm") { value }\n  }\n\n  query JewelietteProductsByIds(\n    $ids: [ID!]!\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    nodes(ids: $ids) {\n      __typename\n      ... on Product { ...JewelietteProductCard ...JewelietteTryOn }\n    }\n  }\n': {
     return: JewelietteProductsByIdsQuery;
     variables: JewelietteProductsByIdsQueryVariables;
   };

@@ -1,12 +1,21 @@
 import {Image} from '@shopify/hydrogen';
 import {Money} from '~/components/shared/Money';
 import type {CatalogImage, CatalogProduct} from '~/lib/jeweliette-catalog';
+import type {TryOnPiece} from '~/lib/try-on/catalog';
 import {useTranslation} from '~/lib/i18n';
+import {FittingRoomTryOn} from './FittingRoomTryOn';
+
+type FittingRoomProduct = CatalogProduct & {
+  tryOn?: TryOnPiece | null;
+  tryOnLink?: string;
+};
 
 type FittingRoomViewProps = {
-  products: CatalogProduct[];
+  products: FittingRoomProduct[];
   selectedIds: string[];
   movingId: string | null;
+  /** Phone/tablet request, detected on the server. */
+  isMobile: boolean;
   onToggle: (id: string) => void;
   onRemove: (id: string) => void;
   onMoveToCart: (id: string) => void;
@@ -14,7 +23,7 @@ type FittingRoomViewProps = {
   onClear: () => void;
 };
 
-function productImage(product: CatalogProduct): CatalogImage | null {
+function productImage(product: FittingRoomProduct): CatalogImage | null {
   return product.featuredImage ?? product.images?.nodes[0] ?? null;
 }
 
@@ -22,6 +31,7 @@ export function FittingRoomView({
   products,
   selectedIds,
   movingId,
+  isMobile,
   onToggle,
   onRemove,
   onMoveToCart,
@@ -103,6 +113,14 @@ export function FittingRoomView({
                   </span>
                 </label>
                 <div className="mt-3 flex items-center gap-4 pl-8 text-[11px] uppercase tracking-widest text-primary">
+                  {product.tryOn && product.tryOnLink ? (
+                    <FittingRoomTryOn
+                      isMobile={isMobile}
+                      piece={product.tryOn}
+                      title={product.title}
+                      tryOnLink={product.tryOnLink}
+                    />
+                  ) : null}
                   <button
                     type="button"
                     aria-label={t('product.fittingRoomRemove', {

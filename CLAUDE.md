@@ -44,7 +44,7 @@ server.ts                  Oxygen worker entry: builds the Hydrogen context, han
 app/root.tsx               Root loader (header, footer, cart, login state), <html> layout, error boundary
 app/routes/                File-based routes (@react-router/fs-routes); api.* are JSON endpoints
 app/components/<group>/    UI grouped by area: account, cart, collections, fitting-room,
-                           layout, product, search, shared (+ RichText.tsx)
+                           layout, product, search, shared, try-on (+ RichText.tsx)
 app/lib/                   Domain logic and utilities (pure where possible)
   context.ts, session.ts, i18n.ts     Hydrogen context, cookie session, locale + translator
   messages/{en,pt,fr}.ts              UI dictionaries (en defines the keys)

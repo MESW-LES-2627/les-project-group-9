@@ -1,5 +1,9 @@
 import {describe, expect, it} from 'vitest';
-import {tryOnPageUrl, withCorsParam} from '../../app/lib/try-on/url';
+import {
+  secureTryOnLink,
+  tryOnPageUrl,
+  withCorsParam,
+} from '../../app/lib/try-on/url';
 
 describe('withCorsParam', () => {
   it('keeps existing query params and adds the CORS cache key', () => {
@@ -38,5 +42,28 @@ describe('tryOnPageUrl', () => {
     expect(
       tryOnPageUrl('http://localhost:3000/products/x?q=1', 'a b'),
     ).toBe('http://localhost:3000/products/a%20b?tryOn=1');
+  });
+});
+
+describe('secureTryOnLink', () => {
+  it('upgrades an http deep link when the page is https', () => {
+    expect(
+      secureTryOnLink('http://shop.example/products/aura?tryOn=1', 'https:'),
+    ).toBe('https://shop.example/products/aura?tryOn=1');
+  });
+
+  it('leaves https links and http pages untouched', () => {
+    expect(
+      secureTryOnLink('https://shop.example/products/aura?tryOn=1', 'https:'),
+    ).toBe('https://shop.example/products/aura?tryOn=1');
+    expect(
+      secureTryOnLink('http://localhost:3000/products/aura?tryOn=1', 'http:'),
+    ).toBe('http://localhost:3000/products/aura?tryOn=1');
+  });
+
+  it('falls back to the link when there is no page context', () => {
+    expect(secureTryOnLink('/products/aura?tryOn=1')).toBe(
+      '/products/aura?tryOn=1',
+    );
   });
 });

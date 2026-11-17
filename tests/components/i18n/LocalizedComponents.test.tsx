@@ -140,6 +140,7 @@ describe('FittingRoomView in each language', () => {
     return inLocale(
       code,
       <FittingRoomView
+        isMobile={false}
         movingId={null}
         onClear={vi.fn()}
         onMoveToCart={vi.fn()}

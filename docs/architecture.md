@@ -167,12 +167,83 @@ metafields (namespace `custom`) through the Customer Account API.
   `?ids=` from the profile state (`useFetcher`), and the loader returns product cards via
   `loadProductsByIds`. The `fitting-room` action moves a piece to the cart and removes it
   from the fitting room.
-- **Fitting room view** (`components/fitting-room/FittingRoomView.tsx`) contains a "Virtual
-  try-on" panel that is currently a placeholder ("coming soon").
+- **Fitting room view** (`components/fitting-room/FittingRoomView.tsx`) is a look builder:
+  pieces can be selected, compared, moved to the cart or removed. Pieces with try-on data get
+  an inline **Try on** action (`FittingRoomTryOn.tsx`) that opens the same camera/QR dialogs
+  as the product page; the loader attaches `tryOn`/`tryOnLink` per piece
+  (`try-on` fields come from `JEWELIETTE_TRY_ON_FRAGMENT` in `products.server.ts`).
 - **Allergens**: `useAllergenMatches()` compares product allergens with the customer's
   allergies. `AllergenBadge` and `AddToBagGuard` (a confirm dialog before adding) use it.
 - **Ring sizes**: `RingSizeForm` (account) and `RingSizeHelp` (product page, ring products
   only; `profile/ringCategory.ts`).
+
+## Front-camera try-on
+
+A shopper can try earrings and necklaces on with the phone camera (US-017). It is not AR
+surface placement: the piece is drawn on a live selfie face.
+
+- **Gate** — `app/lib/try-on/catalog.ts`: the product's `category.name` must be `Earrings`
+  or `Necklaces` **and** an overlay must exist, from `custom.try_on_overlay` (transparent
+  PNG in Files) or, as a fallback, a `.png` featured image. Otherwise
+  `resolveTryOn()` returns `null` and the button is never rendered. `custom.try_on_size_cm`
+  sets the piece's real width (default 2 cm earrings, 16 cm necklaces). Overlay URLs are
+  loaded with `?cors=1` (`try-on/url.ts`) so the product page's cached `<img>` cannot taint
+  the canvas.
+- **True size** — the overlay is scaled with `sizeCm / 14.5 cm × faceWidth`, so the piece
+  keeps its real proportions against the shopper's cheekbones. The number cannot be derived
+  from the image, so `custom.try_on_size_cm` must be the real width of the **trimmed
+  cut-out** (a pendant-only cut-out is a few centimetres; a cut-out that includes the whole
+  chain is ~40 cm). Shoppers can still drag/resize in photo mode.
+- **Device** — `try-on/device.ts` reads `Sec-CH-UA-Mobile` then the user agent in the
+  product loader; phones open the camera dialog and computers the QR dialog. iPadOS's
+  desktop user agent is refined client-side with `maxTouchPoints`.
+- **Runtime** — `@mediapipe/tasks-vision` (FaceLandmarker, 478 landmarks) is imported
+  lazily when the dialog opens. WASM (`public/mediapipe/`, copied from `node_modules` by
+  `scripts/copy-mediapipe-assets.mjs`) and the model (`public/models/face_landmarker.task`)
+  are self-hosted, so no request leaves our origin. The dialog tries the GPU delegate and
+  falls back to CPU. The **classic** WASM loader is used (`forVisionTasks(path, false)` and
+  `vision_wasm_internal.*`): the ES-module variant is evaluated as a classic script and
+  fails at runtime with `ModuleFactory not set.` The camera is requested **inside the shopper's
+  tap** (`requestCamera()` is called from the button handler, before React updates): iOS
+  Safari ties `getUserMedia` to the user gesture, so a request from an effect can be silently
+  refused. QR deep links have no gesture, so they open the dialog with an "Open camera"
+  button; `cameraSupport()` catches in-app browsers without `getUserMedia` and non-HTTPS
+  pages. `attachCameraStream` attaches the stream to the **visible** `<video>` preview and
+  starts playback without awaiting it (Safari can leave `play()` pending and then release
+  the camera); an `AbortError` is retried once after `canplay`, and a track that ends is
+  reported so the dialog can offer a retry. **The preview is the video element** — iOS
+  releases the camera of a hidden one — and the piece is painted on a transparent canvas on
+  top (`drawOverlays`); the landmarker joins later and the status reads `preparing` until
+  then, because the WASM download would otherwise delay the camera by several seconds.
+  `try-on/preload.ts` warms the WASM, the model and the JS chunk on idle on phones (and on
+  hover/focus on desktop) to shorten the first overlay. The CSP in `app/entry.server.tsx`
+  allows `'wasm-unsafe-eval'` in `script-src` and `'self' blob:` in `worker-src` (MediaPipe
+  compiles in a worker on some Safari versions). `attachCameraStream` sets
+  `playsinline`/`webkit-playsinline`/`muted` **before** `srcObject`; the modal defers the
+  camera/landmarker release by one tick so React StrictMode's simulated unmount does not
+  stop and reopen the hardware camera. When the camera or the WASM fails, the banner shows
+  the translated message **plus the raw `Name: message`** so a phone can report the cause.
+- **Geometry** (`try-on/anchors.ts`, pure, pixel space): earrings are top-centre anchored at
+  landmarks 177/401 with a sink ratio; the ear with the smaller `|earX − noseX|` is hidden
+  when the head turns (3-frame hysteresis). Necklaces are centred on the collarbone (0.62
+  face widths below the chin) and masked by MediaPipe's face oval (`evenodd`), so the chain
+  can lie on the neck but never on the face. Transforms are smoothed with an exponential
+  filter. `try-on/frame.ts` turns one landmark set into overlays; `try-on/render.ts` paints
+  the mirrored video and the overlays.
+- **Photo fallback** — `PhotoFallback` decodes a picked image, switches the landmarker to
+  `IMAGE` mode and composes the same overlays. Nothing is uploaded; the camera and photos
+  stay in the browser. The composed piece can be dragged (pointer or arrow keys) and resized
+  with the − / + buttons, and "Reset position" returns to the face-based placement; this
+  covers poses, crops and necklace lengths the automatic anchor cannot know. The overlay is
+  checked for real transparency client-side (`try-on/overlay.ts`); an opaque PNG shows
+  "not available" instead of a rectangle.
+- **UI** — `components/product/TryOnButton.tsx` (button + deep link) opens
+  `components/try-on/TryOnDialog.tsx` (camera/photo) or `TryOnQrDialog.tsx` (desktop QR,
+  encoded locally with `uqr`). The fitting room reuses the same dialogs per piece
+  (`components/fitting-room/FittingRoomTryOn.tsx`). A `?tryOn=1` link opens the dialog after
+  a QR scan and is then removed from the URL.
+- **Copy** — `product.tryOn*` and `tryOn.*` keys in all three dictionaries.
+
 
 ## Recommendation engine
 
@@ -296,7 +367,7 @@ has been decided.
 | 7 | The root font size is 14px, so inputs styled `text-base` render at 14px. iOS Safari zooms on focus for inputs below 16px; this zoom was not tested on a device (**unverified**). | `app/styles/tailwind.css` | US-048 (another team member) |
 | 8 | Touch targets below 44px. Header favorites and fitting-room links are `h-10 w-10`. Because spacing is `rem`-based and the root is 14px, the codebase-wide `size-11`/`min-h-11` targets compute to 38.5px, and `h-10` to 35px (calculated from the CSS, not measured in a browser). | `components/layout/Header.tsx`, `app/styles/tailwind.css` | US-048 (another team member). The new language selector uses explicit 44px targets (US-046). |
 | 9 | Playwright has only a desktop Chromium project. Phone-sized viewports are set per test in `footer.spec.ts` (375px) and, for the header and language selector only, `header.spec.ts` and `language.spec.ts` (US-046). Other flows are not tested on a phone-sized screen. | `playwright.config.ts`, `tests/e2e/` | US-048 (another team member) |
-| 10 | The fitting room's virtual try-on panel is still a placeholder. US-017 adds a front-camera try-on for Earrings and Necklaces (category gate, overlay metafields and geometry in `app/lib/try-on/`); the dialog UI lands in a later phase. | `app/lib/try-on/`, `components/fitting-room/FittingRoomView.tsx` | US-017 |
+| 10 | ~~The fitting room's virtual try-on panel is still a placeholder.~~ Resolved in US-017: the panel is a look builder and each supported piece has an inline Try on action that opens the camera/QR dialogs (`app/lib/try-on/`, `app/components/try-on/`, `components/fitting-room/FittingRoomTryOn.tsx`). | `app/lib/try-on/`, `components/fitting-room/` | US-017 |
 | 11 | `api.profile.tsx` redefines `NO_STORE`, identical to the one exported by `lib/profile/operation.server.ts`. | source | Proposed cleanup |
 | 12 | Comments in `app/lib/context.ts` and `react-router.config.ts` mention React Router 7.9.x; the installed version is 7.16.0. | source, `package.json` | Proposed cleanup |
 | 13 | CI (`test.yml`) does not run `npm run build`. The Oxygen workflow deploys on every push to any branch. | `.github/workflows/` | Information |

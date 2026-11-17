@@ -1,7 +1,8 @@
-import {describe, expect, it} from 'vitest';
+import {afterEach, describe, expect, it, vi} from 'vitest';
 import {
   isMobileRequest,
   isMobileUserAgent,
+  prefersMobileUi,
 } from '../../app/lib/try-on/device';
 
 const IPHONE =
@@ -59,5 +60,44 @@ describe('isMobileRequest', () => {
         request({'sec-ch-ua-mobile': '?0', 'user-agent': DESKTOP_CHROME}),
       ),
     ).toBe(false);
+  });
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+describe('prefersMobileUi', () => {
+  it('keeps a phone detection from the server', () => {
+    expect(prefersMobileUi(true)).toBe(true);
+  });
+
+  it('trusts the Chromium client hint', () => {
+    vi.stubGlobal('navigator', {
+      userAgentData: {mobile: true},
+      maxTouchPoints: 0,
+      userAgent: DESKTOP_CHROME,
+    });
+
+    expect(prefersMobileUi(false)).toBe(true);
+  });
+
+  it('recognises an iPadOS desktop user agent through touch points', () => {
+    vi.stubGlobal('navigator', {
+      maxTouchPoints: 5,
+      userAgent:
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15',
+    });
+
+    expect(prefersMobileUi(false)).toBe(true);
+  });
+
+  it('stays on the desktop path without touch or a mobile hint', () => {
+    vi.stubGlobal('navigator', {
+      maxTouchPoints: 0,
+      userAgent: DESKTOP_CHROME,
+    });
+
+    expect(prefersMobileUi(false)).toBe(false);
   });
 });

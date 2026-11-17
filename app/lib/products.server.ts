@@ -1,6 +1,7 @@
 import type {HydrogenRouterContextProvider} from '@shopify/hydrogen';
 import {
   JEWELIETTE_PRODUCT_CARD_FRAGMENT,
+  JEWELIETTE_TRY_ON_FRAGMENT,
   type CatalogProduct,
 } from '~/lib/jeweliette-catalog';
 import {isProductGid} from '~/lib/profile/list-schema';
@@ -9,6 +10,7 @@ type Context = Pick<HydrogenRouterContextProvider, 'storefront'>;
 
 const PRODUCTS_BY_IDS_QUERY = `#graphql
   ${JEWELIETTE_PRODUCT_CARD_FRAGMENT}
+  ${JEWELIETTE_TRY_ON_FRAGMENT}
   query JewelietteProductsByIds(
     $ids: [ID!]!
     $country: CountryCode
@@ -16,7 +18,7 @@ const PRODUCTS_BY_IDS_QUERY = `#graphql
   ) @inContext(country: $country, language: $language) {
     nodes(ids: $ids) {
       __typename
-      ... on Product { ...JewelietteProductCard }
+      ... on Product { ...JewelietteProductCard ...JewelietteTryOn }
     }
   }
 ` as const;

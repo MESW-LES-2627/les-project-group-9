@@ -1,12 +1,14 @@
 export type IconName =
   | 'arrow'
   | 'bag'
+  | 'camera'
   | 'check'
   | 'chevron'
   | 'close'
   | 'heart'
   | 'hanger'
   | 'menu'
+  | 'qr'
   | 'search'
   | 'sparkle'
   | 'user';
@@ -27,6 +29,12 @@ export function Icon({name, size = 21, filled = false, className}: IconProps) {
         <path d="M9 9V6a3 3 0 0 1 6 0v3" />
       </>
     ),
+    camera: (
+      <>
+        <path d="M4 19V8h4l1.5-2h5L16 8h4v11H4Z" />
+        <circle cx="12" cy="13.5" r="3.5" />
+      </>
+    ),
     check: <path d="m5 12.5 4.5 4.5L19 7" />,
     chevron: <path d="m6 9 6 6 6-6" />,
     close: <path d="m6 6 12 12M18 6 6 18" />,
@@ -40,6 +48,14 @@ export function Icon({name, size = 21, filled = false, className}: IconProps) {
       </>
     ),
     menu: <path d="M4 7h16M4 12h16M4 17h16" />,
+    qr: (
+      <>
+        <rect height="6" rx="1" width="6" x="4" y="4" />
+        <rect height="6" rx="1" width="6" x="14" y="4" />
+        <rect height="6" rx="1" width="6" x="4" y="14" />
+        <path d="M14 14h2v2h-2zM18 14h2v2h-2zM14 18h2v2h-2zM18 18h2v2h-2z" />
+      </>
+    ),
     search: (
       <>
         <circle cx="11" cy="11" r="7" />

@@ -8,6 +8,9 @@ import {updateCustomerFittingRoom} from '~/lib/profile/customer.server';
 import {MAX_FITTING_ROOM} from '~/lib/profile/fitting-room';
 import {isProductGid} from '~/lib/profile/list-schema';
 import {loadProductsByIds, parseProductIds} from '~/lib/products.server';
+import {resolveTryOn} from '~/lib/try-on/catalog';
+import {isMobileRequest} from '~/lib/try-on/device';
+import {tryOnPageUrl} from '~/lib/try-on/url';
 
 export const meta: Route.MetaFunction = ({matches}) => [
   {title: `${translatorFromMatches(matches)('nav.fittingRoom')} | Jeweliette`},
@@ -20,7 +23,15 @@ export async function loader({request, context}: Route.LoaderArgs) {
     MAX_FITTING_ROOM,
   );
   const products = await loadProductsByIds(context, ids);
-  return {products};
+
+  return {
+    products: products.map((product) => ({
+      ...product,
+      tryOn: resolveTryOn(product),
+      tryOnLink: tryOnPageUrl(request.url, product.handle),
+    })),
+    isMobile: isMobileRequest(request),
+  };
 }
 
 export async function action({request, context}: Route.ActionArgs) {
@@ -211,6 +222,7 @@ export default function FittingRoom() {
             </p>
           ) : null}
           <FittingRoomView
+            isMobile={fetcher.data.isMobile}
             movingId={movingId}
             onClear={() => setSelected([])}
             onMoveToCart={moveToCart}
