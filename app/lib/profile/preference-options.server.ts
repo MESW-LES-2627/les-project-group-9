@@ -1,4 +1,5 @@
 import type {HydrogenRouterContextProvider} from '@shopify/hydrogen';
+import type {JeweliettePreferenceOptionsQuery} from 'storefrontapi.generated';
 import {JEWELIETTE_MATERIAL_METAFIELD_FRAGMENT} from '~/lib/jeweliette-catalog';
 import {parseProductMaterials} from '~/lib/materials';
 import {parseTextMetafield} from '~/lib/metafields';
@@ -8,27 +9,6 @@ import type {
 } from './types';
 
 type Context = Pick<HydrogenRouterContextProvider, 'storefront'>;
-
-type OptionProduct = {
-  metal?: {value: string} | null;
-  jewelryMaterial?: {
-    references?: {nodes: Array<OptionMaterialNode>} | null;
-  } | null;
-  watchMaterial?: {
-    references?: {nodes: Array<OptionMaterialNode>} | null;
-  } | null;
-};
-
-type OptionMaterialNode = {
-  handle?: string | null;
-  fields?: Array<{key: string; value?: string | null}> | null;
-} | null;
-
-type PreferenceOptionsQuery = {
-  products?: {
-    nodes: Array<OptionProduct | null>;
-  } | null;
-};
 
 const PREFERENCE_OPTIONS_QUERY = `#graphql
   ${JEWELIETTE_MATERIAL_METAFIELD_FRAGMENT}
@@ -78,7 +58,7 @@ export async function getPreferenceOptions(
   context: Context,
 ): Promise<PreferenceOptions> {
   try {
-    const {products} = await context.storefront.query<PreferenceOptionsQuery>(
+    const {products} = await context.storefront.query<JeweliettePreferenceOptionsQuery>(
       PREFERENCE_OPTIONS_QUERY,
       {cache: context.storefront.CacheShort()},
     );
@@ -86,9 +66,7 @@ export async function getPreferenceOptions(
     const colors = new Map<string, PreferenceOption>();
     const materials = new Map<string, PreferenceOption>();
 
-    for (const product of products?.nodes ?? []) {
-      if (!product) continue;
-
+    for (const product of products.nodes) {
       for (const value of parseTextMetafield(product.metal?.value)) {
         if (!colors.has(value)) {
           colors.set(value, {value, label: labelizeOption(value)});
