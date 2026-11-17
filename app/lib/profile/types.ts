@@ -16,6 +16,17 @@ export type PreferenceProfile = {
   preferredGemstones?: string[];
 };
 
+export type PreferenceOption = {
+  value: string;
+  label: string;
+};
+
+/** Options the profile form offers, derived from the current catalog. */
+export type PreferenceOptions = {
+  colors: PreferenceOption[];
+  materials: PreferenceOption[];
+};
+
 export type ProfileResponse = {
   loggedIn: boolean;
   favorites: string[];
