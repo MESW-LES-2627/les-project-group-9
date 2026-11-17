@@ -61,6 +61,7 @@ steps 1–2 of
 | `npm test` / `npm run test:watch` | Unit and component tests (Vitest) |
 | `npm run test:e2e` | End-to-end tests (Playwright) |
 | `npm run codegen` | Regenerate GraphQL types (`*.generated.d.ts`) and route types |
+| `npm run mediapipe:assets` | Copy the MediaPipe WASM runtime into `public/mediapipe/` (also runs on install and before dev/build) |
 
 ## Project structure
 

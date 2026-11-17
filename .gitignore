@@ -3,6 +3,7 @@ node_modules
 /build
 /dist
 /public/build
+/public/mediapipe
 /.mf
 .env
 .shopify

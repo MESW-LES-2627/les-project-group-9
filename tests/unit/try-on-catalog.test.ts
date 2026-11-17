@@ -1,0 +1,171 @@
+import {describe, expect, it} from 'vitest';
+import {
+  DEFAULT_TRY_ON_SIZE_CM,
+  isPngUrl,
+  parseTryOnSizeCm,
+  resolveOverlayUrl,
+  resolveTryOn,
+  tryOnKind,
+} from '../../app/lib/try-on/catalog';
+
+const OVERLAY = 'https://cdn.shopify.com/s/files/1/0000/files/butterfly.png?v=1';
+
+describe('tryOnKind', () => {
+  it('accepts earrings and necklaces', () => {
+    expect(tryOnKind({category: {name: 'Earrings'}})).toBe('earring');
+    expect(tryOnKind({category: {name: 'Necklaces'}})).toBe('necklace');
+  });
+
+  it('ignores case, spaces and the singular form', () => {
+    expect(tryOnKind({category: {name: ' necklaces '}})).toBe('necklace');
+    expect(tryOnKind({category: {name: 'Earring'}})).toBe('earring');
+  });
+
+  it('rejects other jewellery and missing categories', () => {
+    expect(tryOnKind({category: {name: 'Bracelets'}})).toBe(null);
+    expect(tryOnKind({category: {name: 'Rings'}})).toBe(null);
+    expect(tryOnKind({category: {name: 'Charms'}})).toBe(null);
+    expect(tryOnKind({category: {name: 'Watches'}})).toBe(null);
+    expect(tryOnKind({category: null})).toBe(null);
+    expect(tryOnKind({})).toBe(null);
+  });
+});
+
+describe('isPngUrl', () => {
+  it('looks at the path, not the query string', () => {
+    expect(isPngUrl(`${OVERLAY}`)).toBe(true);
+    expect(isPngUrl('https://cdn.shopify.com/files/photo.JPG?v=1')).toBe(false);
+    expect(isPngUrl('https://cdn.shopify.com/files/photo.png?format=jpg')).toBe(
+      true,
+    );
+    expect(isPngUrl('https://cdn.shopify.com/files/photo.jpg?name=.png')).toBe(
+      false,
+    );
+  });
+
+  it('accepts relative paths and survives malformed input', () => {
+    expect(isPngUrl('/files/earring.PNG')).toBe(true);
+    expect(isPngUrl('not a url')).toBe(false);
+  });
+});
+
+describe('parseTryOnSizeCm', () => {
+  it('parses decimal values with a dot or comma', () => {
+    expect(parseTryOnSizeCm('2.5', 'earring')).toBe(2.5);
+    expect(parseTryOnSizeCm(' 2,5 ', 'earring')).toBe(2.5);
+    expect(parseTryOnSizeCm('16', 'necklace')).toBe(16);
+  });
+
+  it('falls back to the kind default when missing or implausible', () => {
+    expect(parseTryOnSizeCm(null, 'earring')).toBe(
+      DEFAULT_TRY_ON_SIZE_CM.earring,
+    );
+    expect(parseTryOnSizeCm('', 'necklace')).toBe(
+      DEFAULT_TRY_ON_SIZE_CM.necklace,
+    );
+    expect(parseTryOnSizeCm('2cm', 'earring')).toBe(
+      DEFAULT_TRY_ON_SIZE_CM.earring,
+    );
+    expect(parseTryOnSizeCm('0', 'earring')).toBe(DEFAULT_TRY_ON_SIZE_CM.earring);
+    expect(parseTryOnSizeCm('-2', 'earring')).toBe(
+      DEFAULT_TRY_ON_SIZE_CM.earring,
+    );
+    expect(parseTryOnSizeCm('150', 'necklace')).toBe(
+      DEFAULT_TRY_ON_SIZE_CM.necklace,
+    );
+  });
+});
+
+describe('resolveOverlayUrl', () => {
+  it('prefers the transparent-PNG metafield', () => {
+    expect(
+      resolveOverlayUrl({
+        featuredImage: {url: 'https://cdn.shopify.com/files/photo.jpg'},
+        tryOnOverlay: {reference: {image: {url: OVERLAY}}},
+      }),
+    ).toBe(OVERLAY);
+  });
+
+  it('accepts a generic file reference', () => {
+    expect(
+      resolveOverlayUrl({tryOnOverlay: {reference: {url: OVERLAY}}}),
+    ).toBe(OVERLAY);
+  });
+
+  it('falls back to a featured PNG only', () => {
+    expect(resolveOverlayUrl({featuredImage: {url: OVERLAY}})).toBe(OVERLAY);
+    expect(
+      resolveOverlayUrl({
+        featuredImage: {url: 'https://cdn.shopify.com/files/photo.jpg'},
+      }),
+    ).toBe(null);
+    expect(
+      resolveOverlayUrl({
+        featuredImage: {url: 'https://cdn.shopify.com/files/photo.webp'},
+      }),
+    ).toBe(null);
+  });
+
+  it('ignores an empty metafield reference and keeps looking', () => {
+    expect(
+      resolveOverlayUrl({
+        featuredImage: {url: OVERLAY},
+        tryOnOverlay: {reference: {image: {url: '   '}}},
+      }),
+    ).toBe(OVERLAY);
+    expect(resolveOverlayUrl({tryOnOverlay: {reference: null}})).toBe(null);
+  });
+});
+
+describe('resolveTryOn', () => {
+  it('returns the piece with a CORS-safe overlay URL', () => {
+    const piece = resolveTryOn({
+      category: {name: 'Earrings'},
+      featuredImage: {url: 'https://cdn.shopify.com/files/butterfly.png?v=7'},
+      tryOnSize: {value: '1.8'},
+    });
+
+    expect(piece).toEqual({
+      kind: 'earring',
+      overlayUrl:
+        'https://cdn.shopify.com/files/butterfly.png?v=7&cors=1',
+      sizeCm: 1.8,
+    });
+  });
+
+  it('does not add the CORS param twice', () => {
+    const piece = resolveTryOn({
+      category: {name: 'Necklaces'},
+      tryOnOverlay: {reference: {image: {url: `${OVERLAY}&cors=1`}}},
+    });
+
+    expect(piece?.overlayUrl).toBe(`${OVERLAY}&cors=1`);
+  });
+
+  it('hides the button for unsupported categories even with an overlay', () => {
+    expect(
+      resolveTryOn({
+        category: {name: 'Bracelets'},
+        tryOnOverlay: {reference: {image: {url: OVERLAY}}},
+      }),
+    ).toBe(null);
+  });
+
+  it('hides the button when there is no transparent PNG overlay', () => {
+    expect(
+      resolveTryOn({
+        category: {name: 'Earrings'},
+        featuredImage: {url: 'https://cdn.shopify.com/files/photo.jpg'},
+      }),
+    ).toBe(null);
+  });
+
+  it('uses the kind default size when the metafield is missing', () => {
+    expect(
+      resolveTryOn({
+        category: {name: 'Necklaces'},
+        tryOnOverlay: {reference: {url: OVERLAY}},
+      })?.sizeCm,
+    ).toBe(DEFAULT_TRY_ON_SIZE_CM.necklace);
+  });
+});

@@ -25,6 +25,7 @@ to Oxygen. This file holds the standing rules for every session. Details live in
 | `npm test` | Vitest: unit (node) and component (jsdom) projects |
 | `npm run test:e2e` | Playwright, desktop Chromium, against `npm run preview` |
 | `npm run codegen` | Regenerate GraphQL and route types |
+| `npm run mediapipe:assets` | Copy the MediaPipe WASM runtime into `public/mediapipe/` (also on install, predev, prebuild, prepreview) |
 
 ## Verification before every commit
 
@@ -51,9 +52,13 @@ app/lib/                   Domain logic and utilities (pure where possible)
   jeweliette-catalog.ts               Shared product fragments and catalog types
   profile/                            Favorites, fitting room, preferences (customer metafields)
   recommendation/                     Recommendation engine (pure) + candidate loader
+  try-on/                             Front-camera try-on: catalog gate, geometry, device detection
   search.ts                           Filter parsing shared by collections and search
 app/graphql/customer-account/  Customer Account API documents
 app/styles/tailwind.css    Tailwind 4 theme tokens (colors, fonts, breakpoints, shadows)
+public/                    Static assets; public/models/face_landmarker.task is committed,
+                           public/mediapipe/ is copied from node_modules (git-ignored)
+scripts/                   Build-time tooling (copy-mediapipe-assets.mjs)
 tests/{unit,components,e2e}/
 docs/                      Technical and process documentation
 ```

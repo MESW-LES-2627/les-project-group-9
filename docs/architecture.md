@@ -270,6 +270,7 @@ See [testing.md](testing.md). In short:
 | Add a product trait for recommendations | `JEWELIETTE_RECOMMENDATION_PRODUCT_FRAGMENT`, `recommendation/types.ts`, `traits.ts`, `weights.ts`, `signals.ts`, plus tests. |
 | Add a catalog filter | Shopify admin (Search & Discovery filters). If it needs a new filter key, extend `allowedKeys` in `readCatalogFilters()` (`app/lib/search.ts`). UI changes go in `CatalogFilters.tsx`. |
 | Add a sort option | `SORT_OPTIONS` in `app/routes/collections.$handle.tsx`. |
+| Change the try-on gate or overlay | `app/lib/try-on/catalog.ts` (supported categories, `custom.try_on_overlay` PNG, `custom.try_on_size_cm`); geometry in `app/lib/try-on/anchors.ts`; MediaPipe assets in `public/models/` and `public/mediapipe/` (copied by `scripts/copy-mediapipe-assets.mjs`). |
 | Add a customer preference | `PreferenceProfile` (`profile/types.ts`), `profile/preferences.ts` (normalise/parse), `PreferencesForm.tsx`, tests. |
 | Add a UI string / translation | Add the key to `app/lib/messages/en.ts`, `pt.ts` and `fr.ts` and use `useTranslation()` (or `translatorFor` / `translatorFromMatches`). See [i18n.md](i18n.md#adding-a-string). |
 | Add a language | Add an entry to `LOCALES` and a message object in `app/lib/i18n.ts`, then publish the language in the Shopify admin. |
@@ -295,7 +296,7 @@ has been decided.
 | 7 | The root font size is 14px, so inputs styled `text-base` render at 14px. iOS Safari zooms on focus for inputs below 16px; this zoom was not tested on a device (**unverified**). | `app/styles/tailwind.css` | US-048 (another team member) |
 | 8 | Touch targets below 44px. Header favorites and fitting-room links are `h-10 w-10`. Because spacing is `rem`-based and the root is 14px, the codebase-wide `size-11`/`min-h-11` targets compute to 38.5px, and `h-10` to 35px (calculated from the CSS, not measured in a browser). | `components/layout/Header.tsx`, `app/styles/tailwind.css` | US-048 (another team member). The new language selector uses explicit 44px targets (US-046). |
 | 9 | Playwright has only a desktop Chromium project. Phone-sized viewports are set per test in `footer.spec.ts` (375px) and, for the header and language selector only, `header.spec.ts` and `language.spec.ts` (US-046). Other flows are not tested on a phone-sized screen. | `playwright.config.ts`, `tests/e2e/` | US-048 (another team member) |
-| 10 | No 3D or customisation components exist. Virtual try-on is a placeholder panel in `FittingRoomView`. | grep | Information |
+| 10 | The fitting room's virtual try-on panel is still a placeholder. US-017 adds a front-camera try-on for Earrings and Necklaces (category gate, overlay metafields and geometry in `app/lib/try-on/`); the dialog UI lands in a later phase. | `app/lib/try-on/`, `components/fitting-room/FittingRoomView.tsx` | US-017 |
 | 11 | `api.profile.tsx` redefines `NO_STORE`, identical to the one exported by `lib/profile/operation.server.ts`. | source | Proposed cleanup |
 | 12 | Comments in `app/lib/context.ts` and `react-router.config.ts` mention React Router 7.9.x; the installed version is 7.16.0. | source, `package.json` | Proposed cleanup |
 | 13 | CI (`test.yml`) does not run `npm run build`. The Oxygen workflow deploys on every push to any branch. | `.github/workflows/` | Information |

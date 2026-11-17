@@ -26,6 +26,8 @@ import {
 import {materialsForColor, parseProductMaterials} from '~/lib/materials';
 import {isColorOption} from '~/lib/options';
 import {isRingProduct} from '~/lib/profile/ringCategory';
+import {resolveTryOn} from '~/lib/try-on/catalog';
+import {isMobileRequest} from '~/lib/try-on/device';
 
 export const meta: Route.MetaFunction = ({data, matches}) => [
   {
@@ -48,7 +50,12 @@ export async function loader(args: Route.LoaderArgs) {
     .then((result) => result.productRecommendations ?? [])
     .catch(() => []);
 
-  return {product, recommendations};
+  return {
+    product,
+    recommendations,
+    tryOn: resolveTryOn(product),
+    isMobile: isMobileRequest(args.request),
+  };
 }
 
 async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
@@ -326,6 +333,14 @@ const PRODUCT_FRAGMENT = `#graphql
     gemstone: metafield(namespace: "custom", key: "gemstone") { value }
     gemColor: metafield(namespace: "custom", key: "gem_color") { value }
     allergens: metafield(namespace: "custom", key: "allergens") { value }
+    tryOnOverlay: metafield(namespace: "custom", key: "try_on_overlay") {
+      reference {
+        ... on MediaImage { image { url } }
+        ... on GenericFile { url }
+      }
+    }
+    tryOnSize: metafield(namespace: "custom", key: "try_on_size_cm") { value }
+    featuredImage { id url altText width height }
     images(first: 10) { nodes { id url altText width height } }
     collections(first: 1) { nodes { title handle } }
     category { id name }
