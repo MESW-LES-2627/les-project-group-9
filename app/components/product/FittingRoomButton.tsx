@@ -4,19 +4,19 @@ import {useTranslation} from '~/lib/i18n';
 import {ProductActionButton} from './ProductActionButton';
 
 export function FittingRoomButton({
-  productId,
+  variantId,
   title,
   canTryOn = true,
   className = '',
 }: {
-  productId: string;
+  variantId: string;
   title: string;
-  /** Only pieces with a try-on overlay belong in the fitting room. */
+  /** Only variants with a try-on overlay belong in the fitting room. */
   canTryOn?: boolean;
   className?: string;
 }) {
   const {has, toggle, isLoggedIn} = useFittingRoom();
-  const active = has(productId);
+  const active = has(variantId);
   const t = useTranslation();
 
   if (!canTryOn) return null;
@@ -38,7 +38,7 @@ export function FittingRoomButton({
           return;
         }
 
-        toggle(productId);
+        toggle(variantId);
       }}
     >
       <Icon name="hanger" size={18} />

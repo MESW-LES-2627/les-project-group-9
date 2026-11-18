@@ -44,15 +44,6 @@ export type CatalogProduct = {
   productType?: string;
   allergens?: {value: string} | null;
   badge?: {value: string} | null;
-  /** Try-on gate inputs (see `lib/try-on/catalog.ts`). */
-  category?: {name?: string | null} | null;
-  tryOnOverlay?: {
-    reference?: {
-      url?: string | null;
-      image?: {url?: string | null} | null;
-    } | null;
-  } | null;
-  tryOnSize?: {value?: string | null} | null;
   variants?: {
     nodes: Array<{
       id: string;
@@ -112,23 +103,6 @@ export const JEWELIETTE_PRODUCT_CARD_FRAGMENT = `#graphql
       maxVariantPrice { amount currencyCode }
     }
     selectedOrFirstAvailableVariant { id availableForSale }
-  }
-` as const;
-
-/**
- * Try-on fields (see `lib/try-on/catalog.ts`). Use next to
- * `JewelietteProductCard`, which already selects `featuredImage`.
- */
-export const JEWELIETTE_TRY_ON_FRAGMENT = `#graphql
-  fragment JewelietteTryOn on Product {
-    category { name }
-    tryOnOverlay: metafield(namespace: "custom", key: "try_on_overlay") {
-      reference {
-        ... on MediaImage { image { url } }
-        ... on GenericFile { url }
-      }
-    }
-    tryOnSize: metafield(namespace: "custom", key: "try_on_size_cm") { value }
   }
 ` as const;
 

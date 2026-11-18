@@ -1,15 +1,17 @@
 import {data} from 'react-router';
 import type {Route} from './+types/api.profile.fitting-room';
 import {updateCustomerFittingRoom} from '~/lib/profile/customer.server';
+import {isVariantGid} from '~/lib/profile/list-schema';
 import {NO_STORE, readListOperation} from '~/lib/profile/operation.server';
-import {loadProductsByIds} from '~/lib/products.server';
 import {resolveTryOn} from '~/lib/try-on/catalog';
+import {loadVariantsByIds} from '~/lib/variants.server';
 
 export async function action({request, context}: Route.ActionArgs) {
   const result = await readListOperation(
     request,
     context,
     'No fitting room changes',
+    isVariantGid,
   );
 
   if ('error' in result) {
@@ -20,13 +22,13 @@ export async function action({request, context}: Route.ActionArgs) {
   }
 
   if (result.operation.add?.length) {
-    // The fitting room exists to try pieces on, so only try-on capable
-    // products (earrings/necklaces with a transparent overlay) may enter it.
-    const products = await loadProductsByIds(context, result.operation.add);
+    // The fitting room exists to try pieces on, so only variants with a
+    // try-on overlay (and an Earrings/Necklaces product) may enter it.
+    const variants = await loadVariantsByIds(context, result.operation.add);
     const tryOnIds = new Set(
-      products
-        .filter((product) => resolveTryOn(product) !== null)
-        .map((product) => product.id),
+      variants
+        .filter((variant) => resolveTryOn(variant.product, variant) !== null)
+        .map((variant) => variant.id),
     );
     const unsupported = result.operation.add.filter(
       (id) => !tryOnIds.has(id),
@@ -36,7 +38,7 @@ export async function action({request, context}: Route.ActionArgs) {
       return data(
         {
           error:
-            'Only pieces available for try-on can be added to the fitting room',
+            'Only variants available for try-on can be added to the fitting room',
         },
         {status: 400, headers: NO_STORE},
       );

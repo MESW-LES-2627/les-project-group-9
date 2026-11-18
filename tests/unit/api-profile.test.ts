@@ -4,33 +4,37 @@ import {loader} from '../../app/routes/api.profile';
 type LoaderArgs = Parameters<typeof loader>[0];
 
 const CUSTOMER_ID = 'gid://shopify/Customer/1';
-const RING = 'gid://shopify/Product/1';
-const NECKLACE = 'gid://shopify/Product/2';
+const CLEAR = 'gid://shopify/ProductVariant/1';
+const STEEL = 'gid://shopify/ProductVariant/2';
+const LEGACY_PRODUCT = 'gid://shopify/Product/1';
 
-function productNode(id: string) {
-  const capable = id === NECKLACE;
+function variantNode(id: string) {
+  const capable = id === CLEAR;
 
   return {
-    __typename: 'Product',
+    __typename: 'ProductVariant',
     id,
-    title: 'Piece',
-    handle: `piece-${id.split('/').at(-1)}`,
-    priceRange: {
-      minVariantPrice: {amount: '1.0', currencyCode: 'EUR'},
-      maxVariantPrice: {amount: '1.0', currencyCode: 'EUR'},
+    title: capable ? 'Clear' : 'Steel',
+    availableForSale: true,
+    selectedOptions: [{name: 'Color', value: capable ? 'Clear' : 'Steel'}],
+    price: {amount: '1.0', currencyCode: 'EUR'},
+    compareAtPrice: null,
+    product: {
+      id: 'gid://shopify/Product/9',
+      title: 'Piece',
+      handle: 'piece',
+      productType: '',
+      category: {name: capable ? 'Necklaces' : 'Bracelets'},
+      featuredImage: null,
+      priceRange: {
+        minVariantPrice: {amount: '1.0', currencyCode: 'EUR'},
+        maxVariantPrice: {amount: '1.0', currencyCode: 'EUR'},
+      },
     },
-    images: {nodes: []},
-    options: [],
-    featuredImage: null,
-    category: {name: capable ? 'Necklaces' : 'Rings'},
     tryOnOverlay: capable
       ? {reference: {image: {url: 'https://cdn.example/piece.png'}}}
       : null,
     tryOnSize: null,
-    selectedOrFirstAvailableVariant: {
-      id: 'gid://shopify/ProductVariant/1',
-      availableForSale: true,
-    },
   };
 }
 
@@ -87,7 +91,7 @@ function contextWith({
       ) => {
         if (storefrontFails) throw new Error('Storefront unavailable');
 
-        return {nodes: options.variables.ids.map(productNode)};
+        return {nodes: options.variables.ids.map(variantNode)};
       },
     },
   } as unknown as LoaderArgs['context'];
@@ -138,28 +142,38 @@ describe('GET /api/profile', () => {
     expect(result.data).toEqual({error: 'Could not load profile'});
   });
 
-  it('prunes fitting-room pieces that can no longer be tried on', async () => {
+  it('prunes variants that can no longer be tried on', async () => {
     const {context, writes} = contextWith({
-      fittingRoom: JSON.stringify([NECKLACE, RING]),
+      fittingRoom: JSON.stringify([CLEAR, STEEL]),
     });
 
     const result = await callLoader(context);
 
-    expect(result.data).toMatchObject({fittingRoom: [NECKLACE]});
+    expect(result.data).toMatchObject({fittingRoom: [CLEAR]});
     expect(writes).toHaveLength(1);
-    expect(JSON.parse(writes[0])).toEqual([NECKLACE]);
+    expect(JSON.parse(writes[0])).toEqual([CLEAR]);
+  });
+
+  it('drops legacy product GIDs from the stored list', async () => {
+    const {context} = contextWith({
+      fittingRoom: JSON.stringify([LEGACY_PRODUCT, CLEAR]),
+    });
+
+    const result = await callLoader(context);
+
+    expect(result.data).toMatchObject({fittingRoom: [CLEAR]});
   });
 
   it('keeps the list when the catalog lookup fails', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     const {context, writes} = contextWith({
-      fittingRoom: JSON.stringify([RING]),
+      fittingRoom: JSON.stringify([STEEL]),
       storefrontFails: true,
     });
 
     const result = await callLoader(context);
 
-    expect(result.data).toMatchObject({fittingRoom: [RING]});
+    expect(result.data).toMatchObject({fittingRoom: [STEEL]});
     expect(writes).toHaveLength(0);
   });
 });

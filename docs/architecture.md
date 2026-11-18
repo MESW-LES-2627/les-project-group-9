@@ -145,7 +145,7 @@ metafields (namespace `custom`) through the Customer Account API.
 | Metafield | Parser / limits | Endpoint |
 | --- | --- | --- |
 | `custom.favorites` | `profile/schema.ts`, max 500 GIDs | `POST /api/profile/favorites` `{add?, remove?}` |
-| `custom.fitting_room` | `profile/fitting-room.ts`, max 50 GIDs | `POST /api/profile/fitting-room` `{add?, remove?}` |
+| `custom.fitting_room` | `profile/fitting-room.ts`, max 50 **variant** GIDs (one per colourway) | `POST /api/profile/fitting-room` `{add?, remove?}` |
 | `custom.preferences` | `profile/preferences.ts` (allergies, skin tone/undertone, ring sizes per finger, preferred materials/colours/gemstones) | `POST /api/profile/preferences` |
 
 - **Fields** (Template Method): each metafield is a `ProfileField` subclass
@@ -166,24 +166,30 @@ metafields (namespace `custom`) through the Customer Account API.
   once on mount and exposes optimistic toggles. If a write returns 401, it reloads the profile.
   `useFavorites()` (`lib/favorites.ts`) and `useFittingRoom()` (`lib/fitting-room.ts`)
   are thin views over it.
-- **Fitting-room gate** — the fitting room exists to try pieces on, so only products with
-  try-on data (`resolveTryOn()`, i.e. Earrings/Necklaces with a transparent PNG) can enter
-  it: the product page hides the hanger otherwise (`FittingRoomButton canTryOn`) and
-  `POST /api/profile/fitting-room` validates the added ids against the Storefront API
-  (400 with an error code when a piece is not try-on capable). Removal is always allowed.
-  Entries that stop being eligible (category changed, overlay removed, product unpublished)
-  are **pruned when the profile loads** (`pruneFittingRoom` in
-  `lib/profile/fitting-room-gate.server.ts`), so the header count and the wardrobe agree;
-  the wardrobe loader filters them out as a safety net if the prune could not be written.
+- **Fitting-room gate** — the fitting room exists to try pieces on and now stores **variant
+  GIDs** (one entry per colourway), so a clear and a pink variant can live side by side.
+  Only variants with try-on data (`resolveTryOn(product, variant)`, i.e. Earrings/Necklaces
+  with a transparent overlay on the variant) can enter: the product page hides the hanger
+  otherwise (`FittingRoomButton canTryOn`) and `POST /api/profile/fitting-room` validates
+  the added variant ids against the Storefront API (400 with an error code otherwise).
+  Sold-out variants may be viewed and tried on; only Move to cart is disabled. Removal is
+  always allowed. Entries that stop being eligible (overlay removed, category changed,
+  product unpublished) are **pruned when the profile loads** (`pruneFittingRoom` in
+  `lib/profile/fitting-room-gate.server.ts`), and legacy product GIDs simply stop parsing
+  into the variant list, so old entries disappear immediately. The wardrobe loader filters
+  them out as a safety net if the prune could not be written.
 - **Pages**: `/favorites` and `/fitting-room` render client-side. They call their own loader with
-  `?ids=` from the profile state (`useFetcher`), and the loader returns product cards via
-  `loadProductsByIds`. The `fitting-room` action moves a piece to the cart and removes it
-  from the fitting room.
-- **Fitting room view** (`components/fitting-room/FittingRoomView.tsx`) is a look builder:
-  pieces can be selected, compared, moved to the cart or removed. Pieces with try-on data get
-  an inline **Try on** action (`FittingRoomTryOn.tsx`) that opens the same camera/QR dialogs
-  as the product page; the loader attaches `tryOn`/`tryOnLink` per piece
-  (`try-on` fields come from `JEWELIETTE_TRY_ON_FRAGMENT` in `products.server.ts`).
+  `?ids=` from the profile state (`useFetcher`); favorites load product cards via
+  `loadProductsByIds`, the fitting room loads variant entries via `loadVariantsByIds`
+  (`lib/variants.server.ts`). The `fitting-room` action adds the **stored variant** to the
+  cart and removes it from the fitting room.
+- **Fitting room view** (`components/fitting-room/FittingRoomView.tsx`) lists one row per
+  **variant** (product title + colour, variant image and price): rows can be selected,
+  compared, moved to the cart or removed, and sold-out rows keep Try on while Move to cart
+  is disabled. Variants with try-on data get an inline **Try on** action
+  (`FittingRoomTryOn.tsx`) that opens the same camera/QR dialogs as the product page; the
+  loader attaches `tryOn`/`tryOnLink` per variant, the latter preselecting the variant's
+  options on the product page.
 - **Allergens**: `useAllergenMatches()` compares product allergens with the customer's
   allergies. `AllergenBadge` and `AddToBagGuard` (a confirm dialog before adding) use it.
 - **Ring sizes**: `RingSizeForm` (account) and `RingSizeHelp` (product page, ring products
@@ -195,18 +201,22 @@ A shopper can try earrings and necklaces on with the phone camera (US-017). It i
 surface placement: the piece is drawn on a live selfie face.
 
 - **Gate** — `app/lib/try-on/catalog.ts`: the product's `category.name` must be `Earrings`
-  or `Necklaces` **and** an overlay must exist, from `custom.try_on_overlay` (transparent
-  PNG in Files) or, as a fallback, a `.png` featured image. Otherwise
-  `resolveTryOn()` returns `null` and the button is never rendered. `custom.try_on_size_cm`
-  sets the piece's real width (default 2 cm earrings, 16 cm necklaces). Overlay URLs are
-  loaded with `?cors=1` (`try-on/url.ts`) so the product page's cached `<img>` cannot taint
-  the canvas.
+  or `Necklaces` **and the selected variant** must have `custom.try_on_overlay` (a
+  transparent PNG in Files). There is no product-level fallback: colours are independent, so
+  a product whose clear variant has an overlay and whose pink variant does not shows Try on
+  (and the hanger) only for clear. `custom.try_on_size_cm` on the variant sets the piece's
+  real width (default 2 cm earrings, 16 cm necklaces). Overlay URLs are loaded with
+  `?cors=1` (`try-on/url.ts`) so the product page's cached `<img>` cannot taint the canvas.
+  The page derives the piece from the **optimistic** selected variant, so the buttons swap
+  the instant a swatch is tapped.
 - **True size** — the necklace is scaled against the shopper's estimated **shoulder
   width** (`38 cm ÷ 14.5 cm` face ratio, since the FaceLandmarker has no shoulder
   landmarks), the earrings against the face width, so both keep their real proportions.
   The number cannot be derived from the image, so `custom.try_on_size_cm` must be the real
   width of the **trimmed cut-out** (a pendant-only cut-out is a few centimetres; a cut-out
-  that includes the whole chain is ~40 cm). Shoppers can still drag/resize in photo mode.
+  that includes the whole chain is ~40 cm). The size lives on the variant together with the
+  overlay, so each colour is calibrated independently. Shoppers can still drag/resize in
+  photo mode.
 - **Device** — `try-on/device.ts` reads `Sec-CH-UA-Mobile` then the user agent in the
   product loader; phones open the camera dialog and computers the QR dialog. iPadOS's
   desktop user agent is refined client-side with `maxTouchPoints`.
@@ -369,7 +379,7 @@ See [testing.md](testing.md). In short:
 | Add a product trait for recommendations | `JEWELIETTE_RECOMMENDATION_PRODUCT_FRAGMENT`, `recommendation/types.ts`, `traits.ts`, `weights.ts`, `signals.ts`, plus tests. |
 | Add a catalog filter | Shopify admin (Search & Discovery filters). If it needs a new filter key, extend `allowedKeys` in `readCatalogFilters()` (`app/lib/search.ts`). UI changes go in `CatalogFilters.tsx`. |
 | Add a sort option | `SORT_OPTIONS` in `app/routes/collections.$handle.tsx`. |
-| Change the try-on gate or overlay | `app/lib/try-on/catalog.ts` (supported categories, `custom.try_on_overlay` PNG, `custom.try_on_size_cm`); geometry in `app/lib/try-on/anchors.ts`; MediaPipe assets in `public/models/` and `public/mediapipe/` (copied by `scripts/copy-mediapipe-assets.mjs`). |
+| Change the try-on gate or overlay | `app/lib/try-on/catalog.ts` (supported categories, the variant's `custom.try_on_overlay` PNG, `custom.try_on_size_cm`); variant/product loading in `app/lib/variants.server.ts`; geometry in `app/lib/try-on/anchors.ts`; MediaPipe assets in `public/models/` and `public/mediapipe/` (copied by `scripts/copy-mediapipe-assets.mjs`). |
 | Add a customer preference | `PreferenceProfile` (`profile/types.ts`), `profile/preferences.ts` (normalise/parse), `PreferencesForm.tsx`, tests. |
 | Add a UI string / translation | Add the key to `app/lib/messages/en.ts`, `pt.ts` and `fr.ts` and use `useTranslation()` (or `translatorFor` / `translatorFromMatches`). See [i18n.md](i18n.md#adding-a-string). |
 | Add a language | Add an entry to `LOCALES` and a message object in `app/lib/i18n.ts`, then publish the language in the Shopify admin. |

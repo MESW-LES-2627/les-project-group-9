@@ -26,10 +26,30 @@ export function withCorsParam(url: string): string {
 
 /**
  * Absolute link a desktop shopper opens on their phone (via the QR code) to
- * start the try-on for a product.
+ * start the try-on for a product, optionally preselecting a variant through its
+ * option params.
  */
-export function tryOnPageUrl(requestUrl: string, handle: string): string {
+export function tryOnPageUrl(
+  requestUrl: string,
+  handle: string,
+  options: ReadonlyArray<{name: string; value: string}> = [],
+): string {
   const url = new URL(`/products/${encodeURIComponent(handle)}`, requestUrl);
+
+  for (const option of options) {
+    url.searchParams.set(option.name, option.value);
+  }
+
+  url.searchParams.set('tryOn', '1');
+  return url.toString();
+}
+
+/**
+ * The current product page (including the selected variant's option params)
+ * with `tryOn=1`, so a desktop QR opens the same colourway on the phone.
+ */
+export function currentTryOnLink(pageUrl: string): string {
+  const url = new URL(pageUrl);
   url.searchParams.set('tryOn', '1');
   return url.toString();
 }

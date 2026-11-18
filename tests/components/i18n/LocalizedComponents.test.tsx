@@ -47,6 +47,7 @@ vi.mock('~/lib/profile/useAllergenMatches', () => ({
 import {FittingRoomView} from '~/components/fitting-room/FittingRoomView';
 import {ProductItem} from '~/components/product/ProductItem';
 import {LocaleContext, toAppLocale, type LocaleCode} from '~/lib/i18n';
+import type {FittingRoomPiece} from '~/lib/profile/fitting-room';
 
 const LANGUAGE = {en: 'EN', pt: 'PT_PT', fr: 'FR'} as const;
 const NBSP = String.fromCodePoint(0xa0);
@@ -131,9 +132,22 @@ describe('ProductItem in each language', () => {
 });
 
 describe('FittingRoomView in each language', () => {
-  const pieces: CatalogProduct[] = [
-    product,
-    {...product, id: 'gid://shopify/Product/2', handle: 'second'},
+  function piece(variantId: string, title: string): FittingRoomPiece {
+    return {
+      variantId,
+      product: {...product, id: `gid://shopify/Product/${variantId.split('/').at(-1)}`},
+      image: product.featuredImage ?? null,
+      variantTitle: 'Default Title',
+      price: {amount: '49.00', currencyCode: 'EUR'},
+      available: true,
+      tryOn: null,
+      tryOnLink: `https://shop.example/products/${title}?tryOn=1`,
+    };
+  }
+
+  const pieces: FittingRoomPiece[] = [
+    piece('gid://shopify/ProductVariant/1', 'aura-bracelet'),
+    piece('gid://shopify/ProductVariant/2', 'second'),
   ];
 
   function renderView(code: LocaleCode, selectedIds: string[]) {
@@ -147,7 +161,7 @@ describe('FittingRoomView in each language', () => {
         onRemove={vi.fn()}
         onSelectAll={vi.fn()}
         onToggle={vi.fn()}
-        products={pieces}
+        pieces={pieces}
         selectedIds={selectedIds}
       />,
     );
@@ -160,7 +174,7 @@ describe('FittingRoomView in each language', () => {
   ] as const)(
     '%s: plural counts and the try-on placeholder',
     (code, count, ready, tryOn) => {
-      renderView(code, [pieces[0].id]);
+      renderView(code, [pieces[0].variantId]);
 
       expect(screen.getByText(count)).toBeInTheDocument();
       expect(screen.getByText(ready)).toBeInTheDocument();

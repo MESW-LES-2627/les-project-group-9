@@ -8,6 +8,7 @@ import {requestCamera, type CameraAttempt} from '~/lib/try-on/camera';
 import {prefersMobileUi} from '~/lib/try-on/device';
 import {preloadOverlayImage} from '~/lib/try-on/overlay';
 import {preloadTryOnAssets} from '~/lib/try-on/preload';
+import {currentTryOnLink} from '~/lib/try-on/url';
 
 type Mode = 'camera' | 'photo' | 'qr';
 
@@ -16,8 +17,6 @@ type TryOnButtonProps = {
   title: string;
   /** Phone/tablet request, detected on the server from the user agent. */
   isMobile: boolean;
-  /** Absolute product URL with `?tryOn=1`, encoded in the desktop QR code. */
-  tryOnLink: string;
 };
 
 /**
@@ -25,17 +24,13 @@ type TryOnButtonProps = {
  * dialog, computers show a QR code (and can upload a photo instead), and a
  * `?tryOn=1` link opens the same dialog after a QR scan.
  */
-export function TryOnButton({
-  piece,
-  title,
-  isMobile,
-  tryOnLink,
-}: TryOnButtonProps) {
+export function TryOnButton({piece, title, isMobile}: TryOnButtonProps) {
   const t = useTranslation();
   const [mode, setMode] = useState<Mode | null>(null);
   const [mobile] = useState(() => prefersMobileUi(isMobile));
   const [camera, setCamera] = useState<Promise<CameraAttempt> | null>(null);
   const [autoStart, setAutoStart] = useState(true);
+  const [tryOnLink, setTryOnLink] = useState<string | null>(null);
   const handledDeepLink = useRef(false);
 
   function preload() {
@@ -58,6 +53,7 @@ export function TryOnButton({
     // A page-load cannot use the tap gesture, so ask for a start tap instead.
     setAutoStart(false);
     setCamera(null);
+    setTryOnLink(currentTryOnLink(window.location.href));
     setMode(mobile ? 'camera' : 'qr');
 
     params.delete('tryOn');
@@ -71,6 +67,8 @@ export function TryOnButton({
   }, [mobile]);
 
   function openTryOn() {
+    setTryOnLink(currentTryOnLink(window.location.href));
+
     if (!mobile) {
       setMode('qr');
       return;
@@ -96,7 +94,7 @@ export function TryOnButton({
         {t('product.tryOn')}
       </button>
 
-      {mode === 'qr' ? (
+      {mode === 'qr' && tryOnLink ? (
         <TryOnQrDialog
           onClose={() => setMode(null)}
           onUpload={() => setMode('photo')}

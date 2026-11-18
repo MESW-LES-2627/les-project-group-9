@@ -21,7 +21,6 @@ function renderSection() {
       isMobile={false}
       piece={PIECE}
       title="Aura Earrings"
-      tryOnLink="https://shop.example/products/aura?tryOn=1"
     />,
   );
 }

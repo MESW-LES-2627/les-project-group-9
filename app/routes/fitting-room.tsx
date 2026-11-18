@@ -5,12 +5,15 @@ import {translatorFor, translatorFromMatches, useTranslation} from '~/lib/i18n';
 import {FittingRoomView} from '~/components/fitting-room/FittingRoomView';
 import {useFittingRoom} from '~/lib/fitting-room';
 import {updateCustomerFittingRoom} from '~/lib/profile/customer.server';
-import {MAX_FITTING_ROOM} from '~/lib/profile/fitting-room';
-import {isProductGid} from '~/lib/profile/list-schema';
-import {loadProductsByIds, parseProductIds} from '~/lib/products.server';
+import {
+  MAX_FITTING_ROOM,
+  type FittingRoomPiece,
+} from '~/lib/profile/fitting-room';
+import {isVariantGid} from '~/lib/profile/list-schema';
 import {resolveTryOn} from '~/lib/try-on/catalog';
 import {isMobileRequest} from '~/lib/try-on/device';
 import {tryOnPageUrl} from '~/lib/try-on/url';
+import {loadVariantsByIds, parseVariantIds} from '~/lib/variants.server';
 
 export const meta: Route.MetaFunction = ({matches}) => [
   {title: `${translatorFromMatches(matches)('nav.fittingRoom')} | Jeweliette`},
@@ -18,24 +21,32 @@ export const meta: Route.MetaFunction = ({matches}) => [
 ];
 
 export async function loader({request, context}: Route.LoaderArgs) {
-  const ids = parseProductIds(
+  const ids = parseVariantIds(
     new URL(request.url).searchParams.get('ids'),
     MAX_FITTING_ROOM,
   );
-  const products = await loadProductsByIds(context, ids);
+  const variants = await loadVariantsByIds(context, ids);
 
-  return {
-    products: products
-      .map((product) => ({
-        ...product,
-        tryOn: resolveTryOn(product),
-        tryOnLink: tryOnPageUrl(request.url, product.handle),
-      }))
-      // Stale entries (category or overlay removed) are pruned by the profile
-      // endpoint; filtering here keeps them out of the page meanwhile.
-      .filter((product) => product.tryOn !== null),
-    isMobile: isMobileRequest(request),
-  };
+  const pieces: FittingRoomPiece[] = variants
+    .map((variant) => ({
+      variantId: variant.id,
+      product: variant.product,
+      image: variant.image ?? variant.product.featuredImage ?? null,
+      variantTitle: variant.title,
+      price: variant.price,
+      available: variant.availableForSale,
+      tryOn: resolveTryOn(variant.product, variant),
+      tryOnLink: tryOnPageUrl(
+        request.url,
+        variant.product.handle,
+        variant.selectedOptions,
+      ),
+    }))
+    // Stale entries (overlay removed, category changed) are pruned by the
+    // profile endpoint; filtering here keeps them out of the page meanwhile.
+    .filter((piece) => piece.tryOn !== null);
+
+  return {pieces, isMobile: isMobileRequest(request)};
 }
 
 export async function action({request, context}: Route.ActionArgs) {
@@ -47,14 +58,13 @@ export async function action({request, context}: Route.ActionArgs) {
   }
 
   const formData = await request.formData();
-  const productId = formData.get('productId');
+  const variantId = formData.get('variantId');
 
-  if (typeof productId !== 'string' || !isProductGid(productId)) {
+  if (typeof variantId !== 'string' || !isVariantGid(variantId)) {
     return data({error: t('fittingRoom.error.invalid')}, {status: 400});
   }
 
-  const [product] = await loadProductsByIds(context, [productId]);
-  const variant = product?.selectedOrFirstAvailableVariant;
+  const [variant] = await loadVariantsByIds(context, [variantId]);
 
   if (!variant?.availableForSale) {
     return data({error: t('fittingRoom.error.soldOut')}, {status: 400});
@@ -78,7 +88,7 @@ export async function action({request, context}: Route.ActionArgs) {
 
     try {
       const fittingRoom = await updateCustomerFittingRoom(context, {
-        remove: [productId],
+        remove: [variantId],
       });
       return data({fittingRoom, cart: result.cart}, {headers});
     } catch (error) {
@@ -105,7 +115,7 @@ export default function FittingRoom() {
   const [selected, setSelected] = useState<string[]>([]);
   const handledMove = useRef<unknown>(null);
   const movingId =
-    (moveFetcher.formData?.get('productId') as string | null) ?? null;
+    (moveFetcher.formData?.get('variantId') as string | null) ?? null;
 
   useEffect(() => {
     if (key) {
@@ -127,8 +137,8 @@ export default function FittingRoom() {
     );
   }, [key]);
 
-  const products = (fetcher.data?.products ?? []).filter((product) =>
-    ids.includes(product.id),
+  const pieces = (fetcher.data?.pieces ?? []).filter((piece) =>
+    ids.includes(piece.variantId),
   );
 
   const toggleSelected = (id: string) => {
@@ -140,7 +150,7 @@ export default function FittingRoom() {
   };
 
   const moveToCart = (id: string) => {
-    void moveFetcher.submit({productId: id}, {method: 'post'});
+    void moveFetcher.submit({variantId: id}, {method: 'post'});
   };
 
   useEffect(() => {
@@ -209,7 +219,7 @@ export default function FittingRoom() {
         <div className="mx-auto mt-14 max-w-md border-y border-line py-14 text-center text-sm text-primary">
           {t('fittingRoom.loadingPieces')}
         </div>
-      ) : products.length === 0 ? (
+      ) : pieces.length === 0 ? (
         <div className="mx-auto mt-14 max-w-md border-y border-line py-14 text-center">
           <h2 className="font-display text-2xl">
             {t('fittingRoom.unavailableTitle')}
@@ -233,7 +243,7 @@ export default function FittingRoom() {
             onRemove={toggleFittingRoom}
             onSelectAll={() => setSelected(ids)}
             onToggle={toggleSelected}
-            products={products}
+            pieces={pieces}
             selectedIds={selected}
           />
         </>

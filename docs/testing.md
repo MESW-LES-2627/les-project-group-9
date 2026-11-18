@@ -46,7 +46,7 @@ Component tests cover:
 
 | Folder | Components |
 | --- | --- |
-| *(top level)* | `FittingRoomButton`, `FittingRoomView` (list, cart move, and the per-piece Try on action opening the QR/camera dialogs) |
+| *(top level)* | `FittingRoomButton`, `FittingRoomView` (variant rows with colours, cart move per variant, sold-out try-on with Move to cart disabled, and the per-piece Try on action opening the QR/camera dialogs) |
 | `account` | `AccountProfile` (the profile route's form in EN, PT and FR, the "Profile updated." confirmation and the error instead of it), `PreferencesForm`, `RingSizeForm` |
 | `cart` | `CartLineItem`, `CartSummary` |
 | `collections` | `CatalogFilters`: app-named filter labels in EN, PT and FR; other filters keep the Shopify label |

@@ -1,8 +1,8 @@
 import type {ComponentProps} from 'react';
-import {render, screen} from '@testing-library/react';
+import {render, screen, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {describe, expect, it, vi} from 'vitest';
-import type {CatalogProduct} from '~/lib/jeweliette-catalog';
+import type {FittingRoomPiece} from '~/lib/profile/fitting-room';
 
 vi.mock('@shopify/hydrogen', () => ({
   Image: ({alt}: {alt?: string}) => <img alt={alt ?? ''} />,
@@ -38,30 +38,48 @@ vi.mock('~/components/try-on/TryOnDialog', () => ({
 
 import {FittingRoomView} from '../../app/components/fitting-room/FittingRoomView';
 
-const products: CatalogProduct[] = [
-  {
-    id: 'gid://shopify/Product/1',
-    title: 'Gold Ring',
-    handle: 'gold-ring',
-    priceRange: {minVariantPrice: {amount: '89.0', currencyCode: 'EUR'}},
-    featuredImage: {url: '/gold.jpg', altText: 'Gold ring'},
-    selectedOrFirstAvailableVariant: {
-      id: 'gid://shopify/ProductVariant/1',
-      availableForSale: true,
+const VARIANT_A = 'gid://shopify/ProductVariant/1';
+const VARIANT_B = 'gid://shopify/ProductVariant/2';
+
+const TRY_ON = {
+  kind: 'necklace' as const,
+  overlayUrl: 'https://cdn.example/necklace.png?cors=1',
+  sizeCm: 16,
+};
+
+function piece(overrides: Partial<FittingRoomPiece> = {}): FittingRoomPiece {
+  return {
+    variantId: VARIANT_A,
+    product: {
+      id: 'gid://shopify/Product/1',
+      title: 'Gold Ring',
+      handle: 'gold-ring',
+      priceRange: {minVariantPrice: {amount: '89.0', currencyCode: 'EUR'}},
     },
-  },
-  {
+    image: {url: '/gold.jpg', altText: 'Gold ring'},
+    variantTitle: 'Default Title',
+    price: {amount: '89.0', currencyCode: 'EUR'},
+    available: true,
+    tryOn: null,
+    tryOnLink: 'https://shop.example/products/gold-ring?tryOn=1',
+    ...overrides,
+  };
+}
+
+const necklace = piece({
+  variantId: VARIANT_B,
+  product: {
     id: 'gid://shopify/Product/2',
     title: 'Silver Necklace',
     handle: 'silver-necklace',
     priceRange: {minVariantPrice: {amount: '120.0', currencyCode: 'EUR'}},
-    featuredImage: {url: '/silver.jpg', altText: 'Silver necklace'},
-    selectedOrFirstAvailableVariant: {
-      id: 'gid://shopify/ProductVariant/2',
-      availableForSale: true,
-    },
   },
-];
+  image: {url: '/silver.jpg', altText: 'Silver necklace'},
+  price: {amount: '120.0', currencyCode: 'EUR'},
+  tryOn: TRY_ON,
+  tryOnLink:
+    'https://shop.example/products/silver-necklace?Color=Silver&tryOn=1',
+});
 
 function renderView(
   overrides: Partial<ComponentProps<typeof FittingRoomView>> = {},
@@ -75,7 +93,7 @@ function renderView(
       onRemove={vi.fn()}
       onSelectAll={vi.fn()}
       onToggle={vi.fn()}
-      products={products}
+      pieces={[piece(), necklace]}
       selectedIds={[]}
       {...overrides}
     />,
@@ -83,8 +101,8 @@ function renderView(
 }
 
 describe('FittingRoomView', () => {
-  it('lists the saved pieces and marks the selected ones', () => {
-    renderView({selectedIds: ['gid://shopify/Product/1']});
+  it('lists the saved variants and marks the selected ones', () => {
+    renderView({selectedIds: [VARIANT_A]});
 
     expect(screen.getByText('2 pieces')).toBeInTheDocument();
     expect(
@@ -96,7 +114,36 @@ describe('FittingRoomView', () => {
     expect(screen.getByText(/1 piece/)).toBeInTheDocument();
   });
 
-  it('toggles a piece through its checkbox', async () => {
+  it('shows the colour of a non-default variant', () => {
+    renderView({
+      pieces: [piece({variantTitle: 'Clear'})],
+    });
+
+    expect(within(screen.getByRole('listitem')).getByText('Clear')).toBeInTheDocument();
+    expect(
+      screen.getByRole('checkbox', {name: 'Select Gold Ring · Clear'}),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps two colours of the same product as separate rows', () => {
+    renderView({
+      pieces: [
+        piece({variantId: VARIANT_A, variantTitle: 'Clear'}),
+        piece({variantId: VARIANT_B, variantTitle: 'Pink'}),
+      ],
+      selectedIds: [VARIANT_A],
+    });
+
+    expect(screen.getByText('2 pieces')).toBeInTheDocument();
+    expect(
+      screen.getByRole('checkbox', {name: 'Select Gold Ring · Clear'}),
+    ).toBeChecked();
+    expect(
+      screen.getByRole('checkbox', {name: 'Select Gold Ring · Pink'}),
+    ).not.toBeChecked();
+  });
+
+  it('toggles a variant through its checkbox', async () => {
     const user = userEvent.setup();
     const onToggle = vi.fn();
 
@@ -106,7 +153,7 @@ describe('FittingRoomView', () => {
       screen.getByRole('checkbox', {name: 'Select Silver Necklace'}),
     );
 
-    expect(onToggle).toHaveBeenCalledWith('gid://shopify/Product/2');
+    expect(onToggle).toHaveBeenCalledWith(VARIANT_B);
   });
 
   it('supports select all and clear', async () => {
@@ -114,11 +161,7 @@ describe('FittingRoomView', () => {
     const onSelectAll = vi.fn();
     const onClear = vi.fn();
 
-    renderView({
-      onClear,
-      onSelectAll,
-      selectedIds: ['gid://shopify/Product/1'],
-    });
+    renderView({onClear, onSelectAll, selectedIds: [VARIANT_A]});
 
     await user.click(screen.getByRole('button', {name: 'Select all'}));
     await user.click(screen.getByRole('button', {name: 'Clear'}));
@@ -127,7 +170,7 @@ describe('FittingRoomView', () => {
     expect(onClear).toHaveBeenCalledTimes(1);
   });
 
-  it('removes a piece from the fitting room', async () => {
+  it('removes a variant from the fitting room', async () => {
     const user = userEvent.setup();
     const onRemove = vi.fn();
 
@@ -139,10 +182,10 @@ describe('FittingRoomView', () => {
       }),
     );
 
-    expect(onRemove).toHaveBeenCalledWith('gid://shopify/Product/1');
+    expect(onRemove).toHaveBeenCalledWith(VARIANT_A);
   });
 
-  it('moves a piece to the cart', async () => {
+  it('moves a variant to the cart', async () => {
     const user = userEvent.setup();
     const onMoveToCart = vi.fn();
 
@@ -152,19 +195,11 @@ describe('FittingRoomView', () => {
       screen.getByRole('button', {name: 'Move Gold Ring to cart'}),
     );
 
-    expect(onMoveToCart).toHaveBeenCalledWith('gid://shopify/Product/1');
+    expect(onMoveToCart).toHaveBeenCalledWith(VARIANT_A);
   });
 
-  it('disables move to cart when the piece is sold out', () => {
-    const soldOut: CatalogProduct = {
-      ...products[0],
-      selectedOrFirstAvailableVariant: {
-        id: 'gid://shopify/ProductVariant/1',
-        availableForSale: false,
-      },
-    };
-
-    renderView({products: [soldOut]});
+  it('disables move to cart when the variant is sold out but keeps try-on', () => {
+    renderView({pieces: [piece({available: false, tryOn: TRY_ON})]});
 
     const button = screen.getByRole('button', {
       name: 'Move Gold Ring to cart',
@@ -172,10 +207,13 @@ describe('FittingRoomView', () => {
 
     expect(button).toBeDisabled();
     expect(button).toHaveTextContent('Sold out');
+    expect(
+      screen.getByRole('button', {name: 'Try on Gold Ring'}),
+    ).toBeEnabled();
   });
 
-  it('shows the moving state while a piece is being moved', () => {
-    renderView({movingId: 'gid://shopify/Product/1'});
+  it('shows the moving state while a variant is being moved', () => {
+    renderView({movingId: VARIANT_A});
 
     expect(
       screen.getByRole('button', {name: 'Move Gold Ring to cart'}),
@@ -187,25 +225,15 @@ describe('FittingRoomView', () => {
     ).toBeDisabled();
   });
 
-  it('shows the virtual try-on placeholder until pieces are selected', () => {
+  it('shows the virtual try-on panel until pieces are selected', () => {
     renderView();
 
     expect(screen.getByText('See it on you')).toBeInTheDocument();
     expect(screen.getByText(/select at least one piece/i)).toBeInTheDocument();
   });
 
-  it('offers try-on only for supported pieces', () => {
-    const tryOnProduct = {
-      ...products[1],
-      tryOn: {
-        kind: 'necklace' as const,
-        overlayUrl: 'https://cdn.example/necklace.png?cors=1',
-        sizeCm: 16,
-      },
-      tryOnLink: 'https://shop.example/products/silver-necklace?tryOn=1',
-    };
-
-    renderView({products: [products[0], tryOnProduct]});
+  it('offers try-on only for variants with an overlay', () => {
+    renderView();
 
     expect(
       screen.getByRole('button', {name: 'Try on Silver Necklace'}),
@@ -217,17 +245,8 @@ describe('FittingRoomView', () => {
 
   it('opens the QR code from the fitting room on a computer', async () => {
     const user = userEvent.setup();
-    const tryOnProduct = {
-      ...products[1],
-      tryOn: {
-        kind: 'necklace' as const,
-        overlayUrl: 'https://cdn.example/necklace.png?cors=1',
-        sizeCm: 16,
-      },
-      tryOnLink: 'https://shop.example/products/silver-necklace?tryOn=1',
-    };
 
-    renderView({products: [tryOnProduct]});
+    renderView({pieces: [necklace]});
 
     await user.click(
       screen.getByRole('button', {name: 'Try on Silver Necklace'}),
@@ -239,17 +258,8 @@ describe('FittingRoomView', () => {
 
   it('opens the camera from the fitting room on a phone', async () => {
     const user = userEvent.setup();
-    const tryOnProduct = {
-      ...products[1],
-      tryOn: {
-        kind: 'necklace' as const,
-        overlayUrl: 'https://cdn.example/necklace.png?cors=1',
-        sizeCm: 16,
-      },
-      tryOnLink: 'https://shop.example/products/silver-necklace?tryOn=1',
-    };
 
-    renderView({isMobile: true, products: [tryOnProduct]});
+    renderView({isMobile: true, pieces: [necklace]});
 
     await user.click(
       screen.getByRole('button', {name: 'Try on Silver Necklace'}),

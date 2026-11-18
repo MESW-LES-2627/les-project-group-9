@@ -1,5 +1,6 @@
 import {describe, expect, it} from 'vitest';
 import {
+  currentTryOnLink,
   secureTryOnLink,
   tryOnPageUrl,
   withCorsParam,
@@ -42,6 +43,27 @@ describe('tryOnPageUrl', () => {
     expect(
       tryOnPageUrl('http://localhost:3000/products/x?q=1', 'a b'),
     ).toBe('http://localhost:3000/products/a%20b?tryOn=1');
+  });
+
+  it('preselects the variant options in the deep link', () => {
+    expect(
+      tryOnPageUrl('https://shop.example/fitting-room?ids=1', 'aura', [
+        {name: 'Color', value: 'Clear'},
+        {name: 'Size', value: 'M'},
+      ]),
+    ).toBe('https://shop.example/products/aura?Color=Clear&Size=M&tryOn=1');
+  });
+});
+
+describe('currentTryOnLink', () => {
+  it('keeps the page and its option params', () => {
+    expect(
+      currentTryOnLink(
+        'https://shop.example/products/aura?Color=Clear&variant=123',
+      ),
+    ).toBe(
+      'https://shop.example/products/aura?Color=Clear&variant=123&tryOn=1',
+    );
   });
 });
 

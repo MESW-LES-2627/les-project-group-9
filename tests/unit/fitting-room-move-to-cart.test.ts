@@ -1,8 +1,8 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 
-vi.mock('~/lib/products.server', () => ({
-  loadProductsByIds: vi.fn(),
-  parseProductIds: vi.fn(),
+vi.mock('~/lib/variants.server', () => ({
+  loadVariantsByIds: vi.fn(),
+  parseVariantIds: vi.fn(),
 }));
 
 vi.mock('~/lib/profile/customer.server', () => ({
@@ -10,9 +10,9 @@ vi.mock('~/lib/profile/customer.server', () => ({
 }));
 
 import {action} from '../../app/routes/fitting-room';
-import type {CatalogProduct} from '~/lib/jeweliette-catalog';
 import {updateCustomerFittingRoom} from '~/lib/profile/customer.server';
-import {loadProductsByIds} from '~/lib/products.server';
+import {loadVariantsByIds} from '~/lib/variants.server';
+import type {CatalogVariant} from '~/lib/variants.server';
 
 type ActionArgs = Parameters<typeof action>[0];
 
@@ -36,21 +36,28 @@ function contextWith({
   return {context, addLines, setCartId};
 }
 
-function product(availableForSale = true): CatalogProduct {
+function variant(availableForSale = true): CatalogVariant {
   return {
-    id: PRODUCT_ID,
-    title: 'Round Signet Ring',
-    handle: 'round-signet-ring',
-    priceRange: {minVariantPrice: {amount: '38.0', currencyCode: 'EUR'}},
-    selectedOrFirstAvailableVariant: {
-      id: VARIANT_ID,
-      availableForSale,
+    id: VARIANT_ID,
+    title: 'Clear',
+    availableForSale,
+    selectedOptions: [{name: 'Color', value: 'Clear'}],
+    price: {amount: '38.0', currencyCode: 'EUR'},
+    product: {
+      id: PRODUCT_ID,
+      title: 'Aura Bracelet',
+      handle: 'aura-bracelet',
+      priceRange: {minVariantPrice: {amount: '38.0', currencyCode: 'EUR'}},
+      category: {name: 'Bracelets'},
     },
   };
 }
 
-function callAction(context: ActionArgs['context'], productId = PRODUCT_ID) {
-  const body = new URLSearchParams({productId});
+function callAction(
+  context: ActionArgs['context'],
+  variantId = VARIANT_ID,
+) {
+  const body = new URLSearchParams({variantId});
 
   return action({
     request: new Request('http://localhost/fitting-room', {
@@ -64,13 +71,13 @@ function callAction(context: ActionArgs['context'], productId = PRODUCT_ID) {
 }
 
 beforeEach(() => {
-  vi.mocked(loadProductsByIds).mockReset();
+  vi.mocked(loadVariantsByIds).mockReset();
   vi.mocked(updateCustomerFittingRoom).mockReset();
 });
 
 describe('POST /fitting-room', () => {
-  it('adds the first available variant to the cart and removes the piece', async () => {
-    vi.mocked(loadProductsByIds).mockResolvedValue([product()]);
+  it('adds the stored variant to the cart and removes it from the room', async () => {
+    vi.mocked(loadVariantsByIds).mockResolvedValue([variant()]);
     vi.mocked(updateCustomerFittingRoom).mockResolvedValue([]);
     const {context, addLines, setCartId} = contextWith();
 
@@ -81,7 +88,7 @@ describe('POST /fitting-room', () => {
     ]);
     expect(setCartId).toHaveBeenCalledWith('cart-1');
     expect(updateCustomerFittingRoom).toHaveBeenCalledWith(context, {
-      remove: [PRODUCT_ID],
+      remove: [VARIANT_ID],
     });
     expect(result.data).toMatchObject({
       fittingRoom: [],
@@ -100,17 +107,19 @@ describe('POST /fitting-room', () => {
     expect(addLines).not.toHaveBeenCalled();
   });
 
-  it('rejects invalid product IDs', async () => {
+  it('rejects invalid and product IDs', async () => {
     const {context} = contextWith();
 
-    const result = await callAction(context, 'not-a-product');
+    for (const id of ['not-a-variant', PRODUCT_ID]) {
+      const result = await callAction(context, id);
 
-    expect(result.init?.status).toBe(400);
-    expect(result.data).toEqual({error: 'Invalid product'});
+      expect(result.init?.status).toBe(400);
+      expect(result.data).toEqual({error: 'Invalid product'});
+    }
   });
 
-  it('rejects pieces without an available variant', async () => {
-    vi.mocked(loadProductsByIds).mockResolvedValue([product(false)]);
+  it('rejects sold-out variants', async () => {
+    vi.mocked(loadVariantsByIds).mockResolvedValue([variant(false)]);
     const {context, addLines} = contextWith();
 
     const result = await callAction(context);
@@ -126,7 +135,7 @@ describe('POST /fitting-room', () => {
   ] as const)(
     'returns the sold-out message in the shopper language (%s)',
     async (language, message) => {
-      vi.mocked(loadProductsByIds).mockResolvedValue([product(false)]);
+      vi.mocked(loadVariantsByIds).mockResolvedValue([variant(false)]);
       const {context} = contextWith({language});
 
       const result = await callAction(context);
@@ -135,8 +144,8 @@ describe('POST /fitting-room', () => {
     },
   );
 
-  it('does not remove the piece when the cart add fails', async () => {
-    vi.mocked(loadProductsByIds).mockResolvedValue([product()]);
+  it('does not remove the variant when the cart add fails', async () => {
+    vi.mocked(loadVariantsByIds).mockResolvedValue([variant()]);
     const {context, addLines} = contextWith();
     addLines.mockResolvedValueOnce({
       cart: {id: 'cart-1'},
@@ -150,8 +159,8 @@ describe('POST /fitting-room', () => {
     expect(updateCustomerFittingRoom).not.toHaveBeenCalled();
   });
 
-  it('does not remove the piece when the cart returns user errors', async () => {
-    vi.mocked(loadProductsByIds).mockResolvedValue([product()]);
+  it('does not remove the variant when the cart returns user errors', async () => {
+    vi.mocked(loadVariantsByIds).mockResolvedValue([variant()]);
     const {context, addLines} = contextWith();
     addLines.mockResolvedValueOnce({
       cart: {id: 'cart-1'},
@@ -166,7 +175,7 @@ describe('POST /fitting-room', () => {
   });
 
   it('keeps the cart cookie when removing from the fitting room fails', async () => {
-    vi.mocked(loadProductsByIds).mockResolvedValue([product()]);
+    vi.mocked(loadVariantsByIds).mockResolvedValue([variant()]);
     vi.mocked(updateCustomerFittingRoom).mockRejectedValue(
       new Error('No access'),
     );

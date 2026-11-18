@@ -3,9 +3,9 @@ import {withCorsParam} from './url';
 /**
  * Gating and overlay resolution for the front-camera try-on.
  *
- * A piece is try-on capable when its Shopify category is Earrings or Necklaces
- * and it has a transparent PNG overlay. Merchants point `custom.try_on_overlay`
- * at that PNG; the featured image is only accepted when it is a `.png`.
+ * A piece is try-on capable when the **selected variant** has a transparent PNG
+ * overlay (`custom.try_on_overlay`) and its product category is Earrings or
+ * Necklaces. There is no product-level fallback: colours are independent.
  */
 
 export type TryOnKind = 'earring' | 'necklace';
@@ -14,7 +14,7 @@ export type TryOnPiece = {
   kind: TryOnKind;
   /** Absolute overlay URL, already cache-busted for CORS (see `url.ts`). */
   overlayUrl: string;
-  /** Real width of the overlay in centimeters. */
+  /** Real width of the overlay in centimetres. */
   sizeCm: number;
 };
 
@@ -24,9 +24,13 @@ export type TryOnReference = {
   image?: {url?: string | null} | null;
 };
 
+/** Product fields needed to decide the kind. */
 export type TryOnProduct = {
   category?: {name?: string | null} | null;
-  featuredImage?: {url?: string | null} | null;
+};
+
+/** Variant fields that carry the overlay. */
+export type TryOnVariant = {
   tryOnOverlay?: {reference?: TryOnReference | null} | null;
   tryOnSize?: {value?: string | null} | null;
 };
@@ -54,19 +58,8 @@ export function tryOnKind(product: TryOnProduct): TryOnKind | null {
   return KIND_BY_CATEGORY[name] ?? null;
 }
 
-/** True when the URL path ends in `.png`, ignoring query strings. */
-export function isPngUrl(url: string): boolean {
-  try {
-    return new URL(url, 'https://cdn.invalid').pathname
-      .toLowerCase()
-      .endsWith('.png');
-  } catch {
-    return false;
-  }
-}
-
 /**
- * Real overlay width in centimeters. Falls back to the kind's default when the
+ * Real overlay width in centimetres. Falls back to the kind's default when the
  * metafield is missing or outside a plausible range.
  */
 export function parseTryOnSizeCm(
@@ -85,29 +78,31 @@ export function parseTryOnSizeCm(
   return parsed;
 }
 
-/** Overlay URL from the metafield, falling back to a transparent-PNG main image. */
-export function resolveOverlayUrl(product: TryOnProduct): string | null {
-  const reference = product.tryOnOverlay?.reference;
-  const referenceUrl = reference?.image?.url?.trim() || reference?.url?.trim();
-  if (referenceUrl) return referenceUrl;
-
-  const featured = product.featuredImage?.url?.trim();
-  if (featured && isPngUrl(featured)) return featured;
-
-  return null;
+/** Overlay URL from the variant's metafield. */
+export function resolveOverlayUrl(variant: TryOnVariant): string | null {
+  const reference = variant.tryOnOverlay?.reference;
+  return reference?.image?.url?.trim() || reference?.url?.trim() || null;
 }
 
-/** Everything the try-on UI needs, or `null` when the button must not render. */
-export function resolveTryOn(product: TryOnProduct): TryOnPiece | null {
+/**
+ * Everything the try-on UI needs for a variant, or `null` when the button must
+ * not render (unsupported category, or this colour has no overlay).
+ */
+export function resolveTryOn(
+  product: TryOnProduct,
+  variant: TryOnVariant | null | undefined,
+): TryOnPiece | null {
+  if (!variant) return null;
+
   const kind = tryOnKind(product);
   if (!kind) return null;
 
-  const overlayUrl = resolveOverlayUrl(product);
+  const overlayUrl = resolveOverlayUrl(variant);
   if (!overlayUrl) return null;
 
   return {
     kind,
     overlayUrl: withCorsParam(overlayUrl),
-    sizeCm: parseTryOnSizeCm(product.tryOnSize?.value, kind),
+    sizeCm: parseTryOnSizeCm(variant.tryOnSize?.value, kind),
   };
 }

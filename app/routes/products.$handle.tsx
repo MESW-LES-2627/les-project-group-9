@@ -30,7 +30,6 @@ import {isColorOption} from '~/lib/options';
 import {isRingProduct} from '~/lib/profile/ringCategory';
 import {resolveTryOn} from '~/lib/try-on/catalog';
 import {isMobileRequest} from '~/lib/try-on/device';
-import {tryOnPageUrl} from '~/lib/try-on/url';
 
 export const meta: Route.MetaFunction = ({data, matches}) => [
   {
@@ -56,8 +55,6 @@ export async function loader(args: Route.LoaderArgs) {
   return {
     product,
     recommendations,
-    tryOn: resolveTryOn(product),
-    tryOnLink: tryOnPageUrl(args.request.url, product.handle),
     isMobile: isMobileRequest(args.request),
   };
 }
@@ -80,7 +77,7 @@ async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
 }
 
 export default function Product() {
-  const {product, recommendations, tryOn, tryOnLink, isMobile} =
+  const {product, recommendations, isMobile} =
     useLoaderData<typeof loader>();
   const t = useTranslation();
 
@@ -90,6 +87,9 @@ export default function Product() {
   );
 
   useSelectedOptionInUrlParam(selectedVariant.selectedOptions);
+
+  // Try-on is per variant: only the selected colour may have an overlay.
+  const tryOn = resolveTryOn(product, selectedVariant);
 
   const productOptions = getProductOptions({
     ...product,
@@ -168,8 +168,8 @@ export default function Product() {
               <FavoriteButton productId={product.id} title={product.title} />
               <FittingRoomButton
                 canTryOn={tryOn !== null}
-                productId={product.id}
                 title={product.title}
+                variantId={selectedVariant.id}
               />
             </div>
           </div>
@@ -195,7 +195,6 @@ export default function Product() {
               isMobile={isMobile}
               piece={tryOn}
               title={product.title}
-              tryOnLink={tryOnLink}
             />
           ) : null}
 
@@ -331,6 +330,13 @@ const PRODUCT_VARIANT_FRAGMENT = `#graphql
     sku
     title
     unitPrice { amount currencyCode }
+    tryOnOverlay: metafield(namespace: "custom", key: "try_on_overlay") {
+      reference {
+        ... on MediaImage { image { url } }
+        ... on GenericFile { url }
+      }
+    }
+    tryOnSize: metafield(namespace: "custom", key: "try_on_size_cm") { value }
   }
 ` as const;
 
@@ -355,14 +361,6 @@ const PRODUCT_FRAGMENT = `#graphql
     gemstone: metafield(namespace: "custom", key: "gemstone") { value }
     gemColor: metafield(namespace: "custom", key: "gem_color") { value }
     allergens: metafield(namespace: "custom", key: "allergens") { value }
-    tryOnOverlay: metafield(namespace: "custom", key: "try_on_overlay") {
-      reference {
-        ... on MediaImage { image { url } }
-        ... on GenericFile { url }
-      }
-    }
-    tryOnSize: metafield(namespace: "custom", key: "try_on_size_cm") { value }
-    featuredImage { id url altText width height }
     images(first: 10) { nodes { id url altText width height } }
     collections(first: 1) { nodes { title handle } }
     category { id name }

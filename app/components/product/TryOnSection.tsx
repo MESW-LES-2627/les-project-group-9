@@ -7,7 +7,6 @@ type TryOnSectionProps = {
   piece: TryOnPiece;
   title: string;
   isMobile: boolean;
-  tryOnLink: string;
 };
 
 /**
@@ -15,12 +14,7 @@ type TryOnSectionProps = {
  * action from this secondary one, and the eyebrow title replaces the old hint
  * so the section reads as part of the page's accordion rhythm.
  */
-export function TryOnSection({
-  piece,
-  title,
-  isMobile,
-  tryOnLink,
-}: TryOnSectionProps) {
+export function TryOnSection({piece, title, isMobile}: TryOnSectionProps) {
   const t = useTranslation();
   const headingId = useId();
 
@@ -36,12 +30,7 @@ export function TryOnSection({
         {t('product.tryOnTitle')}
       </h2>
       <div className="mt-3">
-        <TryOnButton
-          isMobile={isMobile}
-          piece={piece}
-          title={title}
-          tryOnLink={tryOnLink}
-        />
+        <TryOnButton isMobile={isMobile} piece={piece} title={title} />
       </div>
     </section>
   );

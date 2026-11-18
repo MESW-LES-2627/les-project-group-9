@@ -54,7 +54,6 @@ const PIECE = {
   overlayUrl: 'https://cdn.example/earring.png?cors=1',
   sizeCm: 2,
 };
-const LINK = 'https://shop.example/products/aura?tryOn=1';
 
 function renderButton(isMobile = false) {
   return render(
@@ -62,7 +61,6 @@ function renderButton(isMobile = false) {
       isMobile={isMobile}
       piece={PIECE}
       title="Aura Earrings"
-      tryOnLink={LINK}
     />,
   );
 }

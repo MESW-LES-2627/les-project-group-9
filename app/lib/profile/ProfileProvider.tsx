@@ -16,6 +16,7 @@ import {
   ProfileRequestError,
 } from './client';
 import {isProductGid} from './schema';
+import {isVariantGid} from './list-schema';
 import type {
   ListOperation,
   PreferenceProfile,
@@ -42,6 +43,15 @@ type ProfileContextValue = ProfileState & {
 };
 
 type ListKey = 'favorites' | 'fittingRoom';
+
+/**
+ * Which GID each list stores: favorites are products, the fitting room holds
+ * variants (one entry per colourway).
+ */
+const LIST_VALIDATORS: Record<ListKey, (value: unknown) => value is string> = {
+  favorites: isProductGid,
+  fittingRoom: isVariantGid,
+};
 
 const INITIAL_STATE: ProfileState = {
   status: 'loading',
@@ -106,7 +116,7 @@ export function ProfileProvider({children}: {children: ReactNode}) {
       id: string,
       post: (operation: ListOperation) => Promise<unknown>,
     ) => {
-      if (!isProductGid(id)) return;
+      if (!LIST_VALIDATORS[key](id)) return;
 
       const current = stateRef.current;
       if (!current.isLoggedIn) return;
