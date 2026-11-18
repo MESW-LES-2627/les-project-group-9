@@ -167,8 +167,11 @@ metafields (namespace `custom`) through the Customer Account API.
   try-on data (`resolveTryOn()`, i.e. Earrings/Necklaces with a transparent PNG) can enter
   it: the product page hides the hanger otherwise (`FittingRoomButton canTryOn`) and
   `POST /api/profile/fitting-room` validates the added ids against the Storefront API
-  (400 with an error code when a piece is not try-on capable). Removal is always allowed, so
-  entries added before the rule can be cleaned up.
+  (400 with an error code when a piece is not try-on capable). Removal is always allowed.
+  Entries that stop being eligible (category changed, overlay removed, product unpublished)
+  are **pruned when the profile loads** (`pruneFittingRoom` in
+  `lib/profile/fitting-room-gate.server.ts`), so the header count and the wardrobe agree;
+  the wardrobe loader filters them out as a safety net if the prune could not be written.
 - **Pages**: `/favorites` and `/fitting-room` render client-side. They call their own loader with
   `?ids=` from the profile state (`useFetcher`), and the loader returns product cards via
   `loadProductsByIds`. The `fitting-room` action moves a piece to the cart and removes it

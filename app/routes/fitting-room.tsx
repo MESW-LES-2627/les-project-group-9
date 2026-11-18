@@ -25,11 +25,15 @@ export async function loader({request, context}: Route.LoaderArgs) {
   const products = await loadProductsByIds(context, ids);
 
   return {
-    products: products.map((product) => ({
-      ...product,
-      tryOn: resolveTryOn(product),
-      tryOnLink: tryOnPageUrl(request.url, product.handle),
-    })),
+    products: products
+      .map((product) => ({
+        ...product,
+        tryOn: resolveTryOn(product),
+        tryOnLink: tryOnPageUrl(request.url, product.handle),
+      }))
+      // Stale entries (category or overlay removed) are pruned by the profile
+      // endpoint; filtering here keeps them out of the page meanwhile.
+      .filter((product) => product.tryOn !== null),
     isMobile: isMobileRequest(request),
   };
 }

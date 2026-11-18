@@ -4,14 +4,49 @@ import {loader} from '../../app/routes/api.profile';
 type LoaderArgs = Parameters<typeof loader>[0];
 
 const CUSTOMER_ID = 'gid://shopify/Customer/1';
+const RING = 'gid://shopify/Product/1';
+const NECKLACE = 'gid://shopify/Product/2';
+
+function productNode(id: string) {
+  const capable = id === NECKLACE;
+
+  return {
+    __typename: 'Product',
+    id,
+    title: 'Piece',
+    handle: `piece-${id.split('/').at(-1)}`,
+    priceRange: {
+      minVariantPrice: {amount: '1.0', currencyCode: 'EUR'},
+      maxVariantPrice: {amount: '1.0', currencyCode: 'EUR'},
+    },
+    images: {nodes: []},
+    options: [],
+    featuredImage: null,
+    category: {name: capable ? 'Necklaces' : 'Rings'},
+    tryOnOverlay: capable
+      ? {reference: {image: {url: 'https://cdn.example/piece.png'}}}
+      : null,
+    tryOnSize: null,
+    selectedOrFirstAvailableVariant: {
+      id: 'gid://shopify/ProductVariant/1',
+      availableForSale: true,
+    },
+  };
+}
 
 function contextWith({
   loggedIn = true,
   fail = false,
+  fittingRoom = '[]',
+  storefrontFails = false,
 }: {
   loggedIn?: boolean;
   fail?: boolean;
+  fittingRoom?: string;
+  storefrontFails?: boolean;
 } = {}) {
+  const writes: string[] = [];
+
   const query = vi.fn(async () => {
     if (fail) throw new Error('Profile query failed');
 
@@ -20,7 +55,7 @@ function contextWith({
         customer: {
           id: CUSTOMER_ID,
           favorites: {value: '[]'},
-          fittingRoom: {value: '[]'},
+          fittingRoom: {value: fittingRoom},
           preferences: {value: '{"skin":{"tone":"medium"}}'},
         },
       },
@@ -31,10 +66,33 @@ function contextWith({
     customerAccount: {
       isLoggedIn: async () => loggedIn,
       query,
+      mutate: async (
+        _mutation: string,
+        options: {variables: {metafields: Array<{value: string}>}},
+      ) => {
+        const {value} = options.variables.metafields[0];
+        writes.push(value);
+
+        return {
+          data: {
+            metafieldsSet: {metafields: [{value}], userErrors: []},
+          },
+        };
+      },
+    },
+    storefront: {
+      query: async (
+        _query: string,
+        options: {variables: {ids: string[]}},
+      ) => {
+        if (storefrontFails) throw new Error('Storefront unavailable');
+
+        return {nodes: options.variables.ids.map(productNode)};
+      },
     },
   } as unknown as LoaderArgs['context'];
 
-  return {context, query};
+  return {context, query, writes};
 }
 
 function callLoader(context: LoaderArgs['context']) {
@@ -78,5 +136,30 @@ describe('GET /api/profile', () => {
 
     expect(result.init?.status).toBe(500);
     expect(result.data).toEqual({error: 'Could not load profile'});
+  });
+
+  it('prunes fitting-room pieces that can no longer be tried on', async () => {
+    const {context, writes} = contextWith({
+      fittingRoom: JSON.stringify([NECKLACE, RING]),
+    });
+
+    const result = await callLoader(context);
+
+    expect(result.data).toMatchObject({fittingRoom: [NECKLACE]});
+    expect(writes).toHaveLength(1);
+    expect(JSON.parse(writes[0])).toEqual([NECKLACE]);
+  });
+
+  it('keeps the list when the catalog lookup fails', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const {context, writes} = contextWith({
+      fittingRoom: JSON.stringify([RING]),
+      storefrontFails: true,
+    });
+
+    const result = await callLoader(context);
+
+    expect(result.data).toMatchObject({fittingRoom: [RING]});
+    expect(writes).toHaveLength(0);
   });
 });
