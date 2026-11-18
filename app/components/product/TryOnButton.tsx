@@ -86,7 +86,7 @@ export function TryOnButton({
     <>
       <button
         aria-haspopup="dialog"
-        className="flex min-h-[44px] w-full items-center justify-center gap-2 border border-ink px-6 text-xs font-medium uppercase tracking-widest text-ink transition-colors hover:bg-bark hover:text-white"
+        className="flex min-h-[44px] w-full items-center justify-center gap-2 border border-line px-6 text-xs font-medium uppercase tracking-widest text-ink transition-colors hover:border-bark hover:bg-bark hover:text-paper"
         onClick={openTryOn}
         onFocus={preload}
         onPointerEnter={preload}
@@ -95,9 +95,6 @@ export function TryOnButton({
         <Icon name="camera" size={18} />
         {t('product.tryOn')}
       </button>
-      <p className="mt-2 text-center text-[11px] leading-5 text-primary">
-        {t('product.tryOnHint')}
-      </p>
 
       {mode === 'qr' ? (
         <TryOnQrDialog

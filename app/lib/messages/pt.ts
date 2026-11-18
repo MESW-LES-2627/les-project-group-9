@@ -181,7 +181,7 @@ export const pt: Messages = {
   'product.fittingRoomLogin':
     'Inicie sessão para adicionar {title} ao provador',
   'product.tryOn': 'Experimentar',
-  'product.tryOnHint': 'Veja a peça em si com a câmara',
+  'product.tryOnTitle': 'Veja em si',
   'product.breadcrumb': 'Caminho de navegação',
   'product.description': 'Descrição',
   'product.details': 'Detalhes',

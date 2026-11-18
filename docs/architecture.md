@@ -254,7 +254,10 @@ surface placement: the piece is drawn on a live selfie face.
   covers poses, crops and necklace lengths the automatic anchor cannot know. The overlay is
   checked for real transparency client-side (`try-on/overlay.ts`); an opaque PNG shows
   "not available" instead of a rectangle.
-- **UI** — `components/product/TryOnButton.tsx` (button + deep link) opens
+- **UI** — `components/product/TryOnSection.tsx` renders the try-on block **below Add to
+  bag**: a hairline (`border-line`), a "See it on you" eyebrow and the full-width outlined
+  button, so it stays secondary to the purchase action and matches the accordion rhythm.
+  `TryOnButton` (button + deep link) opens
   `components/try-on/TryOnDialog.tsx` (camera/photo) or `TryOnQrDialog.tsx` (desktop QR,
   encoded locally with `uqr`). The PNG is preloaded and cached (`try-on/overlay.ts`) while
   the shopper browses; the dialog shows the live preview as soon as the stream is ready and

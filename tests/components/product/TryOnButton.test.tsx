@@ -75,16 +75,13 @@ beforeEach(() => {
 });
 
 describe('TryOnButton', () => {
-  it('shows the labelled button with the hint', () => {
+  it('shows the labelled button', () => {
     renderButton();
 
     expect(screen.getByRole('button', {name: 'Try on'})).toHaveAttribute(
       'aria-haspopup',
       'dialog',
     );
-    expect(
-      screen.getByText('See it on you with your camera'),
-    ).toBeInTheDocument();
   });
 
   it('opens the QR code on a computer without requesting the camera', async () => {

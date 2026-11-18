@@ -191,7 +191,7 @@ export const en = {
   'product.fittingRoomAdd': 'Add {title} to fitting room',
   'product.fittingRoomLogin': 'Log in to add {title} to fitting room',
   'product.tryOn': 'Try on',
-  'product.tryOnHint': 'See it on you with your camera',
+  'product.tryOnTitle': 'See it on you',
   'product.breadcrumb': 'Breadcrumb',
   'product.description': 'Description',
   'product.details': 'Details',

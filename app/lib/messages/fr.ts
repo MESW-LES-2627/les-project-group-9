@@ -186,7 +186,7 @@ export const fr: Messages = {
   'product.fittingRoomLogin':
     'Connectez-vous pour ajouter {title} à la cabine d’essayage',
   'product.tryOn': 'Essayer',
-  'product.tryOnHint': 'Voyez la pièce sur vous avec votre caméra',
+  'product.tryOnTitle': 'Voyez sur vous',
   'product.breadcrumb': 'Fil d’Ariane',
   'product.description': 'Description',
   'product.details': 'Détails',

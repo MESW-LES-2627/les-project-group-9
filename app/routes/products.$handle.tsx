@@ -17,7 +17,7 @@ import {ProductItem} from '~/components/product/ProductItem';
 import {AllergenBadge} from '~/components/product/AllergenBadge';
 import {FavoriteButton} from '~/components/product/FavoriteButton';
 import {FittingRoomButton} from '~/components/product/FittingRoomButton';
-import {TryOnButton} from '~/components/product/TryOnButton';
+import {TryOnSection} from '~/components/product/TryOnSection';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 import {
   JEWELIETTE_MATERIAL_METAFIELD_FRAGMENT,
@@ -178,17 +178,6 @@ export default function Product() {
             />
           </div>
 
-          {tryOn ? (
-            <div className="mt-6">
-              <TryOnButton
-                isMobile={isMobile}
-                piece={tryOn}
-                title={product.title}
-                tryOnLink={tryOnLink}
-              />
-            </div>
-          ) : null}
-
           <div className="mt-8">
             <ProductForm
               allergens={product.allergens}
@@ -197,6 +186,15 @@ export default function Product() {
               isRing={isRingProduct(product)}
             />
           </div>
+
+          {tryOn ? (
+            <TryOnSection
+              isMobile={isMobile}
+              piece={tryOn}
+              title={product.title}
+              tryOnLink={tryOnLink}
+            />
+          ) : null}
 
           <div className="mt-10 divide-y divide-line border-y border-line text-sm">
             <details open className="group py-4">
