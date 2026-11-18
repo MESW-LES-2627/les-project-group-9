@@ -10,6 +10,12 @@ vi.mock('~/lib/try-on/preload', () => ({
   preloadTryOnAssets: vi.fn(),
 }));
 
+vi.mock('~/lib/try-on/overlay', () => ({
+  preloadOverlayImage: vi.fn(),
+  loadOverlayImage: vi.fn(),
+  overlayTransparency: vi.fn(),
+}));
+
 vi.mock('~/lib/try-on/camera', async (importOriginal) => {
   const actual = await importOriginal<typeof import('~/lib/try-on/camera')>();
   return {...actual, requestCamera: mocks.requestCamera};

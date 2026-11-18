@@ -1,3 +1,5 @@
+import {releaseFaceDetector, warmFaceDetector} from './face-landmarker';
+
 let started = false;
 
 /**
@@ -22,8 +24,10 @@ export function preloadTryOnAssets(): void {
       void fetch(asset).catch(() => undefined);
     }
 
-    // Warm the lazy JS chunk too.
-    void import('@mediapipe/tasks-vision').catch(() => undefined);
+    // Warm the lazy JS chunk and compile the landmarker before the tap.
+    void import('@mediapipe/tasks-vision')
+      .then(() => warmFaceDetector())
+      .catch(() => undefined);
   };
 
   const idle = (
@@ -31,6 +35,8 @@ export function preloadTryOnAssets(): void {
       requestIdleCallback?: (callback: () => void, options?: {timeout: number}) => number;
     }
   ).requestIdleCallback;
+
+  window.addEventListener('pagehide', releaseFaceDetector, {once: true});
 
   if (idle) idle(load, {timeout: 3000});
   else window.setTimeout(load, 1500);

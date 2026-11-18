@@ -16,6 +16,41 @@ export type FaceDetector = {
 const WASM_BASE = '/mediapipe/wasm';
 const MODEL_URL = '/models/face_landmarker.task';
 
+let sharedDetector: Promise<FaceDetector> | null = null;
+
+/**
+ * Shared landmarker for the page session. Creating it costs ~18 MB of downloads
+ * plus WASM compilation, so it is created once (optionally warmed on idle) and
+ * reused by every try-on dialog. A failed creation is not cached, so a retry
+ * starts clean.
+ */
+export function getFaceDetector(
+  create: () => Promise<FaceDetector> = createFaceDetector,
+): Promise<FaceDetector> {
+  if (!sharedDetector) {
+    sharedDetector = create().catch((error: unknown) => {
+      sharedDetector = null;
+      throw error;
+    });
+  }
+
+  return sharedDetector;
+}
+
+/** Closes and forgets the shared landmarker (call on pagehide). */
+export function releaseFaceDetector(): void {
+  const pending = sharedDetector;
+  sharedDetector = null;
+  void pending
+    ?.then((detector) => detector.close())
+    .catch(() => undefined);
+}
+
+/** Fire-and-forget warm-up used by the idle preloader. */
+export function warmFaceDetector(): void {
+  void getFaceDetector().catch(() => undefined);
+}
+
 /**
  * Loads the MediaPipe FaceLandmarker lazily (14 MB WASM + 3.8 MB model, both
  * self-hosted). Tries the GPU delegate first and falls back to CPU, which is

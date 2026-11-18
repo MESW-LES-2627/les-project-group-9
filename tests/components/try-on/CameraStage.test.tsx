@@ -54,13 +54,19 @@ beforeEach(() => {
   trackListeners.clear();
 });
 
-function renderStage(overrides: {onFailure?: () => void; onStatus?: () => void} = {}) {
+function renderStage(
+  overrides: {
+    onFailure?: () => void;
+    onStatus?: () => void;
+    overlay?: HTMLImageElement | null;
+  } = {},
+) {
   return render(
     <CameraStage
       detector={detector}
       onFailure={overrides.onFailure ?? vi.fn()}
       onStatus={overrides.onStatus ?? vi.fn()}
-      overlay={overlay}
+      overlay={overrides.overlay === undefined ? overlay : overrides.overlay}
       overlayAspect={1}
       piece={{kind: 'earring', sizeCm: 2}}
       stream={streamWithTrack}
@@ -131,5 +137,28 @@ describe('CameraStage', () => {
     Object.defineProperty(video, 'videoHeight', {configurable: true, value: 480});
 
     await waitFor(() => expect(onStatus).toHaveBeenCalledWith('preparing'));
+  });
+
+  it('joins the PNG when it arrives without restarting the camera', async () => {
+    const {rerender} = renderStage({overlay: null});
+
+    await waitFor(() =>
+      expect(mocks.attachCameraStream).toHaveBeenCalledTimes(1),
+    );
+
+    rerender(
+      <CameraStage
+        detector={detector}
+        onFailure={vi.fn()}
+        onStatus={vi.fn()}
+        overlay={overlay}
+        overlayAspect={1}
+        piece={{kind: 'earring', sizeCm: 2}}
+        stream={streamWithTrack}
+        title="Aura Earrings"
+      />,
+    );
+
+    expect(mocks.attachCameraStream).toHaveBeenCalledTimes(1);
   });
 });

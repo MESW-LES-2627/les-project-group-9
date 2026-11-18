@@ -40,11 +40,24 @@ export const TRY_ON_LANDMARKS = {
 /** Average adult face width at the cheekbones, used to convert cm to pixels. */
 export const FACE_WIDTH_CM = 14.5;
 
+/**
+ * Average adult shoulder (biacromial) width. MediaPipe's FaceLandmarker has no
+ * shoulder landmarks, so shoulder width is estimated from the face
+ * (`SHOULDER_TO_FACE_RATIO`); the ratio keeps the scale identical to a
+ * face-width calculation while letting the necklace be sized against shoulders.
+ */
+export const SHOULDER_WIDTH_CM = 38;
+export const SHOULDER_TO_FACE_RATIO = SHOULDER_WIDTH_CM / FACE_WIDTH_CM;
+
 /** Fraction of the overlay height sunk below the lobe so the finding covers it. */
 export const EAR_LOBE_SINK_RATIO = 0.12;
 
-/** Collarbone projection below the chin, in face widths. */
-export const NECKLACE_ANCHOR_RATIO = 0.62;
+/**
+ * Neck-base drop below the chin, in face widths. The necklace's **top centre**
+ * is anchored there (midpoint of the neck/collarbone), so the chain arcs around
+ * the neck instead of hanging from the chest.
+ */
+export const NECK_BASE_DROP_RATIO = 0.18;
 
 /** Hide the turned-away ear below this ratio between the two nose distances. */
 export const EAR_HIDE_RATIO = 0.55;
@@ -69,6 +82,12 @@ export const SMOOTHING_TAU_MS = 90;
 export const SMOOTHING_GAP_MS = 300;
 export const MAX_SCALE_STEP = 0.15;
 export const MAX_JUMP_RATIO = 0.15;
+
+/** How long the last overlay is kept when the face is briefly lost. */
+export const TRACKING_GRACE_MS = 250;
+
+/** Newest-first weights for the short position buffer (3 samples ≈ 66 ms). */
+export const ANCHOR_BUFFER_WEIGHTS = [0.5, 0.3, 0.2] as const;
 
 /** Fraction of the frame kept free at each edge before an anchor counts as off-screen. */
 export const MIN_VISIBLE = 0.02;
@@ -100,6 +119,12 @@ export type EarVisibilityState = {
 export type SmoothingState = {
   value: OverlayTransform | null;
   updatedAt: number | null;
+};
+
+export type AnchorBuffer = {
+  size: number;
+  /** Oldest first. */
+  samples: OverlayTransform[];
 };
 
 export type FrameBounds = {width: number; height: number};
@@ -241,7 +266,11 @@ export function earTransforms(
   };
 }
 
-/** Necklace transform: the overlay's centre sits on the projected collarbone. */
+/**
+ * Necklace transform: the overlay's **top centre** sits on the estimated neck
+ * base (below the chin), and its size is derived from the shopper's estimated
+ * shoulder width, so it stays correct near/far and when turning.
+ */
 export function necklaceTransform(
   points: readonly Point[],
   metrics: FaceMetrics | null,
@@ -250,16 +279,21 @@ export function necklaceTransform(
   if (!metrics) return null;
 
   const chin = pointAt(points, TRY_ON_LANDMARKS.chin);
-  const size = overlaySize(metrics, options.sizeCm, options.overlayAspect);
+  const size = overlaySize(
+    metrics,
+    options.sizeCm,
+    options.overlayAspect,
+    {width: shoulderWidthPx(metrics.width), cm: SHOULDER_WIDTH_CM},
+  );
 
   if (!chin || !size) return null;
 
   const direction = downwardDirection(metrics.eyeMid, chin);
-  const drop = metrics.width * NECKLACE_ANCHOR_RATIO;
+  const drop = metrics.width * NECK_BASE_DROP_RATIO;
 
   return {
     x: chin.x + direction.x * drop,
-    y: chin.y + direction.y * drop - size.height / 2,
+    y: chin.y + direction.y * drop,
     width: size.width,
     height: size.height,
     rotation: metrics.roll,
@@ -284,63 +318,121 @@ export function headMaskPolygon(points: readonly Point[]): Point[] | null {
   return oval;
 }
 
+/** Estimated shoulder width in pixels (see `SHOULDER_TO_FACE_RATIO`). */
+export function shoulderWidthPx(faceWidth: number): number {
+  return faceWidth * SHOULDER_TO_FACE_RATIO;
+}
+
 export function createSmoothingState(): SmoothingState {
   return {value: null, updatedAt: null};
+}
+
+export function createAnchorBuffer(size = ANCHOR_BUFFER_WEIGHTS.length): AnchorBuffer {
+  return {size, samples: []};
+}
+
+/**
+ * Short weighted buffer for the anchor (x, y, size, rotation). Single-frame
+ * landmark spikes are averaged out while the newest sample still dominates, so
+ * the necklace does not lag behind the head.
+ */
+export function bufferTransform(
+  buffer: AnchorBuffer,
+  transform: OverlayTransform,
+): {buffer: AnchorBuffer; transform: OverlayTransform} {
+  const samples = [...buffer.samples, transform].slice(-buffer.size);
+  const next: AnchorBuffer = {size: buffer.size, samples};
+
+  if (samples.length === 1) return {buffer: next, transform};
+
+  const newestFirst = [...samples].reverse();
+  const weights = ANCHOR_BUFFER_WEIGHTS.slice(0, newestFirst.length);
+  const total = weights.reduce((sum, weight) => sum + weight, 0);
+  const weighted = (pick: (sample: OverlayTransform) => number) =>
+    newestFirst.reduce(
+      (sum, sample, index) => sum + pick(sample) * weights[index],
+      0,
+    ) / total;
+  const sin = weighted((sample) => Math.sin(sample.rotation));
+  const cos = weighted((sample) => Math.cos(sample.rotation));
+
+  return {
+    buffer: next,
+    transform: {
+      x: weighted((sample) => sample.x),
+      y: weighted((sample) => sample.y),
+      width: weighted((sample) => sample.width),
+      height: weighted((sample) => sample.height),
+      rotation: Math.atan2(sin, cos),
+      mirrored: transform.mirrored,
+    },
+  };
 }
 
 /**
  * Exponential smoothing of an overlay transform.
  *
- * Snaps (instead of easing) on the first frame, after a >`SMOOTHING_GAP_MS`
- * pause, or when the anchor jumps by more than `MAX_JUMP_RATIO` of the face
- * width. Width changes are capped at `MAX_SCALE_STEP` per frame; the height
- * follows the target aspect ratio so the piece never stretches.
+ * Snaps on the first frame or after a >`SMOOTHING_GAP_MS` pause (tracking was
+ * lost). A large jump within the stream is **clamped** instead of snapping, so
+ * a one-frame landmark spike makes the piece catch up smoothly rather than
+ * teleport. Width changes are capped at `MAX_SCALE_STEP` per frame.
  */
 export function smoothTransform(
   state: SmoothingState,
   target: OverlayTransform | null,
-  options: {now: number; faceWidth: number},
+  options: {now: number; faceWidth: number; tauMs?: number},
 ): {state: SmoothingState; value: OverlayTransform | null} {
   if (!target) return {state: {value: null, updatedAt: null}, value: null};
 
   const previous = state.value;
   const elapsed =
-    state.updatedAt === null ? Number.POSITIVE_INFINITY : options.now - state.updatedAt;
-  const jump = previous
-    ? Math.hypot(target.x - previous.x, target.y - previous.y)
-    : Number.POSITIVE_INFINITY;
-  const maxJump =
-    Number.isFinite(options.faceWidth) && options.faceWidth > 0
-      ? options.faceWidth * MAX_JUMP_RATIO
-      : 0;
+    state.updatedAt === null
+      ? Number.POSITIVE_INFINITY
+      : options.now - state.updatedAt;
 
   const reset =
     !previous ||
     !Number.isFinite(elapsed) ||
     elapsed < 0 ||
-    elapsed > SMOOTHING_GAP_MS ||
-    jump > maxJump;
+    elapsed > SMOOTHING_GAP_MS;
 
   if (reset) {
     return {state: {value: target, updatedAt: options.now}, value: target};
   }
 
-  const alpha = 1 - Math.exp(-elapsed / SMOOTHING_TAU_MS);
+  const maxJump =
+    Number.isFinite(options.faceWidth) && options.faceWidth > 0
+      ? options.faceWidth * MAX_JUMP_RATIO
+      : 0;
+  const jump = Math.hypot(target.x - previous.x, target.y - previous.y);
+  const limited =
+    maxJump > 0 && jump > maxJump
+      ? {
+          ...target,
+          x: previous.x + ((target.x - previous.x) / jump) * maxJump,
+          y: previous.y + ((target.y - previous.y) / jump) * maxJump,
+        }
+      : target;
+
+  const alpha =
+    1 - Math.exp(-elapsed / (options.tauMs ?? SMOOTHING_TAU_MS));
   const smoothedWidth = clamp(
-    previous.width + (target.width - previous.width) * alpha,
+    previous.width + (limited.width - previous.width) * alpha,
     previous.width * (1 - MAX_SCALE_STEP),
     previous.width * (1 + MAX_SCALE_STEP),
   );
   const aspect =
-    target.width > 0 && target.height > 0 ? target.width / target.height : 1;
+    limited.width > 0 && limited.height > 0
+      ? limited.width / limited.height
+      : 1;
 
   const value: OverlayTransform = {
-    x: previous.x + (target.x - previous.x) * alpha,
-    y: previous.y + (target.y - previous.y) * alpha,
+    x: previous.x + (limited.x - previous.x) * alpha,
+    y: previous.y + (limited.y - previous.y) * alpha,
     width: smoothedWidth,
     height: smoothedWidth / aspect,
-    rotation: lerpAngle(previous.rotation, target.rotation, alpha),
-    mirrored: target.mirrored,
+    rotation: lerpAngle(previous.rotation, limited.rotation, alpha),
+    mirrored: limited.mirrored,
   };
 
   return {state: {value, updatedAt: options.now}, value};
@@ -384,12 +476,15 @@ function overlaySize(
   metrics: FaceMetrics | null,
   sizeCm: number,
   aspect: number,
+  reference?: {width: number; cm: number},
 ): {width: number; height: number} | null {
   if (!metrics || !(metrics.width > 0)) return null;
   if (!Number.isFinite(sizeCm) || sizeCm <= 0) return null;
 
   const safeAspect = Number.isFinite(aspect) && aspect > 0 ? aspect : 1;
-  const width = (sizeCm / FACE_WIDTH_CM) * metrics.width;
+  const referenceWidth = reference?.width ?? metrics.width;
+  const referenceCm = reference?.cm ?? FACE_WIDTH_CM;
+  const width = (sizeCm / referenceCm) * referenceWidth;
 
   return {width, height: width / safeAspect};
 }

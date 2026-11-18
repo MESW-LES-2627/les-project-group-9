@@ -189,11 +189,12 @@ surface placement: the piece is drawn on a live selfie face.
   sets the piece's real width (default 2 cm earrings, 16 cm necklaces). Overlay URLs are
   loaded with `?cors=1` (`try-on/url.ts`) so the product page's cached `<img>` cannot taint
   the canvas.
-- **True size** — the overlay is scaled with `sizeCm / 14.5 cm × faceWidth`, so the piece
-  keeps its real proportions against the shopper's cheekbones. The number cannot be derived
-  from the image, so `custom.try_on_size_cm` must be the real width of the **trimmed
-  cut-out** (a pendant-only cut-out is a few centimetres; a cut-out that includes the whole
-  chain is ~40 cm). Shoppers can still drag/resize in photo mode.
+- **True size** — the necklace is scaled against the shopper's estimated **shoulder
+  width** (`38 cm ÷ 14.5 cm` face ratio, since the FaceLandmarker has no shoulder
+  landmarks), the earrings against the face width, so both keep their real proportions.
+  The number cannot be derived from the image, so `custom.try_on_size_cm` must be the real
+  width of the **trimmed cut-out** (a pendant-only cut-out is a few centimetres; a cut-out
+  that includes the whole chain is ~40 cm). Shoppers can still drag/resize in photo mode.
 - **Device** — `try-on/device.ts` reads `Sec-CH-UA-Mobile` then the user agent in the
   product loader; phones open the camera dialog and computers the QR dialog. iPadOS's
   desktop user agent is refined client-side with `maxTouchPoints`.
@@ -216,20 +217,27 @@ surface placement: the piece is drawn on a live selfie face.
   top (`drawOverlays`); the landmarker joins later and the status reads `preparing` until
   then, because the WASM download would otherwise delay the camera by several seconds.
   `try-on/preload.ts` warms the WASM, the model and the JS chunk on idle on phones (and on
-  hover/focus on desktop) to shorten the first overlay. The CSP in `app/entry.server.tsx`
-  allows `'wasm-unsafe-eval'` in `script-src` and `'self' blob:` in `worker-src` (MediaPipe
+  hover/focus on desktop) **and compiles the shared landmarker** before the tap
+  (`getFaceDetector()` caches one instance for the page, closed on `pagehide`), so opening
+  the dialog only starts the camera. The CSP in `app/entry.server.tsx` allows
+  `'wasm-unsafe-eval'` in `script-src` and `'self' blob:` in `worker-src` (MediaPipe
   compiles in a worker on some Safari versions). `attachCameraStream` sets
   `playsinline`/`webkit-playsinline`/`muted` **before** `srcObject`; the modal defers the
-  camera/landmarker release by one tick so React StrictMode's simulated unmount does not
-  stop and reopen the hardware camera. When the camera or the WASM fails, the banner shows
-  the translated message **plus the raw `Name: message`** so a phone can report the cause.
+  camera release by one tick so React StrictMode's simulated unmount does not stop and
+  reopen the hardware camera. When the camera or the WASM fails, the banner shows the
+  translated message **plus the raw `Name: message`** so a phone can report the cause.
 - **Geometry** (`try-on/anchors.ts`, pure, pixel space): earrings are top-centre anchored at
   landmarks 177/401 with a sink ratio; the ear with the smaller `|earX − noseX|` is hidden
-  when the head turns (3-frame hysteresis). Necklaces are centred on the collarbone (0.62
-  face widths below the chin) and masked by MediaPipe's face oval (`evenodd`), so the chain
-  can lie on the neck but never on the face. Transforms are smoothed with an exponential
-  filter. `try-on/frame.ts` turns one landmark set into overlays; `try-on/render.ts` paints
-  the mirrored video and the overlays.
+  when the head turns (3-frame hysteresis). Necklaces anchor their **top centre** at the
+  neck base (0.18 face widths below the chin) and are masked by MediaPipe's face oval
+  (`evenodd`), so the chain arcs around the neck and never crosses the face. Jitter is
+  handled in three layers: a 3-sample weighted anchor buffer (0.5/0.3/0.2, ~66 ms) rejects
+  one-frame landmark spikes, an exponential filter removes the rest (90 ms; 130 ms for the
+  necklace, whose chin/chest anchor is noisier), and a large jump is clamped to 15 % of the
+  reference width per frame instead of teleporting. When the face is briefly lost the last
+  placement is kept for 250 ms so the piece does not flicker. `try-on/frame.ts` turns one
+  landmark set into overlays; `try-on/render.ts` paints the overlay on the transparent
+  canvas (and the full frame for photos).
 - **Photo fallback** — `PhotoFallback` decodes a picked image, switches the landmarker to
   `IMAGE` mode and composes the same overlays. Nothing is uploaded; the camera and photos
   stay in the browser. The composed piece can be dragged (pointer or arrow keys) and resized
@@ -239,7 +247,11 @@ surface placement: the piece is drawn on a live selfie face.
   "not available" instead of a rectangle.
 - **UI** — `components/product/TryOnButton.tsx` (button + deep link) opens
   `components/try-on/TryOnDialog.tsx` (camera/photo) or `TryOnQrDialog.tsx` (desktop QR,
-  encoded locally with `uqr`). The fitting room reuses the same dialogs per piece
+  encoded locally with `uqr`). The PNG is preloaded and cached (`try-on/overlay.ts`) while
+  the shopper browses; the dialog shows the live preview as soon as the stream is ready and
+  the piece joins when the PNG and landmarker arrive — neither restarts the camera (the
+  stage reads them from refs). A skeleton block is rendered during the initial permission
+  handshake. The fitting room reuses the same dialogs per piece
   (`components/fitting-room/FittingRoomTryOn.tsx`). A `?tryOn=1` link opens the dialog after
   a QR scan and is then removed from the URL.
 - **Copy** — `product.tryOn*` and `tryOn.*` keys in all three dictionaries.

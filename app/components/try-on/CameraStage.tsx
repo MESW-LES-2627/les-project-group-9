@@ -2,10 +2,15 @@ import {useEffect, useRef, useState} from 'react';
 import {useTranslation} from '~/lib/i18n';
 import type {TryOnPiece} from '~/lib/try-on/catalog';
 import {
+  TRACKING_GRACE_MS,
+  bufferTransform,
+  createAnchorBuffer,
   createEarVisibilityState,
   createSmoothingState,
   smoothTransform,
   toPixelLandmarks,
+  type AnchorBuffer,
+  type Point,
   type SmoothingState,
 } from '~/lib/try-on/anchors';
 import {
@@ -15,8 +20,8 @@ import {
   type CameraFailure,
 } from '~/lib/try-on/camera';
 import type {FaceDetector} from '~/lib/try-on/face-landmarker';
-import {planFrame} from '~/lib/try-on/frame';
-import {drawOverlays} from '~/lib/try-on/render';
+import {NECKLACE_SMOOTHING_TAU_MS, planFrame} from '~/lib/try-on/frame';
+import {drawOverlays, type FrameOverlay} from '~/lib/try-on/render';
 
 export type CameraStatus = 'preparing' | 'tracking' | 'no-face';
 
@@ -30,7 +35,8 @@ const MIN_FRAME_MS = 1000 / 30;
 type CameraStageProps = {
   /** The heavy landmarker; `null` while it is still loading. */
   detector: FaceDetector | null;
-  overlay: HTMLImageElement;
+  /** The PNG cut-out; `null` until it has been fetched and decoded. */
+  overlay: HTMLImageElement | null;
   overlayAspect: number;
   piece: Pick<TryOnPiece, 'kind' | 'sizeCm'>;
   /** Stream acquired by the dialog right after the tap (iOS-friendly). */
@@ -61,11 +67,27 @@ export function CameraStage({
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const detectorRef = useRef<FaceDetector | null>(detector);
+  const overlayRef = useRef<HTMLImageElement | null>(overlay);
+  const overlayAspectRef = useRef(overlayAspect);
+  const onStatusRef = useRef(onStatus);
+  const onFailureRef = useRef(onFailure);
   const [aspect, setAspect] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     detectorRef.current = detector;
   }, [detector]);
+
+  // The PNG arrives (or is replaced) without restarting the camera stream.
+  useEffect(() => {
+    overlayRef.current = overlay;
+    overlayAspectRef.current = overlayAspect;
+  }, [overlay, overlayAspect]);
+
+  // Callback identity changes must not restart the camera either.
+  useEffect(() => {
+    onStatusRef.current = onStatus;
+    onFailureRef.current = onFailure;
+  }, [onStatus, onFailure]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -83,11 +105,16 @@ export function CameraStage({
     let lastStatus: CameraStatus | null = null;
     let earState = createEarVisibilityState();
     const smoothing: Record<string, SmoothingState> = {};
+    const anchorBuffers: Record<string, AnchorBuffer> = {};
+    const tauMs = piece.kind === 'necklace' ? NECKLACE_SMOOTHING_TAU_MS : undefined;
+    let lastOverlays: FrameOverlay[] = [];
+    let lastMask: Point[] | null = null;
+    let lastPlanAt = 0;
 
     function report(status: CameraStatus) {
       if (lastStatus === status) return;
       lastStatus = status;
-      onStatus(status);
+      onStatusRef.current(status);
     }
 
     function schedule() {
@@ -128,8 +155,9 @@ export function CameraStage({
       }
 
       const activeDetector = detectorRef.current;
+      const activeOverlay = overlayRef.current;
 
-      if (!activeDetector) {
+      if (!activeDetector || !activeOverlay) {
         report('preparing');
         schedule();
         return;
@@ -141,45 +169,70 @@ export function CameraStage({
             points: toPixelLandmarks(points, width, height),
             kind: piece.kind,
             sizeCm: piece.sizeCm,
-            overlayAspect,
+            overlayAspect: overlayAspectRef.current,
             bounds: {width, height},
             earState,
           })
         : null;
 
-      if (plan) earState = plan.earState;
-      else {
+      let overlaysToDraw: FrameOverlay[] = [];
+      let maskToDraw: Point[] | null = null;
+
+      if (plan) {
+        earState = plan.earState;
+        lastPlanAt = now;
+
+        overlaysToDraw = plan.overlays.flatMap((planned) => {
+          // 1) short weighted buffer: rejects one-frame landmark spikes.
+          const buffered = bufferTransform(
+            anchorBuffers[planned.id] ?? createAnchorBuffer(),
+            planned.transform,
+          );
+          anchorBuffers[planned.id] = buffered.buffer;
+
+          // 2) exponential smoothing: removes sub-frame jitter.
+          const previous = smoothing[planned.id] ?? createSmoothingState();
+          const smoothed = smoothTransform(previous, buffered.transform, {
+            now,
+            faceWidth: plan.faceWidth,
+            tauMs,
+          });
+          smoothing[planned.id] = smoothed.state;
+
+          return smoothed.value
+            ? [{transform: smoothed.value, masked: planned.masked}]
+            : [];
+        });
+
+        maskToDraw = plan.headMask;
+        lastOverlays = overlaysToDraw;
+        lastMask = plan.headMask;
+      } else if (now - lastPlanAt < TRACKING_GRACE_MS) {
+        // Keep the last placement for a beat instead of flickering off.
+        overlaysToDraw = lastOverlays;
+        maskToDraw = lastMask;
+      } else {
         earState = createEarVisibilityState();
         Object.keys(smoothing).forEach((key) => delete smoothing[key]);
+        Object.keys(anchorBuffers).forEach((key) => delete anchorBuffers[key]);
+        lastOverlays = [];
+        lastMask = null;
       }
-
-      const overlays = (plan?.overlays ?? []).flatMap((planned) => {
-        const previous = smoothing[planned.id] ?? createSmoothingState();
-        const smoothed = smoothTransform(previous, planned.transform, {
-          now,
-          faceWidth: plan?.faceWidth ?? 0,
-        });
-        smoothing[planned.id] = smoothed.state;
-
-        return smoothed.value
-          ? [{transform: smoothed.value, masked: planned.masked}]
-          : [];
-      });
 
       const context = canvasElement.getContext('2d');
 
       if (context) {
         drawOverlays(context, {
-          overlay,
-          overlays,
-          headMask: plan?.headMask ?? null,
+          overlay: activeOverlay,
+          overlays: overlaysToDraw,
+          headMask: maskToDraw,
           mirror: true,
           sourceWidth: width,
           sourceHeight: height,
         });
       }
 
-      report(overlays.length > 0 ? 'tracking' : 'no-face');
+      report(overlaysToDraw.length > 0 ? 'tracking' : 'no-face');
       schedule();
     }
 
@@ -187,7 +240,7 @@ export function CameraStage({
       onError: (error) => {
         if (disposed) return;
         console.error('Camera could not start', error);
-        onFailure(classifyCameraError(error), describeError(error));
+        onFailureRef.current(classifyCameraError(error), describeError(error));
       },
     });
 
@@ -196,7 +249,7 @@ export function CameraStage({
     const track = stream.getVideoTracks?.()[0];
     track?.addEventListener?.('ended', () => {
       if (!disposed) {
-        onFailure('unavailable', 'TrackEnded: the camera stream ended');
+        onFailureRef.current('unavailable', 'TrackEnded: the camera stream ended');
       }
     });
 
@@ -212,7 +265,7 @@ export function CameraStage({
         );
       }
     };
-  }, [overlay, overlayAspect, piece.kind, piece.sizeCm, stream, onStatus, onFailure]);
+  }, [piece.kind, piece.sizeCm, stream]);
 
   return (
     <div

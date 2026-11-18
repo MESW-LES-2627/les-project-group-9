@@ -3,16 +3,22 @@ import {
   EAR_HYSTERESIS_FRAMES,
   EAR_LOBE_SINK_RATIO,
   FACE_WIDTH_CM,
+  MAX_JUMP_RATIO,
   MAX_ROLL_RADIANS,
-  NECKLACE_ANCHOR_RATIO,
+  NECK_BASE_DROP_RATIO,
+  SHOULDER_WIDTH_CM,
   SMOOTHING_GAP_MS,
+  SMOOTHING_TAU_MS,
   TRY_ON_LANDMARKS,
+  bufferTransform,
+  createAnchorBuffer,
   createEarVisibilityState,
   createSmoothingState,
   earTransforms,
   faceMetrics,
   headMaskPolygon,
   necklaceTransform,
+  shoulderWidthPx,
   smoothTransform,
   toPixelLandmarks,
   updateEarVisibility,
@@ -311,12 +317,12 @@ describe('necklaceTransform', () => {
       overlayAspect: 2,
     });
 
-    const drop = 320 * NECKLACE_ANCHOR_RATIO;
-    const height = ((16 / FACE_WIDTH_CM) * 320) / 2;
+    const drop = 320 * NECK_BASE_DROP_RATIO;
+    const height = (16 / SHOULDER_WIDTH_CM) * shoulderWidthPx(320) / 2;
 
     expect(transform?.x).toBeCloseTo(320);
-    // The overlay is centred on the collarbone, so its top edge sits above it.
-    expect(transform?.y).toBeCloseTo(400 + drop - height / 2);
+    // Top-centre sits on the neck base, so the chain arcs around the neck.
+    expect(transform?.y).toBeCloseTo(400 + drop);
     expect(transform?.width).toBeCloseTo((16 / FACE_WIDTH_CM) * 320);
     expect(transform?.height).toBeCloseTo(height);
     expect(transform?.rotation).toBeCloseTo(0);
@@ -353,6 +359,48 @@ describe('headMaskPolygon', () => {
         landmarks({[TRY_ON_LANDMARKS.chin]: {x: Number.NaN, y: 400}}),
       ),
     ).toBe(null);
+  });
+});
+
+describe('bufferTransform', () => {
+  it('weights the newest sample and absorbs a one-frame spike', () => {
+    let buffer = createAnchorBuffer();
+    let value = transform({x: 100});
+
+    for (let frame = 0; frame < 3; frame += 1) {
+      const result = bufferTransform(buffer, transform({x: 100}));
+      buffer = result.buffer;
+      value = result.transform;
+    }
+
+    expect(value.x).toBeCloseTo(100);
+
+    const spike = bufferTransform(buffer, transform({x: 200}));
+
+    // 0.5 × 200 + 0.3 × 100 + 0.2 × 100
+    expect(spike.transform.x).toBeCloseTo(150);
+
+    const settled = bufferTransform(spike.buffer, transform({x: 200}));
+
+    expect(settled.transform.x).toBeGreaterThan(150);
+    expect(settled.transform.x).toBeLessThan(200);
+  });
+
+  it('averages rotation around the shortest arc', () => {
+    let buffer = createAnchorBuffer();
+
+    buffer = bufferTransform(buffer, transform({rotation: 3})).buffer;
+    const result = bufferTransform(buffer, transform({rotation: -3}));
+
+    expect(Math.abs(result.transform.rotation)).toBeCloseTo(Math.PI, 1);
+  });
+
+  it('takes the mirrored side from the newest sample', () => {
+    const buffer = createAnchorBuffer();
+
+    const result = bufferTransform(buffer, transform({mirrored: true}));
+
+    expect(result.transform.mirrored).toBe(true);
   });
 });
 
@@ -396,7 +444,7 @@ describe('smoothTransform', () => {
     expect(next.value?.height).toBeCloseTo(57.5);
   });
 
-  it('snaps after a tracking gap or a large jump', () => {
+  it('snaps after a tracking gap and clamps a large jump instead', () => {
     const first = smoothTransform(createSmoothingState(), transform(), {
       now: 0,
       faceWidth: 320,
@@ -409,12 +457,35 @@ describe('smoothTransform', () => {
     );
     expect(afterGap.value?.x).toBe(120);
 
+    // A one-frame spike is clamped to MAX_JUMP_RATIO of the face width, then
+    // eased: no teleport, no visible snap.
     const afterJump = smoothTransform(
       first.state,
       transform({x: 300}),
       {now: 30, faceWidth: 320},
     );
-    expect(afterJump.value?.x).toBe(300);
+    expect(afterJump.value?.x).toBeCloseTo(
+      100 + 320 * MAX_JUMP_RATIO * (1 - Math.exp(-30 / SMOOTHING_TAU_MS)),
+    );
+  });
+
+  it('applies the per-overlay time constant', () => {
+    const start = smoothTransform(createSmoothingState(), transform(), {
+      now: 0,
+      faceWidth: 2000,
+    });
+    const fast = smoothTransform(start.state, transform({x: 140}), {
+      now: 40,
+      faceWidth: 2000,
+      tauMs: 60,
+    });
+    const slow = smoothTransform(start.state, transform({x: 140}), {
+      now: 40,
+      faceWidth: 2000,
+      tauMs: 130,
+    });
+
+    expect(fast.value?.x).toBeGreaterThan(slow.value?.x ?? 0);
   });
 
   it('takes the shortest path when the angle wraps', () => {

@@ -3,6 +3,7 @@ import {useTranslation} from '~/lib/i18n';
 import type {TryOnPiece} from '~/lib/try-on/catalog';
 import {requestCamera, type CameraAttempt} from '~/lib/try-on/camera';
 import {prefersMobileUi} from '~/lib/try-on/device';
+import {preloadOverlayImage} from '~/lib/try-on/overlay';
 import {preloadTryOnAssets} from '~/lib/try-on/preload';
 import {TryOnDialog} from '~/components/try-on/TryOnDialog';
 import {TryOnQrDialog} from '~/components/try-on/TryOnQrDialog';
@@ -32,9 +33,15 @@ export function FittingRoomTryOn({
   const [mobile] = useState(() => prefersMobileUi(isMobile));
   const [camera, setCamera] = useState<Promise<CameraAttempt> | null>(null);
 
+  function preload() {
+    preloadTryOnAssets();
+    preloadOverlayImage(piece.overlayUrl);
+  }
+
   useEffect(() => {
-    if (mobile) preloadTryOnAssets();
-  }, [mobile]);
+    if (mobile) preload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mobile, piece.overlayUrl]);
 
   function openTryOn() {
     if (!mobile) {
@@ -54,8 +61,8 @@ export function FittingRoomTryOn({
         aria-label={t('fittingRoom.tryOnPiece', {title})}
         className="underline underline-offset-4 transition-colors hover:text-ink"
         onClick={openTryOn}
-        onFocus={() => preloadTryOnAssets()}
-        onPointerEnter={() => preloadTryOnAssets()}
+        onFocus={preload}
+        onPointerEnter={preload}
         type="button"
       >
         {t('product.tryOn')}

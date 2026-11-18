@@ -6,6 +6,7 @@ import {
   faceMetrics,
   headMaskPolygon,
   necklaceTransform,
+  shoulderWidthPx,
   updateEarVisibility,
   type EarVisibilityState,
   type FrameBounds,
@@ -15,13 +16,19 @@ import type {FrameOverlay} from './render';
 
 export type FrameOverlayId = 'earA' | 'earB' | 'necklace';
 
+/** The necklace anchor needs a longer filter than an earlobe. */
+export const NECKLACE_SMOOTHING_TAU_MS = 130;
+
 export type PlannedOverlay = FrameOverlay & {id: FrameOverlayId};
 
 export type TryOnFramePlan = {
   overlays: PlannedOverlay[];
   /** Head polygon for masked overlays, in pixel space. */
   headMask: Point[] | null;
-  /** Cheekbone width in pixels, used to size the smoothing jump threshold. */
+  /**
+   * Reference width in pixels for the smoothing jump threshold: the face width
+   * for earrings, the estimated shoulder width for the necklace.
+   */
   faceWidth: number;
   earState: EarVisibilityState;
 };
@@ -59,7 +66,7 @@ export function planFrame(input: PlanFrameInput): TryOnFramePlan | null {
     return {
       overlays: [{id: 'necklace', transform, masked: true}],
       headMask: headMaskPolygon(input.points),
-      faceWidth: metrics.width,
+      faceWidth: shoulderWidthPx(metrics.width),
       earState: input.earState,
     };
   }

@@ -1,19 +1,35 @@
 export type OverlayTransparency = 'transparent' | 'opaque' | 'unknown';
 
+const cache = new Map<string, Promise<HTMLImageElement>>();
+
 /**
  * Loads the overlay PNG with CORS so it can be drawn into a canvas without
  * tainting it. The URL already carries the `cors=1` cache key (see `url.ts`).
+ * Results are memoised per URL, so an idle preload makes the dialog instant and
+ * a failed load is retried next time.
  */
 export function loadOverlayImage(url: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
+  const cached = cache.get(url);
+  if (cached) return cached;
+
+  const promise = new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new Image();
     image.crossOrigin = 'anonymous';
     image.decoding = 'async';
     image.onload = () => resolve(image);
-    image.onerror = () =>
-      reject(new Error(`overlay-load: ${url}`));
+    image.onerror = () => reject(new Error(`overlay-load: ${url}`));
     image.src = url;
   });
+
+  cache.set(url, promise);
+  promise.catch(() => cache.delete(url));
+
+  return promise;
+}
+
+/** Fire-and-forget warm-up for the product/fitting-room pages. */
+export function preloadOverlayImage(url: string): void {
+  void loadOverlayImage(url).catch(() => undefined);
 }
 
 /**

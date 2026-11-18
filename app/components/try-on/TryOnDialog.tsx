@@ -11,7 +11,7 @@ import {
   type CameraFailure,
 } from '~/lib/try-on/camera';
 import {
-  createFaceDetector,
+  getFaceDetector,
   type FaceDetector,
 } from '~/lib/try-on/face-landmarker';
 import {loadOverlayImage, overlayTransparency} from '~/lib/try-on/overlay';
@@ -64,7 +64,6 @@ export function TryOnDialog({
   const [cameraAttempt, setCameraAttempt] = useState(0);
   const streamRef = useRef<MediaStream | null>(null);
   const detectorRef = useRef<FaceDetector | null>(null);
-  const detectorPromiseRef = useRef<Promise<FaceDetector> | null>(null);
   const requestRef = useRef<Promise<CameraAttempt> | null>(null);
   const releaseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -85,37 +84,15 @@ export function TryOnDialog({
         : camera ?? (requestRef.current ??= requestCamera());
 
     // Start the landmarker immediately: it is the long pole and must not delay
-    // the camera (or be delayed by it).
-    const detectorPromise =
-      detectorPromiseRef.current ?? createFaceDetector();
-    detectorPromiseRef.current = detectorPromise;
+    // the camera (or be delayed by it). It is shared for the page session.
+    const detectorPromise = getFaceDetector();
+    // The PNG is fetched in parallel and never delays the preview.
+    const overlayPromise = loadOverlayImage(piece.overlayUrl);
 
     async function load() {
-      let opened: CameraAttempt;
+      const opened = await attempt;
 
-      try {
-        const [image, cameraResult] = await Promise.all([
-          loadOverlayImage(piece.overlayUrl),
-          attempt,
-        ]);
-        opened = cameraResult;
-
-        if (!active) return;
-
-        if (overlayTransparency(image) === 'opaque') {
-          stopStream(opened.stream);
-          setPhase('unavailable');
-          return;
-        }
-
-        setOverlay(image);
-      } catch (error) {
-        if (!active) return;
-        // The overlay failed: release a camera that was already opened.
-        const settled = await attempt;
-        stopStream(settled.stream);
-        throw error;
-      }
+      if (!active) return;
 
       if (opened.stream) {
         streamRef.current = opened.stream;
@@ -139,6 +116,31 @@ export function TryOnDialog({
         setPhase('photo');
       }
 
+      // The overlay PNG decodes while the live preview is already on screen.
+      try {
+        const image = await overlayPromise;
+        if (!active) return;
+
+        if (overlayTransparency(image) === 'opaque') {
+          stopStream(streamRef.current);
+          streamRef.current = null;
+          setStream(null);
+          setPhase('unavailable');
+          return;
+        }
+
+        setOverlay(image);
+      } catch (error) {
+        if (!active) return;
+        console.error('Try-on could not start', error);
+        stopStream(streamRef.current);
+        streamRef.current = null;
+        setStream(null);
+        setFailure('unknown');
+        setDetail(describeError(error));
+        setPhase('photo');
+      }
+
       try {
         const faceDetector = await detectorPromise;
         if (!active) return;
@@ -148,7 +150,6 @@ export function TryOnDialog({
       } catch (error) {
         if (!active) return;
         console.error('Try-on could not start', error);
-        detectorPromiseRef.current = null;
         // The camera is of no use without the landmarker; release it.
         stopStream(streamRef.current);
         streamRef.current = null;
@@ -181,12 +182,6 @@ export function TryOnDialog({
 
         // The request may still be in flight when the dialog really closes.
         void attempt.then((value) => stopStream(value.stream));
-
-        const pendingDetector = detectorPromiseRef.current;
-        detectorPromiseRef.current = null;
-        void pendingDetector
-          ?.then((faceDetector) => faceDetector.close())
-          .catch(() => undefined);
       }, 0);
     };
   }, [piece.overlayUrl, initialMode, autoStart, camera]);
@@ -247,9 +242,8 @@ export function TryOnDialog({
 
     if (!detector) {
       try {
-        const faceDetector = await createFaceDetector();
+        const faceDetector = await getFaceDetector();
         detectorRef.current = faceDetector;
-        detectorPromiseRef.current = Promise.resolve(faceDetector);
         setDetector(faceDetector);
       } catch (error) {
         console.error('Try-on could not start', error);
@@ -317,7 +311,13 @@ export function TryOnDialog({
       title={t('tryOn.title', {title})}
     >
       {phase === 'loading' ? (
-        <StatusMessage message={t('tryOn.loading')} />
+        <div className="space-y-3">
+          <div
+            aria-hidden="true"
+            className="aspect-[4/5] w-full animate-pulse bg-secondary"
+          />
+          <StatusMessage message={t('tryOn.loading')} />
+        </div>
       ) : null}
 
       {phase === 'ready' ? (
@@ -339,7 +339,7 @@ export function TryOnDialog({
         <p className="text-sm leading-7 text-primary">{t('tryOn.opaque')}</p>
       ) : null}
 
-      {phase === 'camera' && overlay && stream ? (
+      {phase === 'camera' && stream ? (
         <>
           <CameraStage
             detector={detector}

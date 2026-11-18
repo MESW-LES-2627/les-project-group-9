@@ -6,7 +6,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 const mocks = vi.hoisted(() => ({
   loadOverlayImage: vi.fn(),
   overlayTransparency: vi.fn(),
-  createFaceDetector: vi.fn(),
+  getFaceDetector: vi.fn(),
   close: vi.fn(),
   requestCamera: vi.fn(),
   stopStream: vi.fn(),
@@ -19,7 +19,7 @@ vi.mock('~/lib/try-on/overlay', () => ({
 }));
 
 vi.mock('~/lib/try-on/face-landmarker', () => ({
-  createFaceDetector: mocks.createFaceDetector,
+  getFaceDetector: mocks.getFaceDetector,
 }));
 
 vi.mock('~/lib/try-on/camera', async (importOriginal) => {
@@ -35,12 +35,18 @@ vi.mock('~/lib/try-on/camera', async (importOriginal) => {
 vi.mock('~/components/try-on/CameraStage', () => ({
   CameraStage: ({
     detector,
+    overlay,
     onFailure,
   }: {
     detector: unknown;
+    overlay: unknown;
     onFailure: (reason: string) => void;
   }) => (
-    <div data-detector={detector ? 'ready' : 'pending'} data-testid="camera-stage">
+    <div
+      data-detector={detector ? 'ready' : 'pending'}
+      data-overlay={overlay ? 'ready' : 'pending'}
+      data-testid="camera-stage"
+    >
       <button onClick={() => onFailure('denied')} type="button">
         Fail camera
       </button>
@@ -98,13 +104,34 @@ beforeEach(() => {
     .mockResolvedValue({stream: {} as MediaStream, error: null});
   mocks.stopStream.mockReset();
   mocks.cameraSupport.mockReset().mockReturnValue(null);
-  mocks.createFaceDetector.mockReset().mockResolvedValue(fakeDetector());
+  mocks.getFaceDetector.mockReset().mockResolvedValue(fakeDetector());
 });
 
 describe('TryOnDialog', () => {
+  it('shows the live preview while the PNG is still loading', async () => {
+    const overlayTask = deferred<{naturalWidth: number; naturalHeight: number}>();
+    mocks.loadOverlayImage.mockReturnValue(overlayTask.promise);
+
+    renderDialog();
+
+    const stage = await screen.findByTestId('camera-stage');
+    expect(stage).toHaveAttribute('data-overlay', 'pending');
+
+    await act(async () => {
+      overlayTask.resolve({naturalWidth: 200, naturalHeight: 100});
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId('camera-stage')).toHaveAttribute(
+        'data-overlay',
+        'ready',
+      ),
+    );
+  });
+
   it('shows the live preview before the landmarker finishes', async () => {
     const pending = deferred<ReturnType<typeof fakeDetector>>();
-    mocks.createFaceDetector.mockReturnValue(pending.promise);
+    mocks.getFaceDetector.mockReturnValue(pending.promise);
 
     renderDialog();
 
@@ -128,14 +155,15 @@ describe('TryOnDialog', () => {
 
     await screen.findByTestId('camera-stage');
     expect(mocks.requestCamera).toHaveBeenCalledTimes(1);
-    expect(mocks.createFaceDetector).toHaveBeenCalledTimes(1);
+    expect(mocks.getFaceDetector).toHaveBeenCalledTimes(1);
     expect(
       screen.getByText('Your camera and photos stay on this device.'),
     ).toBeInTheDocument();
 
     unmount();
     await waitFor(() => expect(mocks.stopStream).toHaveBeenCalled());
-    await waitFor(() => expect(mocks.close).toHaveBeenCalled());
+    // The landmarker is shared for the page, so it survives the dialog.
+    expect(mocks.close).not.toHaveBeenCalled();
   });
 
   it('keeps the camera and landmarker alive across StrictMode remounts', async () => {
@@ -183,7 +211,7 @@ describe('TryOnDialog', () => {
     ).toBeInTheDocument();
     expect(screen.queryByTestId('camera-stage')).not.toBeInTheDocument();
     // The landmarker starts in parallel; it is closed when the dialog unmounts.
-    expect(mocks.createFaceDetector).toHaveBeenCalledTimes(1);
+    expect(mocks.getFaceDetector).toHaveBeenCalledTimes(1);
     expect(mocks.stopStream).toHaveBeenCalled();
   });
 
@@ -277,7 +305,7 @@ describe('TryOnDialog', () => {
     consoleError.mockRestore();
   });
 
-  it('closes the landmarker when unmounted', async () => {
+  it('keeps the shared landmarker alive for the next open', async () => {
     const {unmount} = renderDialog();
 
     await screen.findByTestId('camera-stage');
@@ -289,7 +317,8 @@ describe('TryOnDialog', () => {
     );
 
     unmount();
-    await waitFor(() => expect(mocks.close).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(mocks.stopStream).toHaveBeenCalled());
+    expect(mocks.close).not.toHaveBeenCalled();
   });
 
   it('shows the exact browser error on the failure banner', async () => {
@@ -313,7 +342,7 @@ describe('TryOnDialog', () => {
     const consoleError = vi
       .spyOn(console, 'error')
       .mockImplementation(() => undefined);
-    mocks.createFaceDetector.mockRejectedValue(
+    mocks.getFaceDetector.mockRejectedValue(
       new Error('ModuleFactory not set.'),
     );
 

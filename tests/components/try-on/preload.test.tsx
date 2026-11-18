@@ -1,6 +1,17 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 
+const mocks = vi.hoisted(() => ({
+  warmFaceDetector: vi.fn(),
+  releaseFaceDetector: vi.fn(),
+}));
+
 vi.mock('@mediapipe/tasks-vision', () => ({}));
+
+vi.mock('~/lib/try-on/face-landmarker', () => ({
+  getFaceDetector: vi.fn(),
+  warmFaceDetector: mocks.warmFaceDetector,
+  releaseFaceDetector: mocks.releaseFaceDetector,
+}));
 
 type Preload = typeof import('~/lib/try-on/preload');
 
@@ -8,6 +19,8 @@ let preloadTryOnAssets: Preload['preloadTryOnAssets'];
 
 beforeEach(async () => {
   vi.resetModules();
+  mocks.warmFaceDetector.mockReset();
+  mocks.releaseFaceDetector.mockReset();
   Object.defineProperty(window, 'requestIdleCallback', {
     configurable: true,
     value: (callback: () => void) => {
@@ -24,7 +37,7 @@ afterEach(() => {
 });
 
 describe('preloadTryOnAssets', () => {
-  it('warms the WASM runtime and the model when the browser is idle', async () => {
+  it('warms the WASM runtime, the model and the landmarker when idle', async () => {
     const fetchMock = vi.fn().mockResolvedValue({});
     vi.stubGlobal('fetch', fetchMock);
 
@@ -35,6 +48,9 @@ describe('preloadTryOnAssets', () => {
       '/mediapipe/wasm/vision_wasm_internal.wasm',
     );
     expect(fetchMock).toHaveBeenCalledWith('/models/face_landmarker.task');
+    await vi.waitFor(() =>
+      expect(mocks.warmFaceDetector).toHaveBeenCalledTimes(1),
+    );
   });
 
   it('only starts once', () => {
@@ -45,5 +61,14 @@ describe('preloadTryOnAssets', () => {
     preloadTryOnAssets();
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('releases the shared landmarker when the page is hidden', () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({}));
+
+    preloadTryOnAssets();
+    window.dispatchEvent(new Event('pagehide'));
+
+    expect(mocks.releaseFaceDetector).toHaveBeenCalled();
   });
 });

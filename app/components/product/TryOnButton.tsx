@@ -6,6 +6,7 @@ import {TryOnQrDialog} from '~/components/try-on/TryOnQrDialog';
 import type {TryOnPiece} from '~/lib/try-on/catalog';
 import {requestCamera, type CameraAttempt} from '~/lib/try-on/camera';
 import {prefersMobileUi} from '~/lib/try-on/device';
+import {preloadOverlayImage} from '~/lib/try-on/overlay';
 import {preloadTryOnAssets} from '~/lib/try-on/preload';
 
 type Mode = 'camera' | 'photo' | 'qr';
@@ -37,9 +38,15 @@ export function TryOnButton({
   const [autoStart, setAutoStart] = useState(true);
   const handledDeepLink = useRef(false);
 
+  function preload() {
+    preloadTryOnAssets();
+    preloadOverlayImage(piece.overlayUrl);
+  }
+
   useEffect(() => {
-    if (mobile) preloadTryOnAssets();
-  }, [mobile]);
+    if (mobile) preload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mobile, piece.overlayUrl]);
 
   useEffect(() => {
     if (handledDeepLink.current) return;
@@ -81,8 +88,8 @@ export function TryOnButton({
         aria-haspopup="dialog"
         className="flex min-h-[44px] w-full items-center justify-center gap-2 border border-ink px-6 text-xs font-medium uppercase tracking-widest text-ink transition-colors hover:bg-ink hover:text-white"
         onClick={openTryOn}
-        onFocus={() => preloadTryOnAssets()}
-        onPointerEnter={() => preloadTryOnAssets()}
+        onFocus={preload}
+        onPointerEnter={preload}
         type="button"
       >
         <Icon name="camera" size={18} />
