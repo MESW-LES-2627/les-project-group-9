@@ -158,6 +158,9 @@ export function formatMetafieldValue(
 
   const text = value.trim();
 
+  // Storefront values sometimes carry these sentinels as plain text.
+  if (/^(null|undefined)$/i.test(text)) return '';
+
   if (!text.startsWith('[')) return text;
 
   try {

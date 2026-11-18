@@ -118,7 +118,10 @@ Request
   - Embed a fragment by interpolating it into the document (`${JEWELIETTE_PRODUCT_CARD_FRAGMENT}`).
 - **Metafield parsing**: `app/lib/metafields.ts` (normalise text/list metafields),
   `app/lib/materials.ts` (material metaobjects), `app/lib/allergens.ts`,
-  `formatMetafieldValue()` (display list metafields as comma-separated text).
+  `formatMetafieldValue()` (display list metafields as comma-separated text, and treat
+  `null`/`undefined` sentinels as empty). The product page hides the Description, Details and
+  Materials sections when they have no content (whitespace/`&nbsp;`-only HTML, empty lists),
+  so an empty metafield never renders an empty accordion.
 - `app/lib/products.server.ts`: `loadProductsByIds()` loads product cards for a list of
   GIDs (`nodes(ids:)`), used by favorites and the fitting room.
 

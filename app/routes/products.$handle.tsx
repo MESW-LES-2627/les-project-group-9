@@ -25,6 +25,7 @@ import {
   formatMetafieldValue,
 } from '~/lib/jeweliette-catalog';
 import {materialsForColor, parseProductMaterials} from '~/lib/materials';
+import {hasHtmlContent} from '~/lib/html';
 import {isColorOption} from '~/lib/options';
 import {isRingProduct} from '~/lib/profile/ringCategory';
 import {resolveTryOn} from '~/lib/try-on/catalog';
@@ -121,6 +122,8 @@ export default function Product() {
     }))
     .filter((item) => item.value !== '');
 
+  const hasDescription = hasHtmlContent(product.descriptionHtml);
+
   return (
     <div className="mx-auto max-w-[1280px] px-[4vw] pb-20 pt-6">
       <nav
@@ -197,21 +200,23 @@ export default function Product() {
           ) : null}
 
           <div className="mt-10 divide-y divide-line border-y border-line text-sm">
-            <details open className="group py-4">
-              <summary className="flex cursor-pointer list-none items-center justify-between text-[11px] uppercase tracking-widest [&::-webkit-details-marker]:hidden">
-                {t('product.description')}
-                <span aria-hidden="true" className="group-open:hidden">
-                  +
-                </span>
-                <span aria-hidden="true" className="hidden group-open:inline">
-                  −
-                </span>
-              </summary>
-              <div
-                className="prose-sm mt-4 leading-7 text-primary [&_p]:mb-3"
-                dangerouslySetInnerHTML={{__html: product.descriptionHtml}}
-              />
-            </details>
+            {hasDescription ? (
+              <details open className="group py-4">
+                <summary className="flex cursor-pointer list-none items-center justify-between text-[11px] uppercase tracking-widest [&::-webkit-details-marker]:hidden">
+                  {t('product.description')}
+                  <span aria-hidden="true" className="group-open:hidden">
+                    +
+                  </span>
+                  <span aria-hidden="true" className="hidden group-open:inline">
+                    −
+                  </span>
+                </summary>
+                <div
+                  className="prose-sm mt-4 leading-7 text-primary [&_p]:mb-3"
+                  dangerouslySetInnerHTML={{__html: product.descriptionHtml}}
+                />
+              </details>
+            ) : null}
 
             {productDetails.length > 0 ? (
               <details className="group py-4">
