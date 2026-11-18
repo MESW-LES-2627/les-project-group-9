@@ -6,10 +6,26 @@ import {
   SKIN_TONES,
   UNDERTONES,
 } from '~/lib/profile/preferences';
-import type {PreferenceProfile} from '~/lib/profile/types';
+import type {
+  PreferenceOption,
+  PreferenceOptions,
+  PreferenceProfile,
+} from '~/lib/profile/types';
 import {useTranslation} from '~/lib/i18n';
 
-export function PreferencesForm() {
+const EMPTY_OPTIONS: PreferenceOptions = {colors: [], materials: []};
+
+function toggleValue(values: string[], value: string): string[] {
+  return values.includes(value)
+    ? values.filter((item) => item !== value)
+    : [...values, value];
+}
+
+export function PreferencesForm({
+  options = EMPTY_OPTIONS,
+}: {
+  options?: PreferenceOptions;
+}) {
   const {status, preferences, savePreferences} = useProfile();
   const t = useTranslation();
 
@@ -23,6 +39,7 @@ export function PreferencesForm() {
       {status === 'ready' ? (
         <PreferencesFields
           preferences={preferences}
+          options={options}
           onSave={savePreferences}
         />
       ) : status === 'error' ? (
@@ -36,15 +53,58 @@ export function PreferencesForm() {
   );
 }
 
+function PreferenceOptionGroup({
+  legend,
+  options,
+  selected,
+  onToggle,
+}: {
+  legend: string;
+  options: PreferenceOption[];
+  selected: string[];
+  onToggle: (value: string) => void;
+}) {
+  return (
+    <fieldset>
+      <legend className="text-[11px] uppercase tracking-[0.15em] text-primary">
+        {legend}
+      </legend>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        {options.map((option) => (
+          <label
+            key={option.value}
+            className="flex items-center gap-2 border border-line bg-paper px-3 py-2 text-sm text-ink"
+          >
+            <input
+              type="checkbox"
+              checked={selected.includes(option.value)}
+              onChange={() => onToggle(option.value)}
+              className="h-4 w-4 accent-ink"
+            />
+            {option.label}
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
 export function PreferencesFields({
   preferences,
+  options = EMPTY_OPTIONS,
   onSave,
 }: {
   preferences: PreferenceProfile | null;
+  options?: PreferenceOptions;
   onSave: (preferences: PreferenceProfile) => Promise<void>;
 }) {
   const t = useTranslation();
   const [allergies, setAllergies] = useState(preferences?.allergies ?? []);
+  const [colors, setColors] = useState(preferences?.preferredColors ?? []);
+  const [materials, setMaterials] = useState(
+    preferences?.preferredMaterials ?? [],
+  );
   const [tone, setTone] = useState(preferences?.skin?.tone ?? '');
   const [undertone, setUndertone] = useState(
     preferences?.skin?.undertone ?? '',
@@ -73,6 +133,8 @@ export function PreferencesFields({
           tone: tone || undefined,
           undertone: undertone || undefined,
         },
+        preferredColors: colors,
+        preferredMaterials: materials,
       }),
     )
       .then(() => setState('saved'))
@@ -149,6 +211,30 @@ export function PreferencesFields({
           </select>
         </label>
       </div>
+
+      {options.colors.length ? (
+        <PreferenceOptionGroup
+          legend={t('preferences.colors')}
+          options={options.colors}
+          selected={colors}
+          onToggle={(value) => {
+            setColors((current) => toggleValue(current, value));
+            setState('idle');
+          }}
+        />
+      ) : null}
+
+      {options.materials.length ? (
+        <PreferenceOptionGroup
+          legend={t('preferences.materials')}
+          options={options.materials}
+          selected={materials}
+          onToggle={(value) => {
+            setMaterials((current) => toggleValue(current, value));
+            setState('idle');
+          }}
+        />
+      ) : null}
 
       <div className="flex flex-wrap items-center gap-4">
         <button

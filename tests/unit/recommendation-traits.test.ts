@@ -57,6 +57,22 @@ describe('toProductTraits', () => {
     expect(silver.undertones).toEqual(['cool']);
   });
 
+  it('reads colours from product options when custom.metal is missing', () => {
+    const traits = toProductTraits(
+      product({
+        options: [
+          {
+            name: 'Color',
+            optionValues: [{name: 'Gold'}, {name: 'Silver'}],
+          },
+        ],
+      }),
+    );
+
+    expect(traits.metal).toEqual(['gold', 'silver']);
+    expect(traits.undertones).toEqual(['warm', 'cool']);
+  });
+
   it('maps supported product allergens', () => {
     const traits = toProductTraits(
       product({allergens: {value: '["nickel", "cobalt"]'}}),

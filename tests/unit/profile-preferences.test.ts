@@ -1,5 +1,6 @@
 import {describe, expect, it} from 'vitest';
 import {
+  hasRecommendationPreferences,
   normalizePreferences,
   normalizePreferencesPatch,
   parsePreferences,
@@ -159,5 +160,31 @@ describe('normalizePreferencesPatch', () => {
     expect(normalizePreferencesPatch({allergies: []})).toEqual({
       allergies: [],
     });
+  });
+});
+
+describe('hasRecommendationPreferences', () => {
+  it('ignores preferences that are not used for suggestions', () => {
+    expect(hasRecommendationPreferences(null)).toBe(false);
+    expect(hasRecommendationPreferences({skin: {tone: 'medium'}})).toBe(false);
+    expect(hasRecommendationPreferences({allergies: ['nickel']})).toBe(false);
+    expect(hasRecommendationPreferences({ringSizes: {'left-ring': '6'}})).toBe(
+      false,
+    );
+  });
+
+  it('accepts undertone, materials, colours and gemstones', () => {
+    expect(hasRecommendationPreferences({skin: {undertone: 'warm'}})).toBe(
+      true,
+    );
+    expect(
+      hasRecommendationPreferences({preferredMaterials: ['gold-plated']}),
+    ).toBe(true);
+    expect(hasRecommendationPreferences({preferredColors: ['gold']})).toBe(
+      true,
+    );
+    expect(
+      hasRecommendationPreferences({preferredGemstones: ['moonstone']}),
+    ).toBe(true);
   });
 });

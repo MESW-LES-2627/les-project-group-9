@@ -60,5 +60,49 @@ describe('RecommendedProducts', () => {
 
     expect(screen.getByText('Picked for you')).toBeInTheDocument();
     expect(screen.getByText('Based on your preferences')).toBeInTheDocument();
+    expect(screen.getByText('Matches your undertone')).toBeInTheDocument();
+  });
+
+  it('does nothing without favorites or preferences', async () => {
+    render(<RecommendedProducts />);
+
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    expect(mocks.load).not.toHaveBeenCalled();
+    expect(screen.queryByRole('heading')).not.toBeInTheDocument();
+  });
+
+  it('uses favorites copy when there are favorites', async () => {
+    mocks.useFavorites.mockReturnValue({
+      ids: ['gid://shopify/Product/1'],
+      ready: true,
+      syncing: false,
+    });
+    mocks.data = {
+      products: [{id: 'gid://shopify/Product/2'}],
+      reasons: {'gid://shopify/Product/2': [{code: 'sameMaterial'}]},
+    };
+
+    render(<RecommendedProducts />);
+
+    await waitFor(() => {
+      expect(mocks.load).toHaveBeenCalledWith('/api/recommendations?limit=4');
+    });
+    expect(screen.getByText('You may also like')).toBeInTheDocument();
+    expect(screen.getByText('Because you liked these')).toBeInTheDocument();
+  });
+
+  it('hides the section when the API returns no products', async () => {
+    mocks.useProfile.mockReturnValue({
+      preferences: {preferredMaterials: ['gold-plated']},
+    });
+    mocks.data = {products: [], reasons: {}};
+
+    render(<RecommendedProducts />);
+
+    await waitFor(() => {
+      expect(mocks.load).toHaveBeenCalled();
+    });
+    expect(screen.queryByRole('heading')).not.toBeInTheDocument();
   });
 });

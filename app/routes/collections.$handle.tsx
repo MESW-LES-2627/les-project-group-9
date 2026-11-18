@@ -1,11 +1,14 @@
-import {redirect, useLoaderData} from 'react-router';
+import {data, redirect, useLoaderData} from 'react-router';
 import {Analytics, getPaginationVariables, Pagination} from '@shopify/hydrogen';
 import type {ProductCollectionSortKeys} from '@shopify/hydrogen/storefront-api-types';
 import type {Route} from './+types/collections.$handle';
 import {type MessageKey, translatorFromMatches, useTranslation} from '~/lib/i18n';
 import {ProductItem} from '~/components/product/ProductItem';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
-import {JEWELIETTE_PRODUCT_CARD_FRAGMENT} from '~/lib/jeweliette-catalog';
+import {JEWELIETTE_RECOMMENDATION_PRODUCT_FRAGMENT} from '~/lib/jeweliette-catalog';
+import {readCustomerProfile} from '~/lib/profile/customer.server';
+import {rankProductIds} from '~/lib/recommendation/rank';
+import {toProductTraits} from '~/lib/recommendation/traits';
 import {CatalogFilters} from '~/components/collections/CatalogFilters';
 import {readCatalogFilters} from '~/lib/search';
 
@@ -46,6 +49,12 @@ const SORT_OPTIONS: Record<
     sortKey: 'PRICE',
     reverse: true,
   },
+
+  'for-you': {
+    labelKey: 'catalog.sort.forYou',
+    sortKey: 'COLLECTION_DEFAULT',
+    reverse: false,
+  },
 };
 
 export const meta: Route.MetaFunction = ({data, matches}) => {
@@ -65,8 +74,10 @@ export async function loader({context, params, request}: Route.LoaderArgs) {
   if (!params.handle) {throw redirect('/collections');}
   const url = new URL(request.url);
   const requestedSort = url.searchParams.get('sort') || 'featured';
-  const sort = Object.prototype.hasOwnProperty.call(SORT_OPTIONS, requestedSort,) ? requestedSort : 'featured';
+  const validSort = Object.prototype.hasOwnProperty.call(SORT_OPTIONS, requestedSort,) ? requestedSort : 'featured';
   const {selectedFilters, filters, priceMin, priceMax} = readCatalogFilters(url.searchParams);
+  const loggedIn = await context.customerAccount.isLoggedIn().catch(() => false);
+  const sort = validSort === 'for-you' && !loggedIn ? 'featured' : validSort;
 
   const paginationVariables = getPaginationVariables(
     request,
@@ -99,29 +110,70 @@ export async function loader({context, params, request}: Route.LoaderArgs) {
     data: collection,
   });
 
-  return {
-    collection,
-    sort,
-    selectedFilters,
-    priceMin,
-    priceMax,
-    paginationKey: JSON.stringify([
-      collection.id,
+  let products = collection.products;
+
+  if (sort === 'for-you' && loggedIn) {
+    try {
+      const profile = await readCustomerProfile(context);
+      const nodes = collection.products.nodes;
+      const traits = nodes.map(toProductTraits);
+      const favoriteIds = new Set(profile.favorites);
+      const favorites = traits.filter((product) =>
+        favoriteIds.has(product.id),
+      );
+      const byId = new Map(nodes.map((product) => [product.id, product]));
+
+      products = {
+        ...collection.products,
+        nodes: rankProductIds(traits, {
+          favorites,
+          preferences: profile.preferences,
+        })
+          .map((id) => byId.get(id))
+          .filter(
+            (product): product is (typeof nodes)[number] => Boolean(product),
+          ),
+      };
+    } catch (error) {
+      console.error('Collection personalization failed', error);
+    }
+  }
+
+  return data(
+    {
+      collection,
+      products,
       sort,
       selectedFilters,
       priceMin,
       priceMax,
-    ]),
-  };
+      canPersonalize: loggedIn,
+      paginationKey: JSON.stringify([
+        collection.id,
+        sort,
+        selectedFilters,
+        priceMin,
+        priceMax,
+      ]),
+    },
+    {
+      headers:
+        sort === 'for-you'
+          ? {'Cache-Control': 'private, no-store', Vary: 'Cookie'}
+          : undefined,
+    },
+  );
 }
 
 export default function CollectionPage() {
   const {
     collection,
+    products,
     sort,
     selectedFilters,
     priceMin,
     priceMax,
+    canPersonalize,
     paginationKey,
   } = useLoaderData<typeof loader>();
   const t = useTranslation();
@@ -146,7 +198,7 @@ export default function CollectionPage() {
 
       <Pagination
         key={paginationKey}
-        connection={collection.products}
+        connection={products}
       >
         {({
             nodes,
@@ -156,7 +208,7 @@ export default function CollectionPage() {
           }) => (
           <>
             <CatalogFilters
-              filters={collection.products.filters}
+              filters={products.filters}
               selectedFilters={selectedFilters}
               priceMin={priceMin}
               priceMax={priceMax}
@@ -165,12 +217,12 @@ export default function CollectionPage() {
                 nodes[0]?.priceRange.minVariantPrice.currencyCode
               }
               sort={sort}
-              sortOptions={Object.entries(SORT_OPTIONS).map(
-                ([value, option]) => ({
+              sortOptions={Object.entries(SORT_OPTIONS)
+                .filter(([value]) => value !== 'for-you' || canPersonalize)
+                .map(([value, option]) => ({
                   value,
                   label: t(option.labelKey),
-                }),
-              )}
+                }))}
             />
 
             <p className="mt-4 text-xs uppercase tracking-widest text-primary">
@@ -262,7 +314,7 @@ const LEGACY_PRODUCT_ITEM_FRAGMENT = `#graphql
 ` as const;
 
 const COLLECTION_QUERY = `#graphql
-  ${JEWELIETTE_PRODUCT_CARD_FRAGMENT}
+  ${JEWELIETTE_RECOMMENDATION_PRODUCT_FRAGMENT}
 
   query Collection(
     $handle: String!
@@ -292,7 +344,7 @@ const COLLECTION_QUERY = `#graphql
         reverse: $reverse
       ) {
         nodes {
-          ...JewelietteProductCard
+          ...JewelietteRecommendationProduct
         }
 
         filters {

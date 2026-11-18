@@ -63,26 +63,31 @@ export default function Favorites() {
             {t('common.logIn')}
           </Link>
         </div>
-      ) : ids.length === 0 ? (
-        <div className="mx-auto mt-14 max-w-md border-y border-line py-14 text-center">
-          <h2 className="font-display text-2xl">{t('favorites.emptyTitle')}</h2>
-          <p className="mt-3 text-sm text-primary">
-            {t('favorites.emptyText')}
-          </p>
-          <Link
-            to="/collections/all"
-            className="mt-6 inline-flex min-h-11 items-center bg-primary px-6 text-[11px] uppercase tracking-widest text-white hover:bg-ink"
-          >
-            {t('home.exploreCollection')}
-          </Link>
-        </div>
       ) : (
         <>
-          <div className="mt-12 grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 xl:grid-cols-4">
-            {products.map((product) => (
-              <ProductItem key={product.id} product={product} />
-            ))}
-          </div>
+          {ids.length === 0 ? (
+            <div className="mx-auto mt-14 max-w-md border-y border-line py-14 text-center">
+              <h2 className="font-display text-2xl">
+                {t('favorites.emptyTitle')}
+              </h2>
+              <p className="mt-3 text-sm text-primary">
+                {t('favorites.emptyText')}
+              </p>
+              <Link
+                to="/collections/all"
+                className="mt-6 inline-flex min-h-11 items-center bg-primary px-6 text-[11px] uppercase tracking-widest text-white hover:bg-ink"
+              >
+                {t('home.exploreCollection')}
+              </Link>
+            </div>
+          ) : (
+            <div className="mt-12 grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 xl:grid-cols-4">
+              {products.map((product) => (
+                <ProductItem key={product.id} product={product} />
+              ))}
+            </div>
+          )}
+
           <RecommendedProducts className="mt-16" />
         </>
       )}

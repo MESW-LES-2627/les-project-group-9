@@ -42,8 +42,8 @@ export function hasRecommendationPreferences(
 ): boolean {
   if (!preferences) return false;
 
+  // Skin tone is stored for try-on; it has no product trait to match yet.
   return Boolean(
-    preferences.skin?.tone ||
     preferences.skin?.undertone ||
     preferences.preferredMaterials?.length ||
     preferences.preferredColors?.length ||
