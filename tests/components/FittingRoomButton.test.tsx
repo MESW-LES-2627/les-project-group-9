@@ -45,6 +45,18 @@ describe('FittingRoomButton', () => {
     expect(mocks.toggle).toHaveBeenCalledWith(PRODUCT_ID);
   });
 
+  it('is not offered for pieces that cannot be tried on', () => {
+    render(
+      <FittingRoomButton
+        canTryOn={false}
+        productId={PRODUCT_ID}
+        title="Solstice Ring"
+      />,
+    );
+
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
   it('reflects a piece that is already in the fitting room', () => {
     mocks.has.mockReturnValue(true);
 

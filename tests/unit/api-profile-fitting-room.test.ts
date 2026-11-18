@@ -7,6 +7,36 @@ type ActionArgs = Parameters<typeof action>[0];
 const CUSTOMER_ID = 'gid://shopify/Customer/1';
 const RING = 'gid://shopify/Product/1';
 const NECKLACE = 'gid://shopify/Product/2';
+const BRACELET = 'gid://shopify/Product/3';
+
+const TRY_ON_CAPABLE = new Set([RING, NECKLACE]);
+
+function productNode(id: string) {
+  const capable = TRY_ON_CAPABLE.has(id);
+
+  return {
+    __typename: 'Product',
+    id,
+    title: 'Piece',
+    handle: `piece-${id.split('/').at(-1)}`,
+    priceRange: {
+      minVariantPrice: {amount: '1.0', currencyCode: 'EUR'},
+      maxVariantPrice: {amount: '1.0', currencyCode: 'EUR'},
+    },
+    images: {nodes: []},
+    options: [],
+    featuredImage: null,
+    category: {name: capable ? 'Necklaces' : 'Bracelets'},
+    tryOnOverlay: capable
+      ? {reference: {image: {url: 'https://cdn.example/piece.png'}}}
+      : null,
+    tryOnSize: null,
+    selectedOrFirstAvailableVariant: {
+      id: 'gid://shopify/ProductVariant/1',
+      availableForSale: true,
+    },
+  };
+}
 
 function contextWith({loggedIn = true, customerFound = true} = {}) {
   const calls: Array<{
@@ -49,6 +79,14 @@ function contextWith({loggedIn = true, customerFound = true} = {}) {
           },
         };
       },
+    },
+    storefront: {
+      query: async (
+        _query: string,
+        options: {variables: {ids: string[]}},
+      ) => ({
+        nodes: options.variables.ids.map(productNode),
+      }),
     },
   } as unknown as ActionArgs['context'];
 
@@ -132,6 +170,17 @@ describe('POST /api/profile/fitting-room', () => {
     const result = await callAction(context, JSON.stringify({add: [RING]}));
 
     expect(result.data).toEqual({fittingRoom: [RING]});
+  });
+
+  it('rejects pieces that cannot be tried on', async () => {
+    const {context, calls} = contextWith();
+    const result = await callAction(context, JSON.stringify({add: [BRACELET]}));
+
+    expect(result.init?.status).toBe(400);
+    expect(result.data).toEqual({
+      error: 'Only pieces available for try-on can be added to the fitting room',
+    });
+    expect(calls).toHaveLength(0);
   });
 
   it('removes product IDs', async () => {

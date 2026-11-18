@@ -163,7 +163,11 @@ export default function Product() {
             </h1>
             <div className="flex items-center gap-2">
               <FavoriteButton productId={product.id} title={product.title} />
-              <FittingRoomButton productId={product.id} title={product.title} />
+              <FittingRoomButton
+                canTryOn={tryOn !== null}
+                productId={product.id}
+                title={product.title}
+              />
             </div>
           </div>
 

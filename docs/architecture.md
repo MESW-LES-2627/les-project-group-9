@@ -163,6 +163,12 @@ metafields (namespace `custom`) through the Customer Account API.
   once on mount and exposes optimistic toggles. If a write returns 401, it reloads the profile.
   `useFavorites()` (`lib/favorites.ts`) and `useFittingRoom()` (`lib/fitting-room.ts`)
   are thin views over it.
+- **Fitting-room gate** — the fitting room exists to try pieces on, so only products with
+  try-on data (`resolveTryOn()`, i.e. Earrings/Necklaces with a transparent PNG) can enter
+  it: the product page hides the hanger otherwise (`FittingRoomButton canTryOn`) and
+  `POST /api/profile/fitting-room` validates the added ids against the Storefront API
+  (400 with an error code when a piece is not try-on capable). Removal is always allowed, so
+  entries added before the rule can be cleaned up.
 - **Pages**: `/favorites` and `/fitting-room` render client-side. They call their own loader with
   `?ids=` from the profile state (`useFetcher`), and the loader returns product cards via
   `loadProductsByIds`. The `fitting-room` action moves a piece to the cart and removes it

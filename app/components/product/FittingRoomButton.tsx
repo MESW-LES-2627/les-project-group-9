@@ -6,15 +6,20 @@ import {ProductActionButton} from './ProductActionButton';
 export function FittingRoomButton({
   productId,
   title,
+  canTryOn = true,
   className = '',
 }: {
   productId: string;
   title: string;
+  /** Only pieces with a try-on overlay belong in the fitting room. */
+  canTryOn?: boolean;
   className?: string;
 }) {
   const {has, toggle, isLoggedIn} = useFittingRoom();
   const active = has(productId);
   const t = useTranslation();
+
+  if (!canTryOn) return null;
 
   return (
     <ProductActionButton
