@@ -60,7 +60,7 @@ export function CartLineItem({
               onClick={() => {
                 if (layout === 'aside') close();
               }}
-              className="font-display text-lg leading-tight text-ink hover:text-primary"
+              className="font-display text-lg leading-tight text-ink hover:text-bark"
             >
               {product.title}
             </Link>
@@ -212,7 +212,7 @@ function CartLineRemoveButton({
       <button
         disabled={disabled}
         type="submit"
-        className="min-h-11 text-xs uppercase tracking-widest text-primary underline underline-offset-4 transition-colors hover:text-ink disabled:opacity-40"
+        className="min-h-11 text-xs uppercase tracking-widest text-primary underline underline-offset-4 transition-colors hover:text-bark disabled:opacity-40"
       >
         {t('common.remove')}
       </button>

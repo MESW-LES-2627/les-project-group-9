@@ -104,7 +104,7 @@ function SearchResultsProducts({
   if (!products?.nodes.length) return null;
 
   const paginationClass =
-    'my-8 inline-flex min-h-11 items-center border border-primary px-6 text-xs uppercase tracking-widest text-primary transition-colors hover:bg-primary hover:text-white';
+    'my-8 inline-flex min-h-11 items-center border border-primary px-6 text-xs uppercase tracking-widest text-primary transition-colors hover:bg-bark hover:text-white';
 
   return (
     <section>

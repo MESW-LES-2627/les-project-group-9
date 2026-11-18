@@ -258,7 +258,7 @@ export default function CollectionPage() {
             )}
 
             <div className="mt-12 flex justify-center">
-              <NextLink className="inline-flex min-h-11 items-center border border-primary px-6 text-[11px] uppercase tracking-widest text-primary transition-colors hover:bg-primary hover:text-white">
+              <NextLink className="inline-flex min-h-11 items-center border border-primary px-6 text-[11px] uppercase tracking-widest text-primary transition-colors hover:bg-bark hover:text-white">
                 {isLoading ? t('common.loading') : t('common.loadMore')}
               </NextLink>
             </div>
