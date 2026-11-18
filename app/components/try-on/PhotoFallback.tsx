@@ -279,7 +279,7 @@ export function PhotoFallback({
               +
             </button>
             <button
-              className="min-h-[44px] border border-line px-4 text-[11px] uppercase tracking-widest text-primary hover:border-ink disabled:opacity-40"
+              className="min-h-[44px] border border-line px-4 text-[11px] uppercase tracking-widest text-primary hover:border-bark disabled:opacity-40"
               disabled={!interactive}
               onClick={() => setAdjust(NO_ADJUST)}
               type="button"
@@ -293,7 +293,7 @@ export function PhotoFallback({
         </>
       )}
 
-      <label className="inline-flex min-h-[44px] w-full cursor-pointer items-center justify-center border border-ink px-6 text-xs uppercase tracking-widest text-ink transition-colors hover:bg-ink hover:text-white">
+      <label className="inline-flex min-h-[44px] w-full cursor-pointer items-center justify-center border border-ink px-6 text-xs uppercase tracking-widest text-ink transition-colors hover:bg-bark hover:text-white">
         <input
           accept="image/*"
           capture="user"

@@ -55,13 +55,13 @@ export function FittingRoomView({
           </p>
           <div className="flex items-center gap-4 text-[11px] uppercase tracking-widest text-primary">
             <button
-              className="hover:text-ink"
+              className="hover:text-bark"
               onClick={onSelectAll}
               type="button"
             >
               {t('fittingRoom.selectAll')}
             </button>
-            <button className="hover:text-ink" onClick={onClear} type="button">
+            <button className="hover:text-bark" onClick={onClear} type="button">
               {t('fittingRoom.clear')}
             </button>
           </div>
@@ -128,7 +128,7 @@ export function FittingRoomView({
                     })}
                     disabled={movingId !== null}
                     onClick={() => onRemove(product.id)}
-                    className="underline underline-offset-4 transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
+                    className="underline underline-offset-4 transition-colors hover:text-bark disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {t('common.remove')}
                   </button>
@@ -139,7 +139,7 @@ export function FittingRoomView({
                     })}
                     disabled={!available || movingId !== null}
                     onClick={() => onMoveToCart(product.id)}
-                    className="underline underline-offset-4 transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
+                    className="underline underline-offset-4 transition-colors hover:text-bark disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {moving
                       ? t('fittingRoom.moving')

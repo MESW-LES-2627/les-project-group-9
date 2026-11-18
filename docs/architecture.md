@@ -323,7 +323,8 @@ with the active locale. Shopify content is translated in the Shopify admin (see
 
 - Tailwind 4, CSS-first: theme tokens live in the `@theme` block of
   `app/styles/tailwind.css`. That file is loaded as a `<link>` from `root.tsx`.
-  - Colors: `primary`, `secondary`, `cream`, `paper`, `ink`, `line`.
+  - Colors: `primary`, `secondary`, `cream`, `paper`, `ink`, `bark` (the site-wide hover
+    shade, a softer brown than `ink`), `line`.
   - Fonts: `font-display` (Playfair Display), `font-sans` (DM Sans), loaded from Google Fonts in `root.tsx`.
   - Breakpoints: Tailwind defaults plus `xs` (27rem) and `tablet` (50rem). See [responsive.md](responsive.md).
   - Shadows `shadow-stack`, `shadow-toast`; easing `ease-jewel`.

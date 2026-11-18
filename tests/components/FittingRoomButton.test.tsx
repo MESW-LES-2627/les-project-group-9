@@ -39,6 +39,7 @@ describe('FittingRoomButton', () => {
     });
 
     expect(button).toHaveAttribute('aria-pressed', 'false');
+    expect(button).toHaveAttribute('data-active', 'false');
 
     await user.click(button);
 
@@ -66,6 +67,6 @@ describe('FittingRoomButton', () => {
       screen.getByRole('button', {
         name: 'Remove Solstice Ring from fitting room',
       }),
-    ).toHaveAttribute('aria-pressed', 'true');
+    ).toHaveAttribute('data-active', 'true');
   });
 });

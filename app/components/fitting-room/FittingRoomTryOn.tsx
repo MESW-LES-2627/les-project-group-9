@@ -59,7 +59,7 @@ export function FittingRoomTryOn({
       <button
         aria-haspopup="dialog"
         aria-label={t('fittingRoom.tryOnPiece', {title})}
-        className="underline underline-offset-4 transition-colors hover:text-ink"
+        className="underline underline-offset-4 transition-colors hover:text-bark"
         onClick={openTryOn}
         onFocus={preload}
         onPointerEnter={preload}

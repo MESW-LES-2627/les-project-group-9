@@ -85,7 +85,7 @@ export default function SearchPage() {
 
               <button
                 type="submit"
-                className="min-h-11 px-3 text-xs uppercase tracking-widest text-primary hover:text-ink"
+                className="min-h-11 px-3 text-xs uppercase tracking-widest text-primary hover:text-bark"
               >
                 {t('nav.search')}
               </button>

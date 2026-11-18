@@ -86,7 +86,7 @@ export function TryOnButton({
     <>
       <button
         aria-haspopup="dialog"
-        className="flex min-h-[44px] w-full items-center justify-center gap-2 border border-ink px-6 text-xs font-medium uppercase tracking-widest text-ink transition-colors hover:bg-ink hover:text-white"
+        className="flex min-h-[44px] w-full items-center justify-center gap-2 border border-ink px-6 text-xs font-medium uppercase tracking-widest text-ink transition-colors hover:bg-bark hover:text-white"
         onClick={openTryOn}
         onFocus={preload}
         onPointerEnter={preload}

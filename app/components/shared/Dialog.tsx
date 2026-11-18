@@ -130,7 +130,7 @@ export function Dialog({
 /** Shared secondary/primary button classes for dialog footers. */
 export const dialogButton = {
   secondary:
-    'min-h-[44px] border border-line px-4 text-xs uppercase tracking-widest text-primary hover:border-ink',
+    'min-h-[44px] border border-line px-4 text-xs uppercase tracking-widest text-primary hover:border-bark',
   primary:
-    'min-h-[44px] bg-primary px-4 text-xs uppercase tracking-widest text-white hover:bg-ink',
+    'min-h-[44px] bg-primary px-4 text-xs uppercase tracking-widest text-white hover:bg-bark',
 } as const;
