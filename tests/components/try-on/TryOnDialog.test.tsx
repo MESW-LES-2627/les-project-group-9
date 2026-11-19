@@ -351,6 +351,7 @@ describe('TryOnDialog', () => {
     expect(
       await screen.findByText('Details: Error: ModuleFactory not set.'),
     ).toBeInTheDocument();
+    expect(screen.queryByText('Loading try-on…')).not.toBeInTheDocument();
     consoleError.mockRestore();
   });
 });

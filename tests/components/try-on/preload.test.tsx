@@ -1,4 +1,5 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
+import {TRY_ON_ASSETS} from '~/lib/try-on/assets';
 
 const mocks = vi.hoisted(() => ({
   warmFaceDetector: vi.fn(),
@@ -44,10 +45,8 @@ describe('preloadTryOnAssets', () => {
     preloadTryOnAssets();
 
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/mediapipe/wasm/vision_wasm_internal.wasm',
-    );
-    expect(fetchMock).toHaveBeenCalledWith('/models/face_landmarker.task');
+    expect(fetchMock).toHaveBeenCalledWith(TRY_ON_ASSETS.wasmUrl);
+    expect(fetchMock).toHaveBeenCalledWith(TRY_ON_ASSETS.modelUrl);
     await vi.waitFor(() =>
       expect(mocks.warmFaceDetector).toHaveBeenCalledTimes(1),
     );

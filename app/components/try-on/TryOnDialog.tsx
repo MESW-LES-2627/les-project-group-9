@@ -383,7 +383,7 @@ export function TryOnDialog({
               piece={piece}
               title={title}
             />
-          ) : (
+          ) : failureMessage ? null : (
             <StatusMessage message={t('tryOn.loading')} />
           )}
         </>

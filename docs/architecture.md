@@ -227,11 +227,16 @@ surface placement: the piece is drawn on a live selfie face.
   product loader; phones open the camera dialog and computers the QR dialog. iPadOS's
   desktop user agent is refined client-side with `maxTouchPoints`.
 - **Runtime** — `@mediapipe/tasks-vision` (FaceLandmarker, 478 landmarks) is imported
-  lazily when the dialog opens. WASM (`public/mediapipe/`, copied from `node_modules` by
-  `scripts/copy-mediapipe-assets.mjs`) and the model (`public/models/face_landmarker.task`)
-  are self-hosted, so no request leaves our origin. The dialog tries the GPU delegate and
-  falls back to CPU. The **classic** WASM loader is used (`forVisionTasks(path, false)` and
-  `vision_wasm_internal.*`): the ES-module variant is evaluated as a classic script and
+  lazily when the dialog opens. The classic loader (`vision_wasm_internal.js`), the WASM
+  binary and the model (`app/assets/models/face_landmarker.task`) are imported with Vite's
+  `?url` (`app/lib/try-on/assets.ts`), so Vite emits them under hashed `/assets/…` names
+  next to the app's JS/CSS and Oxygen serves them with the right MIME type and an immutable
+  cache. They used to be unversioned `public/` files; the Oxygen deployment answered a
+  missing public path with its HTML 404 page, which aborts the WASM fetch with
+  `both async and sync fetching of the wasm failed`. The dialog tries the GPU delegate and
+  falls back to CPU. The **classic** loader is used (`vision_wasm_internal.js`, passed to
+  `FaceLandmarker.createFromOptions()` in an explicit fileset): the ES-module variant is
+  evaluated as a classic script and
   fails at runtime with `ModuleFactory not set.` The camera is requested **inside the shopper's
   tap** (`requestCamera()` is called from the button handler, before React updates): iOS
   Safari ties `getUserMedia` to the user gesture, so a request from an effect can be silently
@@ -253,7 +258,10 @@ surface placement: the piece is drawn on a live selfie face.
   `playsinline`/`webkit-playsinline`/`muted` **before** `srcObject`; the modal defers the
   camera release by one tick so React StrictMode's simulated unmount does not stop and
   reopen the hardware camera. When the camera or the WASM fails, the banner shows the
-  translated message **plus the raw `Name: message`** so a phone can report the cause.
+  translated message **plus the raw `Name: message`** so a phone can report the cause. A
+  failed landmarker creation probes the three asset URLs (HTTP status and content type) and
+  logs the result, and the banner's detail includes the short summary, so a deployment that
+  serves HTML instead of the WASM is identifiable without a debugger.
 - **Geometry** (`try-on/anchors.ts`, pure, pixel space): earrings are top-centre anchored at
   landmarks 177/401, pushed outwards to the lobe by `EAR_OUTWARD_RATIO` (4 % of the face
   width, along the face's lateral axis) and lifted along the face's vertical axis by
@@ -389,7 +397,7 @@ See [testing.md](testing.md). In short:
 | Add a product trait for recommendations | `JEWELIETTE_RECOMMENDATION_PRODUCT_FRAGMENT`, `recommendation/types.ts`, `traits.ts`, `weights.ts`, `signals.ts`, plus tests. |
 | Add a catalog filter | Shopify admin (Search & Discovery filters). If it needs a new filter key, extend `allowedKeys` in `readCatalogFilters()` (`app/lib/search.ts`). UI changes go in `CatalogFilters.tsx`. |
 | Add a sort option | `SORT_OPTIONS` in `app/routes/collections.$handle.tsx`. |
-| Change the try-on gate or overlay | `app/lib/try-on/catalog.ts` (supported categories, the variant's `custom.try_on_overlay` PNG, `custom.try_on_size_cm`); variant/product loading in `app/lib/variants.server.ts`; geometry in `app/lib/try-on/anchors.ts`; MediaPipe assets in `public/models/` and `public/mediapipe/` (copied by `scripts/copy-mediapipe-assets.mjs`). |
+| Change the try-on gate or overlay | `app/lib/try-on/catalog.ts` (supported categories, the variant's `custom.try_on_overlay` PNG, `custom.try_on_size_cm`); variant/product loading in `app/lib/variants.server.ts`; geometry in `app/lib/try-on/anchors.ts`; MediaPipe assets in `app/lib/try-on/assets.ts` (the model lives in `app/assets/models/`). |
 | Add a customer preference | `PreferenceProfile` (`profile/types.ts`), `profile/preferences.ts` (normalise/parse), `PreferencesForm.tsx`, tests. |
 | Add a UI string / translation | Add the key to `app/lib/messages/en.ts`, `pt.ts` and `fr.ts` and use `useTranslation()` (or `translatorFor` / `translatorFromMatches`). See [i18n.md](i18n.md#adding-a-string). |
 | Add a language | Add an entry to `LOCALES` and a message object in `app/lib/i18n.ts`, then publish the language in the Shopify admin. |
