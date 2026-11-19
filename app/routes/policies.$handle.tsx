@@ -52,7 +52,7 @@ export default function Policy() {
     <article className="mx-auto max-w-6xl px-[5vw] pb-24 pt-12">
       <Link
         to="/policies"
-        className="text-xs uppercase tracking-widest text-primary hover:text-ink"
+        className="text-xs uppercase tracking-widest text-primary hover:text-bark"
       >
         <span aria-hidden="true">←</span> {t('policies.all')}
       </Link>

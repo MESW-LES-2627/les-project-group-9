@@ -15,7 +15,7 @@ const inputClass =
   'min-h-10 min-w-0 flex-1 border border-line bg-paper px-3 text-base text-ink placeholder:text-primary/60 focus:border-primary focus:outline-none';
 
 const secondaryButtonClass =
-  'min-h-10 shrink-0 border border-primary px-4 text-xs font-medium uppercase tracking-widest text-primary transition-colors hover:bg-primary hover:text-white';
+  'min-h-10 shrink-0 border border-primary px-4 text-xs font-medium uppercase tracking-widest text-primary transition-colors hover:bg-bark hover:text-white';
 
 export function CartSummary({cart, layout}: CartSummaryProps) {
   const summaryId = useId();
@@ -97,7 +97,7 @@ function CartCheckoutActions({checkoutUrl}: {checkoutUrl?: string}) {
     <a
       href={checkoutUrl}
       target="_self"
-      className="mt-3 flex min-h-11 w-full items-center justify-between bg-primary px-5 text-xs font-medium uppercase tracking-widest text-white transition-colors hover:bg-ink"
+      className="mt-3 flex min-h-11 w-full items-center justify-between bg-primary px-5 text-xs font-medium uppercase tracking-widest text-white transition-colors hover:bg-bark"
     >
       {t('cart.checkout')}
       <span aria-hidden="true">→</span>
