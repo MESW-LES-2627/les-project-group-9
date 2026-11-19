@@ -6,8 +6,9 @@ import {PreferencesForm} from '~/components/account/PreferencesForm';
 import {RingSizeForm} from '~/components/account/RingSizeForm';
 import {AllergenBadge} from '~/components/product/AllergenBadge';
 import {RingSizeHelp} from '~/components/product/RingSizeHelp';
-import {ProfileProvider} from '~/lib/profile/ProfileProvider';
+import {ProfileProvider, useProfile} from '~/lib/profile/ProfileProvider';
 import {
+  hasRecommendationPreferences,
   normalizePreferencesPatch,
   preferencesField,
 } from '~/lib/profile/preferences';
@@ -25,6 +26,17 @@ function json(data: unknown) {
   } as Response);
 }
 
+function SuggestionState() {
+  const {preferences} = useProfile();
+
+  return (
+    <output
+      data-testid="suggestion-state"
+      data-active={String(hasRecommendationPreferences(preferences))}
+    />
+  );
+}
+
 function renderFlow() {
   return render(
     <MemoryRouter>
@@ -38,6 +50,7 @@ function renderFlow() {
         <RingSizeForm />
         <AllergenBadge allergens={{value: '["Zinc"]'}} />
         <RingSizeHelp />
+        <SuggestionState />
       </ProfileProvider>
     </MemoryRouter>,
   );
@@ -129,7 +142,7 @@ describe('preferences flow', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
     await user.selectOptions(
-      document.querySelector('#ring-size-left-ring') as HTMLElement,
+      screen.getByLabelText('Ring', {selector: '#ring-size-left-ring'}),
       '',
     );
     await user.click(screen.getByRole('button', {name: 'Save ring sizes'}));
@@ -150,15 +163,20 @@ describe('preferences flow', () => {
     const user = userEvent.setup();
     renderFlow();
 
-    await screen.findByLabelText('Gold-plated');
+    const suggestionState = screen.getByTestId('suggestion-state');
+
+    expect(await screen.findByLabelText('Gold-plated')).toBeChecked();
+    expect(suggestionState).toHaveAttribute('data-active', 'true');
+
     await user.click(screen.getByLabelText('Gold-plated'));
     await user.click(
       screen.getByRole('button', {name: 'Save preferences'}),
     );
 
     await waitFor(() => {
-      expect(api.posts[0]).toMatchObject({preferredMaterials: []});
+      expect(suggestionState).toHaveAttribute('data-active', 'false');
     });
-    expect(api.preferences.preferredMaterials).toEqual([]);
+    expect(api.posts[0]).toMatchObject({preferredMaterials: []});
+    expect(screen.getByLabelText('Gold-plated')).not.toBeChecked();
   });
 });

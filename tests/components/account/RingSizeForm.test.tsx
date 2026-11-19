@@ -54,7 +54,7 @@ describe('RingSizeFields', () => {
     );
 
     await user.selectOptions(
-      document.querySelector('#ring-size-left-ring') as HTMLElement,
+      screen.getByLabelText('Ring', {selector: '#ring-size-left-ring'}),
       '7',
     );
     await user.click(screen.getByRole('button', {name: 'Save ring sizes'}));

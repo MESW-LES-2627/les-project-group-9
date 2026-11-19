@@ -1,8 +1,13 @@
-import {expect, test, type Page} from '@playwright/test';
+import {expect, test, type Locator, type Page} from '@playwright/test';
 
 const LOGGED_IN = {loggedIn: true, favorites: [], fittingRoom: []};
+const ALL_ALLERGIES = ['nickel', 'zinc', 'cobalt'];
+
+/** Only the logged-in heart reads "Add … to favorites". */
+const LOGGED_IN_HEART = {name: /^Add .+ to favorites$/};
 
 async function mockProfile(page: Page, preferences: unknown) {
+  await page.unroute('**/api/profile');
   await page.route('**/api/profile', (route) =>
     route.fulfill({
       status: 200,
@@ -12,59 +17,69 @@ async function mockProfile(page: Page, preferences: unknown) {
   );
 }
 
-/**
- * These checks need Jeweliette catalog data that the CI catalog (mock.shop)
- * does not have: the Teardrop Pavé Necklace carries an allergen metafield,
- * and the Round Signet Ring is the Rings product with a Size option.
- */
-async function openFixtureProduct(page: Page, handle: string) {
-  const response = await page.goto(`/products/${handle}`);
+async function openProductWith(
+  page: Page,
+  find: (page: Page) => Locator,
+): Promise<boolean> {
+  await page.goto('/collections/all');
 
-  test.skip(
-    response?.status() === 404,
-    `Fixture product "${handle}" is not in this catalog`,
-  );
+  const hrefs = await page
+    .locator('a[href^="/products/"]')
+    .evaluateAll((links) => [
+      ...new Set(
+        links.map((link) => (link.getAttribute('href') ?? '').split('?')[0]),
+      ),
+    ]);
+
+  for (const href of hrefs.filter(Boolean).slice(0, 10)) {
+    await page.goto(href);
+    await page.getByRole('button', LOGGED_IN_HEART).first().waitFor();
+
+    if (await find(page).first().isVisible()) return true;
+  }
+
+  return false;
 }
 
+const allergenBadge = (page: Page) =>
+  page.getByRole('main').getByText('Allergen', {exact: true});
+
+const measurementGuide = (page: Page) =>
+  page.getByRole('button', {name: 'Measurement Guide'});
+
 test('stops warning about an allergen once it is deleted', async ({page}) => {
-  await mockProfile(page, {allergies: ['zinc']});
-  await openFixtureProduct(page, 'teardrop-pave-necklace');
+  await mockProfile(page, {allergies: ALL_ALLERGIES});
 
-  // The logged-in favorite button proves the mocked profile was applied.
-  await expect(
-    page.getByRole('button', {
-      name: 'Add Teardrop Pavé Necklace to favorites',
-    }),
-  ).toBeVisible();
-  await expect(page.getByText('Allergen', {exact: true})).toBeVisible();
+  test.skip(
+    !(await openProductWith(page, allergenBadge)),
+    'No product in this catalog declares an allergen',
+  );
 
-  await page.unroute('**/api/profile');
   await mockProfile(page, {allergies: []});
   await page.reload();
 
-  await expect(
-    page.getByRole('button', {
-      name: 'Add Teardrop Pavé Necklace to favorites',
-    }),
-  ).toBeVisible();
-  await expect(page.getByText('Allergen', {exact: true})).toHaveCount(0);
+  await expect(page.getByRole('button', LOGGED_IN_HEART).first()).toBeVisible();
+  await expect(allergenBadge(page)).toHaveCount(0);
 });
 
 test('stops showing a ring size once it is deleted', async ({page}) => {
   await mockProfile(page, {ringSizes: {'left-ring': '6'}});
-  await openFixtureProduct(page, 'customizable-round-signet-ring');
 
-  await page.getByRole('button', {name: 'Measurement Guide'}).click();
+  test.skip(
+    !(await openProductWith(page, measurementGuide)),
+    'No ring product with a Size option in this catalog',
+  );
+
+  await measurementGuide(page).click();
   await expect(page.getByText('Ring: 6')).toBeVisible();
 
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toHaveCount(0);
 
-  await page.unroute('**/api/profile');
   await mockProfile(page, {ringSizes: {}});
   await page.reload();
 
-  await page.getByRole('button', {name: 'Measurement Guide'}).click();
+  await measurementGuide(page).click();
   await expect(
     page.getByText('You have not saved your ring sizes yet.'),
   ).toBeVisible();

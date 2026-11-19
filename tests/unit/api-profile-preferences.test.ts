@@ -118,27 +118,23 @@ describe('POST /api/profile/preferences', () => {
         skin: {tone: 'medium', undertone: 'warm'},
         preferredColors: ['gold'],
         preferredMaterials: ['gold-plated'],
+        ringSizes: {'left-ring': '6'},
       },
     });
     const result = await callAction(
       context,
       JSON.stringify({allergies: [], skin: {}, preferredMaterials: []}),
     );
-
-    expect(result.data).toEqual({
-      preferences: {
-        allergies: [],
-        skin: {},
-        preferredColors: ['gold'],
-        preferredMaterials: [],
-      },
-    });
-    expect(parsePreferences(calls[0].metafields[0].value)).toEqual({
+    const expected = {
       allergies: [],
       skin: {},
       preferredColors: ['gold'],
       preferredMaterials: [],
-    });
+      ringSizes: {'left-ring': '6'},
+    };
+
+    expect(result.data).toEqual({preferences: expected});
+    expect(parsePreferences(calls[0].metafields[0].value)).toEqual(expected);
   });
 
   it('saves only the ring sizes it receives and drops invalid ones', async () => {

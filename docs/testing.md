@@ -53,7 +53,7 @@ Component tests cover:
 | `layout` | `LanguageSelector` dropdown (closed trigger with the localized current language in EN/PT/FR, EN/PT/FR options with flags, names, `lang` and `aria-current`, posting path, query and hash, arrow keys/Home/End/Escape with focus return, keyboard choice, outside click and focus-out closing, inline layout) |
 | `i18n` | `LocalizedComponents`: `ProductItem` and `FittingRoomView` in EN, PT and FR (labels, plurals, try-on placeholder, price format) with untranslated catalog content. `LocalizedCartAndSearch`: `CartMain` (empty bag), `CartSummary` (labels, applied codes, subtotal format) and `SearchResultsPredictive` (section headings, price format, no-results quotes) in EN, PT and FR |
 | `product` | `AddToCartButton`, `AllergenBadge`, `FavoriteButton`, `ProductBadge`, `ProductForm`, `ProductGallery`, `ProductItem`, `ProductPrice`, `RecommendedProducts`, `RingSizeHelp`, swatch gallery |
-| `search` | `SearchForm`, `SearchResultsPredictive` |
+| `search` | `SearchForm`, `SearchFormPredictive` (refetches when a stale response lands last), `SearchResultsPredictive` |
 | `shared` | `ConfirmDialog` |
 
 `AddToCartButton` is tested but not currently used by the app (see [architecture.md → Known issues](architecture.md#known-issues)).
