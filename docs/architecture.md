@@ -249,10 +249,14 @@ surface placement: the piece is drawn on a live selfie face.
   reopen the hardware camera. When the camera or the WASM fails, the banner shows the
   translated message **plus the raw `Name: message`** so a phone can report the cause.
 - **Geometry** (`try-on/anchors.ts`, pure, pixel space): earrings are top-centre anchored at
-  landmarks 177/401 with a sink ratio; the ear with the smaller `|earX − noseX|` is hidden
-  when the head turns (3-frame hysteresis). Necklaces anchor their **top centre** at the
-  neck base (0.18 face widths below the chin) and are masked by MediaPipe's face oval
-  (`evenodd`), so the chain arcs around the neck and never crosses the face. Jitter is
+  landmarks 177/401, pushed outwards to the lobe by `EAR_OUTWARD_RATIO` (4 % of the face
+  width, along the face's lateral axis) and lifted along the face's vertical axis by
+  `EAR_LOBE_LIFT_RATIO` (3 % of the face width), since the mesh's cheek point sits below the
+  lobe; the ear with the smaller
+  `|earX − noseX|` is hidden when the head turns (3-frame hysteresis). Necklaces anchor their
+  **top centre** at the neck base (0.18 face widths below the chin) and are masked by
+  MediaPipe's face oval (`evenodd`), so the chain arcs around the neck and never crosses the
+  face. Jitter is
   handled in three layers: a 3-sample weighted anchor buffer (0.5/0.3/0.2, ~66 ms) rejects
   one-frame landmark spikes, an exponential filter removes the rest (90 ms; 130 ms for the
   necklace, whose chin/chest anchor is noisier), and a large jump is clamped to 15 % of the

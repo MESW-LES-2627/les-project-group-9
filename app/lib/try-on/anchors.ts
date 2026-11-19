@@ -49,8 +49,19 @@ export const FACE_WIDTH_CM = 14.5;
 export const SHOULDER_WIDTH_CM = 38;
 export const SHOULDER_TO_FACE_RATIO = SHOULDER_WIDTH_CM / FACE_WIDTH_CM;
 
-/** Fraction of the overlay height sunk below the lobe so the finding covers it. */
-export const EAR_LOBE_SINK_RATIO = 0.12;
+/**
+ * Extra outward push from the cheek edge (landmarks 177/401) to the actual
+ * earlobe, in face widths. The mesh has no lobe vertex, so the anchors sit a
+ * little inside the ear; this scales the correction with each shopper's face.
+ */
+export const EAR_OUTWARD_RATIO = 0.04;
+
+/**
+ * Upward lift from the cheek/ear-edge vertex to the lobe, in face widths, along
+ * the face's vertical axis. The mesh has no lobe vertex and the cheek point sits
+ * below it, so this raises the earring independently of its size or aspect.
+ */
+export const EAR_LOBE_LIFT_RATIO = 0.03;
 
 /**
  * Neck-base drop below the chin, in face widths. The necklace's **top centre**
@@ -236,16 +247,15 @@ export function earTransforms(
   const size = overlaySize(metrics, options.sizeCm, options.overlayAspect);
   if (!size) return null;
 
-  const earA = pointAt(points, TRY_ON_LANDMARKS.earA);
-  const earB = pointAt(points, TRY_ON_LANDMARKS.earB);
-  const sink = size.height * EAR_LOBE_SINK_RATIO;
+  const earA = earAnchor(points, TRY_ON_LANDMARKS.earA, metrics);
+  const earB = earAnchor(points, TRY_ON_LANDMARKS.earB, metrics);
 
   return {
     a:
       options.visibility.a && earA
         ? {
             x: earA.x,
-            y: earA.y + sink,
+            y: earA.y,
             width: size.width,
             height: size.height,
             rotation: metrics.roll,
@@ -256,7 +266,7 @@ export function earTransforms(
       options.visibility.b && earB
         ? {
             x: earB.x,
-            y: earB.y + sink,
+            y: earB.y,
             width: size.width,
             height: size.height,
             rotation: metrics.roll,
@@ -446,6 +456,62 @@ function pointAt(points: readonly Point[], index: number): Point | null {
   }
 
   return point;
+}
+
+/**
+ * Earlobe anchor: the cheek/ear-edge vertex pushed slightly outwards along the
+ * face's lateral axis and lifted along its vertical axis, both by a fraction of
+ * the shopper's face width. Using the face axes (not the centre-to-ear vector)
+ * keeps the correction anatomical, and the face width makes it scale with
+ * distance and head turn.
+ */
+function earAnchor(
+  points: readonly Point[],
+  earIndex: number,
+  metrics: FaceMetrics,
+): Point | null {
+  const ear = pointAt(points, earIndex);
+  const faceA = pointAt(points, TRY_ON_LANDMARKS.faceA);
+  const faceB = pointAt(points, TRY_ON_LANDMARKS.faceB);
+  const chin = pointAt(points, TRY_ON_LANDMARKS.chin);
+
+  if (!ear) return null;
+  if (!faceA || !faceB || !(metrics.width > 0)) return ear;
+
+  const dx = faceB.x - faceA.x;
+  const dy = faceB.y - faceA.y;
+  const length = Math.hypot(dx, dy);
+
+  if (!(length > 0)) return ear;
+
+  const lateral = {x: dx / length, y: dy / length};
+  const centre = {x: (faceA.x + faceB.x) / 2, y: (faceA.y + faceB.y) / 2};
+  const side =
+    Math.sign(
+      (ear.x - centre.x) * lateral.x + (ear.y - centre.y) * lateral.y,
+    ) || 1;
+  const offset = metrics.width * EAR_OUTWARD_RATIO * side;
+
+  const vertical = chin
+    ? unitVector(metrics.eyeMid, chin)
+    : {x: 0, y: 1};
+  const lift = metrics.width * EAR_LOBE_LIFT_RATIO;
+
+  return {
+    x: ear.x + lateral.x * offset - vertical.x * lift,
+    y: ear.y + lateral.y * offset - vertical.y * lift,
+  };
+}
+
+/** Unit vector from `from` to `to`, pointing down the face (eye midpoint → chin). */
+function unitVector(from: Point, to: Point): Point {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const length = Math.hypot(dx, dy);
+
+  if (!(length > 0)) return {x: 0, y: 1};
+
+  return {x: dx / length, y: dy / length};
 }
 
 function stepEar(

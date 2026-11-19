@@ -1,7 +1,8 @@
 import {describe, expect, it} from 'vitest';
 import {
   EAR_HYSTERESIS_FRAMES,
-  EAR_LOBE_SINK_RATIO,
+  EAR_LOBE_LIFT_RATIO,
+  EAR_OUTWARD_RATIO,
   FACE_WIDTH_CM,
   MAX_JUMP_RATIO,
   MAX_ROLL_RADIANS,
@@ -242,23 +243,89 @@ describe('earTransforms', () => {
 
     const width = (2 / FACE_WIDTH_CM) * 320;
     const height = width;
+    const outward = 320 * EAR_OUTWARD_RATIO;
+    const lift = 320 * EAR_LOBE_LIFT_RATIO;
 
     expect(transforms?.a).toEqual({
-      x: 80,
-      y: 250 + height * EAR_LOBE_SINK_RATIO,
+      x: 80 - outward,
+      y: 250 - lift,
       width,
       height,
       rotation: 0,
       mirrored: false,
     });
     expect(transforms?.b).toEqual({
-      x: 560,
-      y: 250 + height * EAR_LOBE_SINK_RATIO,
+      x: 560 + outward,
+      y: 250 - lift,
       width,
       height,
       rotation: 0,
       mirrored: true,
     });
+  });
+
+  it('pushes the anchors outward by a fraction of the face width', () => {
+    const points = landmarks({
+      [TRY_ON_LANDMARKS.faceA]: {x: 200, y: 240},
+      [TRY_ON_LANDMARKS.faceB]: {x: 400, y: 240},
+      [TRY_ON_LANDMARKS.earA]: {x: 120, y: 250},
+      [TRY_ON_LANDMARKS.earB]: {x: 480, y: 250},
+    });
+    const transforms = earTransforms(points, faceMetrics(points), {
+      sizeCm: 2,
+      overlayAspect: 1,
+      visibility: VISIBLE,
+    });
+
+    const outward = 200 * EAR_OUTWARD_RATIO;
+    const lift = 200 * EAR_LOBE_LIFT_RATIO;
+
+    expect(transforms?.a?.x).toBeCloseTo(120 - outward);
+    expect(transforms?.a?.y).toBeCloseTo(250 - lift);
+    expect(transforms?.b?.x).toBeCloseTo(480 + outward);
+    expect(transforms?.b?.y).toBeCloseTo(250 - lift);
+  });
+
+  it('follows the face lateral axis when the head rolls', () => {
+    const points = landmarks({
+      [TRY_ON_LANDMARKS.faceA]: {x: 140, y: 220},
+      [TRY_ON_LANDMARKS.faceB]: {x: 460, y: 260},
+    });
+    const metrics = faceMetrics(points)!;
+    const transforms = earTransforms(points, metrics, {
+      sizeCm: 2,
+      overlayAspect: 1,
+      visibility: VISIBLE,
+    });
+
+    const lateral = {x: 320 / 322.49, y: 40 / 322.49};
+    const offset = metrics.width * EAR_OUTWARD_RATIO;
+    const lift = metrics.width * EAR_LOBE_LIFT_RATIO;
+
+    expect(transforms?.a?.x).toBeCloseTo(80 - lateral.x * offset);
+    expect(transforms?.a?.y).toBeCloseTo(250 - lateral.y * offset - lift);
+    expect(transforms?.b?.x).toBeCloseTo(560 + lateral.x * offset);
+    expect(transforms?.b?.y).toBeCloseTo(250 + lateral.y * offset - lift);
+  });
+
+  it('lifts the earrings along the face vertical axis', () => {
+    const points = landmarks({
+      [TRY_ON_LANDMARKS.chin]: {x: 340, y: 400},
+    });
+    const metrics = faceMetrics(points)!;
+    const transforms = earTransforms(points, metrics, {
+      sizeCm: 2,
+      overlayAspect: 1,
+      visibility: VISIBLE,
+    });
+
+    const length = Math.hypot(20, 200);
+    const vertical = {x: 20 / length, y: 200 / length};
+    const lift = metrics.width * EAR_LOBE_LIFT_RATIO;
+    const outward = metrics.width * EAR_OUTWARD_RATIO;
+
+    expect(transforms?.a?.x).toBeCloseTo(80 - outward - vertical.x * lift);
+    expect(transforms?.a?.y).toBeCloseTo(250 - vertical.y * lift);
   });
 
   it('keeps the overlay aspect ratio and the head roll', () => {
