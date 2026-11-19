@@ -83,6 +83,112 @@ describe('PreferencesFields', () => {
     });
   });
 
+  it('replaces a saved allergen with the newly selected one', async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <PreferencesFields
+        preferences={{allergies: ['nickel']}}
+        onSave={onSave}
+      />,
+    );
+
+    await user.click(screen.getByLabelText('Nickel'));
+    await user.click(screen.getByLabelText('Zinc'));
+    await user.click(
+      screen.getByRole('button', {name: 'Save preferences'}),
+    );
+
+    expect(onSave).toHaveBeenCalledWith({
+      allergies: ['zinc'],
+      skin: {},
+      preferredColors: [],
+      preferredMaterials: [],
+    });
+  });
+
+  it('removes the last allergen when it is unchecked', async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <PreferencesFields
+        preferences={{allergies: ['nickel']}}
+        onSave={onSave}
+      />,
+    );
+
+    await user.click(screen.getByLabelText('Nickel'));
+    await user.click(
+      screen.getByRole('button', {name: 'Save preferences'}),
+    );
+
+    expect(onSave).toHaveBeenCalledWith({
+      allergies: [],
+      skin: {},
+      preferredColors: [],
+      preferredMaterials: [],
+    });
+  });
+
+  it('replaces a saved material with the newly selected one', async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <PreferencesFields
+        preferences={{preferredMaterials: ['gold-plated']}}
+        options={{
+          colors: [],
+          materials: [
+            {value: 'gold-plated', label: 'Gold-plated'},
+            {value: 'silver-plated', label: 'Silver-plated'},
+          ],
+        }}
+        onSave={onSave}
+      />,
+    );
+
+    await user.click(screen.getByLabelText('Gold-plated'));
+    await user.click(screen.getByLabelText('Silver-plated'));
+    await user.click(
+      screen.getByRole('button', {name: 'Save preferences'}),
+    );
+
+    expect(onSave).toHaveBeenCalledWith({
+      allergies: [],
+      skin: {},
+      preferredColors: [],
+      preferredMaterials: ['silver-plated'],
+    });
+  });
+
+  it('clears skin tone and undertone when both are set back to Not set', async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <PreferencesFields
+        preferences={{skin: {tone: 'medium', undertone: 'warm'}}}
+        onSave={onSave}
+      />,
+    );
+
+    await user.selectOptions(screen.getByLabelText('Skin tone'), '');
+    await user.selectOptions(screen.getByLabelText('Undertone'), '');
+    await user.click(
+      screen.getByRole('button', {name: 'Save preferences'}),
+    );
+
+    expect(onSave).toHaveBeenCalledWith({
+      allergies: [],
+      skin: {},
+      preferredColors: [],
+      preferredMaterials: [],
+    });
+  });
+
   it('removes a colour when it is unchecked', async () => {
     const user = userEvent.setup();
     const onSave = vi.fn().mockResolvedValue(undefined);
