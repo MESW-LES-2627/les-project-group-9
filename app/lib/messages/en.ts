@@ -350,8 +350,7 @@ export const en = {
     one: '{count} piece ready to try',
     other: '{count} pieces ready to try',
   },
-  'fittingRoom.selectHint':
-    'Select at least one piece on the left to build your look.',
+  'fittingRoom.selectHint': 'Select at least one piece to build your look.',
   'fittingRoom.error.unauthorized': 'Unauthorized',
   'fittingRoom.error.invalid': 'Invalid product',
   'fittingRoom.error.soldOut': 'This piece is sold out',

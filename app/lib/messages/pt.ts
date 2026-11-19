@@ -347,7 +347,7 @@ export const pt: Messages = {
     other: '{count} peças prontas a experimentar',
   },
   'fittingRoom.selectHint':
-    'Selecione pelo menos uma peça à esquerda para criar o seu visual.',
+    'Selecione pelo menos uma peça para criar o seu visual.',
   'fittingRoom.error.unauthorized': 'Não autorizado',
   'fittingRoom.error.invalid': 'Produto inválido',
   'fittingRoom.error.soldOut': 'Esta peça está esgotada',

@@ -194,6 +194,9 @@ export default function FittingRoom() {
         <h1 className="mt-3 font-display text-[clamp(2.25rem,4vw,3.5rem)] leading-none">
           {t('nav.fittingRoom')}
         </h1>
+        <p className="mt-3 max-w-[46ch] text-sm leading-7 text-primary">
+          {t('fittingRoom.tryOnText')}
+        </p>
       </header>
 
       {!ready ? (

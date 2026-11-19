@@ -355,7 +355,7 @@ export const fr: Messages = {
     other: '{count} pièces prêtes à essayer',
   },
   'fittingRoom.selectHint':
-    'Sélectionnez au moins une pièce à gauche pour composer votre look.',
+    'Sélectionnez au moins une pièce pour composer votre look.',
   'fittingRoom.error.unauthorized': 'Non autorisé',
   'fittingRoom.error.invalid': 'Produit invalide',
   'fittingRoom.error.soldOut': 'Cette pièce est épuisée',

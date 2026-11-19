@@ -1,5 +1,6 @@
 import {Image} from '@shopify/hydrogen';
 import {Money} from '~/components/shared/Money';
+import {Icon} from '~/components/shared/Icon';
 import type {FittingRoomPiece} from '~/lib/profile/fitting-room';
 import {useTranslation} from '~/lib/i18n';
 import {FittingRoomLookTryOn} from './FittingRoomLookTryOn';
@@ -45,11 +46,8 @@ export function FittingRoomView({
   );
 
   return (
-    <div className="mt-8 grid gap-6 lg:grid-cols-2">
-      <section
-        aria-label={t('fittingRoom.listLabel')}
-        className="lg:sticky lg:top-24 lg:h-[calc(100svh-190px)] lg:overflow-y-auto lg:pr-2"
-      >
+    <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-10">
+      <section aria-label={t('fittingRoom.listLabel')}>
         <div className="flex items-center justify-between gap-4 border-b border-line pb-3">
           <p className="text-[11px] uppercase tracking-[0.2em] text-primary">
             {t('fittingRoom.count', {count: pieces.length})}
@@ -153,21 +151,13 @@ export function FittingRoomView({
 
       <aside
         aria-label={t('fittingRoom.tryOn')}
-        className="flex min-h-[420px] flex-col border border-dashed border-line bg-secondary/40 p-6 lg:sticky lg:top-24 lg:h-[calc(100svh-190px)]"
+        className="flex min-h-[240px] flex-col border-t border-line pt-6 lg:sticky lg:top-24 lg:min-h-[420px] lg:border-l lg:border-t-0 lg:pl-10 lg:pt-0"
       >
-        <div>
-          <p className="text-[11px] uppercase tracking-[0.2em] text-primary">
-            {t('fittingRoom.tryOn')}
-          </p>
-          <h2 className="mt-2 font-display text-2xl text-ink">
-            {t('fittingRoom.tryOnTitle')}
-          </h2>
-          <p className="mt-2 max-w-[48ch] text-sm leading-7 text-primary">
-            {t('fittingRoom.tryOnText')}
-          </p>
-        </div>
+        <h2 className="font-display text-2xl text-ink">
+          {t('fittingRoom.tryOnTitle')}
+        </h2>
 
-        <div className="mt-6 flex flex-1 items-center justify-center">
+        <div className="mt-6">
           {selectedLook.length ? (
             <div className="w-full text-center">
               <div className="mx-auto flex max-w-xs flex-wrap justify-center gap-2">
@@ -187,7 +177,7 @@ export function FittingRoomView({
               <p className="mt-4 text-sm text-primary">
                 {t('fittingRoom.readyToTry', {count: selectedLook.length})}
               </p>
-              <div className="mt-4">
+              <div className="mx-auto mt-5 w-full max-w-xs">
                 <FittingRoomLookTryOn
                   ids={selectedLook.map((piece) => piece.variantId)}
                   isMobile={isMobile}
@@ -198,9 +188,12 @@ export function FittingRoomView({
               </div>
             </div>
           ) : (
-            <p className="max-w-[30ch] text-center text-sm text-primary">
-              {t('fittingRoom.selectHint')}
-            </p>
+            <div className="mt-4 flex flex-col items-center gap-4 text-center">
+              <Icon name="hanger" size={28} className="text-primary/40" />
+              <p className="max-w-[30ch] text-sm text-primary">
+                {t('fittingRoom.selectHint')}
+              </p>
+            </div>
           )}
         </div>
       </aside>
