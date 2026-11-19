@@ -1,8 +1,8 @@
 export const accountInput = 'min-h-11 w-full border border-line bg-paper px-3 py-2 text-base text-ink outline-none placeholder:text-primary/50 focus:border-primary';
 
-export const accountButton = 'inline-flex min-h-11 items-center justify-center bg-primary px-6 py-3 text-xs uppercase tracking-widest text-white transition-colors hover:bg-bark disabled:cursor-not-allowed disabled:opacity-50';
+export const accountButton = 'inline-flex min-h-11 items-center justify-center bg-primary px-6 py-3 text-xs uppercase tracking-widest text-white transition-colors hover:bg-ink disabled:cursor-not-allowed disabled:opacity-50';
 
-export const accountSecondaryButton = 'inline-flex min-h-11 items-center justify-center border border-primary px-6 py-3 text-xs uppercase tracking-widest text-primary transition-colors hover:bg-bark hover:text-white disabled:opacity-50';
+export const accountSecondaryButton = 'inline-flex min-h-11 items-center justify-center border border-primary px-6 py-3 text-xs uppercase tracking-widest text-primary transition-colors hover:bg-primary hover:text-white disabled:opacity-50';
 
 export const accountAddressForm =
   'mt-5 border border-line bg-paper p-5 sm:p-8 ' +

@@ -82,7 +82,7 @@ export function Aside({
           </h2>
           <button
             aria-label={t('nav.close')}
-            className="grid size-11 place-items-center text-primary hover:text-bark"
+            className="grid size-11 place-items-center text-primary hover:text-ink"
             onClick={close}
             type="button"
           >

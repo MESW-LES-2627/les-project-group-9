@@ -42,7 +42,6 @@ describe('FavoriteButton', () => {
     const button = screen.getByRole('button', {name: 'Add Ring to favorites'});
 
     expect(button).toHaveAttribute('aria-pressed', 'false');
-    expect(button).toHaveAttribute('data-active', 'false');
   });
 
   it('offers to remove the product when it is a favorite', () => {
@@ -55,7 +54,6 @@ describe('FavoriteButton', () => {
     });
 
     expect(button).toHaveAttribute('aria-pressed', 'true');
-    expect(button).toHaveAttribute('data-active', 'true');
   });
 
   it('toggles the favorite when clicked', async () => {

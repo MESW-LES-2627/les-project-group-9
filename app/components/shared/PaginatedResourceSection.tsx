@@ -26,7 +26,7 @@ export function PaginatedResourceSection<NodesType>({
 
         return (
           <div>
-            <PreviousLink className="my-8 inline-flex min-h-11 items-center justify-center border border-primary px-6 text-xs uppercase tracking-widest text-primary transition-colors hover:bg-bark hover:text-white">
+            <PreviousLink className="my-8 inline-flex min-h-11 items-center justify-center border border-primary px-6 text-xs uppercase tracking-widest text-primary transition-colors hover:bg-primary hover:text-white">
               {isLoading ? (
                 t('common.loading')
               ) : (
@@ -46,7 +46,7 @@ export function PaginatedResourceSection<NodesType>({
             ) : (
               resourcesMarkup
             )}
-            <NextLink className="my-8 inline-flex min-h-11 items-center justify-center border border-primary px-6 text-xs uppercase tracking-widest text-primary transition-colors hover:bg-bark hover:text-white">
+            <NextLink className="my-8 inline-flex min-h-11 items-center justify-center border border-primary px-6 text-xs uppercase tracking-widest text-primary transition-colors hover:bg-primary hover:text-white">
               {isLoading ? (
                 t('common.loading')
               ) : (

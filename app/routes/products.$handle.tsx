@@ -125,7 +125,7 @@ export default function Product() {
         aria-label={t('product.breadcrumb')}
         className="mb-6 flex flex-wrap gap-2 text-[11px] uppercase tracking-widest text-primary"
       >
-        <Link to="/" className="hover:text-bark">
+        <Link to="/" className="hover:text-ink">
           {t('nav.home')}
         </Link>
         {collection ? (
@@ -133,7 +133,7 @@ export default function Product() {
             <span aria-hidden="true">/</span>
             <Link
               to={`/collections/${collection.handle}`}
-              className="hover:text-bark"
+              className="hover:text-ink"
             >
               {collection.title}
             </Link>

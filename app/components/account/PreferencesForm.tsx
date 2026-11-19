@@ -240,7 +240,7 @@ export function PreferencesFields({
         <button
           type="submit"
           disabled={state === 'saving'}
-          className="bg-primary px-6 py-3 text-[11px] uppercase tracking-widest text-white transition-colors hover:bg-bark disabled:opacity-60"
+          className="bg-primary px-6 py-3 text-[11px] uppercase tracking-widest text-white transition-colors hover:bg-ink disabled:opacity-60"
         >
           {state === 'saving' ? t('common.saving') : t('preferences.save')}
         </button>

@@ -168,7 +168,7 @@ function HeaderCtas({
 
       <NavLink
         aria-label={t('nav.account')}
-        className="hidden size-11 place-items-center hover:text-bark xl:grid"
+        className="hidden size-11 place-items-center hover:text-ink xl:grid"
         prefetch="intent"
         to="/account"
       >
@@ -204,7 +204,7 @@ function SearchToggle() {
   return (
     <button
       aria-label={t('nav.search')}
-      className="grid size-11 place-items-center hover:text-bark"
+      className="grid size-11 place-items-center hover:text-ink"
       onClick={() => open('search')}
       type="button"
     >
@@ -221,7 +221,7 @@ function CartBadge({count}: {count: number}) {
   return (
     <a
       aria-label={t('nav.openCart', {count})}
-      className="relative grid size-11 place-items-center hover:text-bark"
+      className="relative grid size-11 place-items-center hover:text-ink"
       href="/cart"
       onClick={(event) => {
         event.preventDefault();
@@ -321,7 +321,7 @@ function FavoritesLink() {
     <Link
       to="/favorites"
       aria-label={`${t('nav.favorites')}${ids.length ? ` (${ids.length})` : ''}`}
-      className="relative flex h-10 w-10 items-center justify-center hover:text-bark"
+      className="relative flex h-10 w-10 items-center justify-center hover:text-ink"
     >
       <Icon name="heart" size={20} />
       {ids.length > 0 ? (
@@ -340,7 +340,7 @@ function FittingRoomLink() {
     <Link
       to="/fitting-room"
       aria-label={`${t('nav.fittingRoom')}${ids.length ? ` (${ids.length})` : ''}`}
-      className="relative flex h-10 w-10 items-center justify-center hover:text-bark"
+      className="relative flex h-10 w-10 items-center justify-center hover:text-ink"
     >
       <Icon name="hanger" size={20} />
       {ids.length > 0 ? (

@@ -185,7 +185,7 @@ export function SearchOverlay({
                         <Link
                           to={`/collections/${collection.handle}`}
                           onClick={done}
-                          className="inline-flex min-h-10 items-center border border-line px-4 text-xs uppercase tracking-wider hover:border-bark"
+                          className="inline-flex min-h-10 items-center border border-line px-4 text-xs uppercase tracking-wider hover:border-ink"
                         >
                           {collection.title}
                         </Link>

@@ -41,7 +41,7 @@ export default function Policies() {
           <li key={policy.id}>
             <Link
               to={`/policies/${policy.handle}`}
-              className="flex min-h-16 items-center justify-between gap-6 py-4 font-display text-xl hover:text-bark"
+              className="flex min-h-16 items-center justify-between gap-6 py-4 font-display text-xl hover:text-primary"
             >
               {policy.title}
               <span aria-hidden="true">→</span>

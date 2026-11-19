@@ -58,7 +58,7 @@ export default function Favorites() {
           </p>
           <Link
             to="/account/login"
-            className="mt-6 inline-flex min-h-11 items-center bg-primary px-6 text-[11px] uppercase tracking-widest text-white hover:bg-bark"
+            className="mt-6 inline-flex min-h-11 items-center bg-primary px-6 text-[11px] uppercase tracking-widest text-white hover:bg-ink"
           >
             {t('common.logIn')}
           </Link>
@@ -75,7 +75,7 @@ export default function Favorites() {
               </p>
               <Link
                 to="/collections/all"
-                className="mt-6 inline-flex min-h-11 items-center bg-primary px-6 text-[11px] uppercase tracking-widest text-white hover:bg-bark"
+                className="mt-6 inline-flex min-h-11 items-center bg-primary px-6 text-[11px] uppercase tracking-widest text-white hover:bg-ink"
               >
                 {t('home.exploreCollection')}
               </Link>

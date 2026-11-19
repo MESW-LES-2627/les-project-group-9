@@ -8,11 +8,7 @@ type ProductActionButtonProps = {
   children: ReactNode;
 };
 
-/**
- * Shared round action button used next to the product title (favorite, fitting
- * room). The selected state is a full ink pill with paper-coloured icon, so a
- * stroke icon (the hanger) communicates "on" as clearly as the filled heart.
- */
+/** Shared round action button used next to the product title. */
 export function ProductActionButton({
   active,
   label,
@@ -25,17 +21,12 @@ export function ProductActionButton({
       type="button"
       aria-pressed={active}
       aria-label={label}
-      data-active={active}
       onClick={(event) => {
         event.preventDefault();
         event.stopPropagation();
         onClick();
       }}
-      className={`z-10 flex h-9 w-9 items-center justify-center rounded-full transition-colors ${
-        active
-          ? 'bg-ink text-paper hover:bg-bark'
-          : 'bg-paper/90 text-primary hover:bg-white'
-      } ${className}`}
+      className={`z-10 flex h-9 w-9 items-center justify-center rounded-full bg-paper/90 text-primary transition-colors hover:bg-white ${className}`}
     >
       {children}
     </button>

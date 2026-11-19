@@ -121,7 +121,7 @@ function PredictiveLinkList({
         {links.map((link) => (
           <li key={link.id}>
             <Link
-              className="hover:text-bark"
+              className="hover:text-ink"
               onClick={closeSearch}
               prefetch="intent"
               to={link.url}
@@ -243,7 +243,7 @@ function SearchResultsPredictiveProducts({
                     />
                   ) : null}
                 </div>
-                <p className="mt-3 truncate font-display text-base leading-tight text-ink group-hover:text-bark">
+                <p className="mt-3 truncate font-display text-base leading-tight text-ink group-hover:text-primary">
                   {product.title}
                 </p>
                 {price ? (

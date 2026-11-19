@@ -123,7 +123,7 @@ function SearchAside() {
               />
               <button
                 aria-label={t('search.seeAll')}
-                className="grid size-11 shrink-0 place-items-center text-primary hover:text-bark"
+                className="grid size-11 shrink-0 place-items-center text-primary hover:text-ink"
                 onClick={goToSearch}
                 type="button"
               >

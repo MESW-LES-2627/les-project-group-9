@@ -23,7 +23,7 @@ export function RingSizeForm() {
         href="https://www.ringsize.app/"
         target="_blank"
         rel="noreferrer"
-        className="mt-2 inline-block text-[11px] uppercase tracking-widest text-primary underline underline-offset-4 hover:text-bark"
+        className="mt-2 inline-block text-[11px] uppercase tracking-widest text-primary underline underline-offset-4 hover:text-ink"
       >
         {t('ring.howToMeasure')}
       </a>
@@ -119,7 +119,7 @@ export function RingSizeFields({
         <button
           type="submit"
           disabled={state === 'saving'}
-          className="bg-primary px-6 py-3 text-[11px] uppercase tracking-widest text-white transition-colors hover:bg-bark disabled:opacity-60"
+          className="bg-primary px-6 py-3 text-[11px] uppercase tracking-widest text-white transition-colors hover:bg-ink disabled:opacity-60"
         >
           {state === 'saving' ? t('common.saving') : t('ring.save')}
         </button>

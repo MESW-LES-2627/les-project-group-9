@@ -74,7 +74,7 @@ export function RingSizeHelp() {
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => setOpen(true)}
-        className="text-[11px] uppercase tracking-widest text-primary underline underline-offset-4 hover:text-bark"
+        className="text-[11px] uppercase tracking-widest text-primary underline underline-offset-4 hover:text-ink"
       >
         {t('ring.guide')}
       </button>
@@ -132,7 +132,7 @@ export function RingSizeHelp() {
                 </p>
                 <Link
                   to="/account/profile"
-                  className="inline-block bg-primary px-6 py-3 text-[11px] uppercase tracking-widest text-white transition-colors hover:bg-bark"
+                  className="inline-block bg-primary px-6 py-3 text-[11px] uppercase tracking-widest text-white transition-colors hover:bg-ink"
                 >
                   {t('ring.addSizes')}
                 </Link>
@@ -143,7 +143,7 @@ export function RingSizeHelp() {
               <button
                 type="button"
                 onClick={close}
-                className="text-[11px] uppercase tracking-widest text-primary hover:text-bark"
+                className="text-[11px] uppercase tracking-widest text-primary hover:text-ink"
               >
                 {t('nav.close')}
               </button>

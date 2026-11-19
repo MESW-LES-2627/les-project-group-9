@@ -98,7 +98,7 @@ export default function Homepage() {
           <Link
             to={heroUrl}
             prefetch="intent"
-            className="mt-9 inline-flex min-h-[50px] items-center justify-between gap-10 bg-primary px-6 text-xs font-medium uppercase tracking-widest text-white transition-colors hover:bg-bark"
+            className="mt-9 inline-flex min-h-[50px] items-center justify-between gap-10 bg-primary px-6 text-xs font-medium uppercase tracking-widest text-white transition-colors hover:bg-ink"
           >
             {t('home.exploreCollection')}
             <span aria-hidden="true">↗</span>
