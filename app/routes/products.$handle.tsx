@@ -26,6 +26,10 @@ import {
 import {materialsForColor, parseProductMaterials} from '~/lib/materials';
 import {isColorOption} from '~/lib/options';
 import {isRingProduct} from '~/lib/profile/ringCategory';
+import {
+  PRODUCT_CUSTOMIZATION_FRAGMENT,
+  parseProductCustomization,
+} from '~/lib/customization';
 
 export const meta: Route.MetaFunction = ({data, matches}) => [
   {
@@ -48,7 +52,11 @@ export async function loader(args: Route.LoaderArgs) {
     .then((result) => result.productRecommendations ?? [])
     .catch(() => []);
 
-  return {product, recommendations};
+  return {
+    product,
+    customization: parseProductCustomization(product),
+    recommendations,
+  };
 }
 
 async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
@@ -69,7 +77,8 @@ async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
 }
 
 export default function Product() {
-  const {product, recommendations} = useLoaderData<typeof loader>();
+  const {product, customization, recommendations} =
+    useLoaderData<typeof loader>();
   const t = useTranslation();
 
   const selectedVariant = useOptimisticVariant(
@@ -164,11 +173,14 @@ export default function Product() {
           </div>
 
           <div className="mt-8">
+            {/* Keyed by product so the customization choice resets on another product. */}
             <ProductForm
+              key={product.id}
               allergens={product.allergens}
               productOptions={productOptions}
               selectedVariant={selectedVariant}
               isRing={isRingProduct(product)}
+              customization={customization}
             />
           </div>
 
@@ -326,6 +338,7 @@ const PRODUCT_FRAGMENT = `#graphql
     gemstone: metafield(namespace: "custom", key: "gemstone") { value }
     gemColor: metafield(namespace: "custom", key: "gem_color") { value }
     allergens: metafield(namespace: "custom", key: "allergens") { value }
+    ...ProductCustomizationFields
     images(first: 10) { nodes { id url altText width height } }
     collections(first: 1) { nodes { title handle } }
     category { id name }
@@ -345,6 +358,7 @@ const PRODUCT_FRAGMENT = `#graphql
   }
   ${PRODUCT_VARIANT_FRAGMENT}
   ${JEWELIETTE_MATERIAL_METAFIELD_FRAGMENT}
+  ${PRODUCT_CUSTOMIZATION_FRAGMENT}
 ` as const;
 
 const PRODUCT_QUERY = `#graphql

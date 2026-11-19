@@ -197,6 +197,12 @@ export const fr: Messages = {
   'product.detail.metal': 'Métal',
   'product.detail.gemstone': 'Pierre',
   'product.detail.gemColor': 'Couleur de la pierre',
+  'product.customize.title': 'Personnaliser',
+  'product.customize.engraving': 'Gravure',
+  'product.customize.engravingRemaining': {
+    one: '{count} caractère restant',
+    other: '{count} caractères restants',
+  },
 
   // Allergens and the allergy warning
   'allergen.nickel': 'Nickel',
