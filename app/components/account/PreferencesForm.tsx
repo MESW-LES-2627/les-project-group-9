@@ -26,7 +26,8 @@ export function PreferencesForm({
 }: {
   options?: PreferenceOptions;
 }) {
-  const {status, preferences, savePreferences} = useProfile();
+  const {status, preferences, preferencesVersion, savePreferences} =
+    useProfile();
   const t = useTranslation();
 
   return (
@@ -38,6 +39,7 @@ export function PreferencesForm({
 
       {status === 'ready' ? (
         <PreferencesFields
+          key={preferencesVersion}
           preferences={preferences}
           options={options}
           onSave={savePreferences}

@@ -10,6 +10,7 @@ import {
   useOutletContext,
 } from 'react-router';
 import type {Route} from './+types/account.profile';
+import {PreferencesData} from '~/components/account/PreferencesData';
 import {PreferencesForm} from '~/components/account/PreferencesForm';
 import {RingSizeForm} from '~/components/account/RingSizeForm';
 import {getPreferenceOptions} from '~/lib/profile/preference-options.server';
@@ -162,6 +163,7 @@ export default function AccountProfile() {
 
       <PreferencesForm options={preferenceOptions} />
       <RingSizeForm />
+      <PreferencesData />
     </div>
   );
 }

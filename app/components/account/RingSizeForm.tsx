@@ -12,7 +12,8 @@ import {useTranslation} from '~/lib/i18n';
 type RingSizes = Partial<Record<RingFinger, string>>;
 
 export function RingSizeForm() {
-  const {status, preferences, savePreferences} = useProfile();
+  const {status, preferences, preferencesVersion, savePreferences} =
+    useProfile();
   const t = useTranslation();
 
   return (
@@ -30,6 +31,7 @@ export function RingSizeForm() {
 
       {status === 'ready' ? (
         <RingSizeFields
+          key={preferencesVersion}
           ringSizes={preferences?.ringSizes ?? {}}
           onSave={(ringSizes) => savePreferences({ringSizes})}
         />
