@@ -11,6 +11,13 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['app/**/*.{ts,tsx}'],
+      exclude: [
+        'app/entry.client.tsx',
+        'app/entry.server.tsx',
+        'app/routes.ts',
+        'app/**/*.d.ts',
+        'app/graphql/**',
+      ],
       reporter: ['text', 'json-summary', 'json'],
       reportOnFailure: true,
       thresholds: {
