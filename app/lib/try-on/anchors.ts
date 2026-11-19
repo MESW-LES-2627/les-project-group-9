@@ -64,6 +64,12 @@ export const EAR_OUTWARD_RATIO = 0.04;
 export const EAR_LOBE_LIFT_RATIO = 0.03;
 
 /**
+ * Vertical gap between piercings on the same ear, in face widths. The first
+ * piece sits on the lobe; each additional one moves up along the ear.
+ */
+export const EAR_STACK_GAP_RATIO = 0.055;
+
+/**
  * Neck-base drop below the chin, in face widths. The necklace's **top centre**
  * is anchored there (midpoint of the neck/collarbone), so the chain arcs around
  * the neck instead of hanging from the chest.
@@ -240,6 +246,8 @@ export function earTransforms(
     sizeCm: number;
     overlayAspect: number;
     visibility: EarVisibility;
+    /** 0 for the lobe, 1 for the next piercing up, and so on. */
+    stackIndex?: number;
   },
 ): {a: OverlayTransform | null; b: OverlayTransform | null} | null {
   if (!metrics) return null;
@@ -247,8 +255,18 @@ export function earTransforms(
   const size = overlaySize(metrics, options.sizeCm, options.overlayAspect);
   if (!size) return null;
 
-  const earA = earAnchor(points, TRY_ON_LANDMARKS.earA, metrics);
-  const earB = earAnchor(points, TRY_ON_LANDMARKS.earB, metrics);
+  const earA = earAnchor(
+    points,
+    TRY_ON_LANDMARKS.earA,
+    metrics,
+    options.stackIndex ?? 0,
+  );
+  const earB = earAnchor(
+    points,
+    TRY_ON_LANDMARKS.earB,
+    metrics,
+    options.stackIndex ?? 0,
+  );
 
   return {
     a:
@@ -289,12 +307,10 @@ export function necklaceTransform(
   if (!metrics) return null;
 
   const chin = pointAt(points, TRY_ON_LANDMARKS.chin);
-  const size = overlaySize(
-    metrics,
-    options.sizeCm,
-    options.overlayAspect,
-    {width: shoulderWidthPx(metrics.width), cm: SHOULDER_WIDTH_CM},
-  );
+  const size = overlaySize(metrics, options.sizeCm, options.overlayAspect, {
+    width: shoulderWidthPx(metrics.width),
+    cm: SHOULDER_WIDTH_CM,
+  });
 
   if (!chin || !size) return null;
 
@@ -337,7 +353,9 @@ export function createSmoothingState(): SmoothingState {
   return {value: null, updatedAt: null};
 }
 
-export function createAnchorBuffer(size = ANCHOR_BUFFER_WEIGHTS.length): AnchorBuffer {
+export function createAnchorBuffer(
+  size = ANCHOR_BUFFER_WEIGHTS.length,
+): AnchorBuffer {
   return {size, samples: []};
 }
 
@@ -424,8 +442,7 @@ export function smoothTransform(
         }
       : target;
 
-  const alpha =
-    1 - Math.exp(-elapsed / (options.tauMs ?? SMOOTHING_TAU_MS));
+  const alpha = 1 - Math.exp(-elapsed / (options.tauMs ?? SMOOTHING_TAU_MS));
   const smoothedWidth = clamp(
     previous.width + (limited.width - previous.width) * alpha,
     previous.width * (1 - MAX_SCALE_STEP),
@@ -469,6 +486,7 @@ function earAnchor(
   points: readonly Point[],
   earIndex: number,
   metrics: FaceMetrics,
+  stackIndex: number,
 ): Point | null {
   const ear = pointAt(points, earIndex);
   const faceA = pointAt(points, TRY_ON_LANDMARKS.faceA);
@@ -492,10 +510,9 @@ function earAnchor(
     ) || 1;
   const offset = metrics.width * EAR_OUTWARD_RATIO * side;
 
-  const vertical = chin
-    ? unitVector(metrics.eyeMid, chin)
-    : {x: 0, y: 1};
-  const lift = metrics.width * EAR_LOBE_LIFT_RATIO;
+  const vertical = chin ? unitVector(metrics.eyeMid, chin) : {x: 0, y: 1};
+  const lift =
+    metrics.width * (EAR_LOBE_LIFT_RATIO + stackIndex * EAR_STACK_GAP_RATIO);
 
   return {
     x: ear.x + lateral.x * offset - vertical.x * lift,

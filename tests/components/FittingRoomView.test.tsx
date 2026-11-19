@@ -14,8 +14,7 @@ vi.mock('~/lib/try-on/preload', () => ({
 
 vi.mock('~/lib/try-on/overlay', () => ({
   preloadOverlayImage: vi.fn(),
-  loadOverlayImage: vi.fn(),
-  overlayTransparency: vi.fn(),
+  loadTryOnOverlays: vi.fn(),
 }));
 
 vi.mock('~/lib/try-on/camera', async (importOriginal) => {
@@ -31,8 +30,18 @@ vi.mock('~/components/try-on/TryOnQrDialog', () => ({
 }));
 
 vi.mock('~/components/try-on/TryOnDialog', () => ({
-  TryOnDialog: ({initialMode}: {initialMode: string}) => (
-    <div data-mode={initialMode} data-testid="camera-dialog" />
+  TryOnDialog: ({
+    initialMode,
+    pieces,
+  }: {
+    initialMode: string;
+    pieces: Array<{id: string}>;
+  }) => (
+    <div
+      data-mode={initialMode}
+      data-pieces={pieces.map((piece) => piece.id).join(',')}
+      data-testid="camera-dialog"
+    />
   ),
 }));
 
@@ -42,6 +51,7 @@ const VARIANT_A = 'gid://shopify/ProductVariant/1';
 const VARIANT_B = 'gid://shopify/ProductVariant/2';
 
 const TRY_ON = {
+  id: VARIANT_B,
   kind: 'necklace' as const,
   overlayUrl: 'https://cdn.example/necklace.png?cors=1',
   sizeCm: 16,
@@ -61,7 +71,6 @@ function piece(overrides: Partial<FittingRoomPiece> = {}): FittingRoomPiece {
     price: {amount: '89.0', currencyCode: 'EUR'},
     available: true,
     tryOn: null,
-    tryOnLink: 'https://shop.example/products/gold-ring?tryOn=1',
     ...overrides,
   };
 }
@@ -77,8 +86,6 @@ const necklace = piece({
   image: {url: '/silver.jpg', altText: 'Silver necklace'},
   price: {amount: '120.0', currencyCode: 'EUR'},
   tryOn: TRY_ON,
-  tryOnLink:
-    'https://shop.example/products/silver-necklace?Color=Silver&tryOn=1',
 });
 
 function renderView(
@@ -101,35 +108,51 @@ function renderView(
 }
 
 describe('FittingRoomView', () => {
-  it('lists the saved variants and marks the selected ones', () => {
-    renderView({selectedIds: [VARIANT_A]});
+  it('lists the saved variants, unselected by default', () => {
+    renderView();
 
     expect(screen.getByText('2 pieces')).toBeInTheDocument();
     expect(
       screen.getByRole('checkbox', {name: 'Select Gold Ring'}),
-    ).toBeChecked();
+    ).not.toBeChecked();
     expect(
       screen.getByRole('checkbox', {name: 'Select Silver Necklace'}),
     ).not.toBeChecked();
-    expect(screen.getByText(/1 piece/)).toBeInTheDocument();
+  });
+
+  it('marks a piece without a model as "No 3D"', () => {
+    renderView({pieces: [piece()]});
+
+    const row = within(screen.getByRole('listitem'));
+
+    expect(row.getByText('No 3D')).toBeInTheDocument();
+    expect(
+      row.getByRole('checkbox', {name: 'Select Gold Ring'}),
+    ).toBeDisabled();
   });
 
   it('shows the colour of a non-default variant', () => {
     renderView({
-      pieces: [piece({variantTitle: 'Clear'})],
+      pieces: [piece({variantTitle: 'Clear', tryOn: TRY_ON})],
     });
 
-    expect(within(screen.getByRole('listitem')).getByText('Clear')).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('listitem')).getByText('Clear'),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole('checkbox', {name: 'Select Gold Ring · Clear'}),
-    ).toBeInTheDocument();
+    ).toBeEnabled();
   });
 
   it('keeps two colours of the same product as separate rows', () => {
     renderView({
       pieces: [
-        piece({variantId: VARIANT_A, variantTitle: 'Clear'}),
-        piece({variantId: VARIANT_B, variantTitle: 'Pink'}),
+        piece({variantId: VARIANT_A, variantTitle: 'Clear', tryOn: TRY_ON}),
+        piece({
+          variantId: VARIANT_B,
+          variantTitle: 'Pink',
+          tryOn: {...TRY_ON, id: VARIANT_B},
+        }),
       ],
       selectedIds: [VARIANT_A],
     });
@@ -161,7 +184,7 @@ describe('FittingRoomView', () => {
     const onSelectAll = vi.fn();
     const onClear = vi.fn();
 
-    renderView({onClear, onSelectAll, selectedIds: [VARIANT_A]});
+    renderView({onClear, onSelectAll, selectedIds: [VARIANT_B]});
 
     await user.click(screen.getByRole('button', {name: 'Select all'}));
     await user.click(screen.getByRole('button', {name: 'Clear'}));
@@ -198,7 +221,7 @@ describe('FittingRoomView', () => {
     expect(onMoveToCart).toHaveBeenCalledWith(VARIANT_A);
   });
 
-  it('disables move to cart when the variant is sold out but keeps try-on', () => {
+  it('disables move to cart when the variant is sold out', () => {
     renderView({pieces: [piece({available: false, tryOn: TRY_ON})]});
 
     const button = screen.getByRole('button', {
@@ -207,9 +230,6 @@ describe('FittingRoomView', () => {
 
     expect(button).toBeDisabled();
     expect(button).toHaveTextContent('Sold out');
-    expect(
-      screen.getByRole('button', {name: 'Try on Gold Ring'}),
-    ).toBeEnabled();
   });
 
   it('shows the moving state while a variant is being moved', () => {
@@ -230,44 +250,34 @@ describe('FittingRoomView', () => {
 
     expect(screen.getByText('See it on you')).toBeInTheDocument();
     expect(screen.getByText(/select at least one piece/i)).toBeInTheDocument();
-  });
-
-  it('offers try-on only for variants with an overlay', () => {
-    renderView();
-
     expect(
-      screen.getByRole('button', {name: 'Try on Silver Necklace'}),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', {name: 'Try on Gold Ring'}),
+      screen.queryByRole('button', {name: 'Try on the look'}),
     ).not.toBeInTheDocument();
   });
 
-  it('opens the QR code from the fitting room on a computer', async () => {
+  it('builds the look only from selected pieces that have a model', async () => {
     const user = userEvent.setup();
 
-    renderView({pieces: [necklace]});
+    renderView({selectedIds: [VARIANT_A, VARIANT_B]});
 
-    await user.click(
-      screen.getByRole('button', {name: 'Try on Silver Necklace'}),
-    );
+    expect(screen.getByText('1 piece ready to try')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', {name: 'Try on the look'}));
 
     expect(screen.getByTestId('qr-dialog')).toBeInTheDocument();
     expect(screen.queryByTestId('camera-dialog')).not.toBeInTheDocument();
   });
 
-  it('opens the camera from the fitting room on a phone', async () => {
+  it('opens the camera with every selected piece on a phone', async () => {
     const user = userEvent.setup();
 
-    renderView({isMobile: true, pieces: [necklace]});
+    renderView({isMobile: true, selectedIds: [VARIANT_B]});
 
-    await user.click(
-      screen.getByRole('button', {name: 'Try on Silver Necklace'}),
-    );
+    await user.click(screen.getByRole('button', {name: 'Try on the look'}));
 
-    expect(screen.getByTestId('camera-dialog')).toHaveAttribute(
-      'data-mode',
-      'camera',
-    );
+    const dialog = screen.getByTestId('camera-dialog');
+
+    expect(dialog).toHaveAttribute('data-mode', 'camera');
+    expect(dialog).toHaveAttribute('data-pieces', VARIANT_B);
   });
 });

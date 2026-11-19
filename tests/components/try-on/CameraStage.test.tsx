@@ -1,5 +1,7 @@
 import {render, screen, waitFor} from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
+import type {TryOnPiece} from '~/lib/try-on/catalog';
+import type {LoadedTryOnPiece} from '~/lib/try-on/overlay';
 
 const mocks = vi.hoisted(() => ({
   attachCameraStream: vi.fn(),
@@ -17,6 +19,21 @@ vi.mock('~/lib/try-on/camera', async (importOriginal) => {
 
 import {CameraStage} from '~/components/try-on/CameraStage';
 
+const PIECE: TryOnPiece = {
+  id: 'gid://shopify/ProductVariant/1',
+  kind: 'earring',
+  overlayUrl: 'https://cdn.example/earring.png?cors=1',
+  sizeCm: 2,
+};
+
+const SECOND_PIECE: TryOnPiece = {
+  ...PIECE,
+  id: 'gid://shopify/ProductVariant/2',
+  overlayUrl: 'https://cdn.example/necklace.png?cors=1',
+  kind: 'necklace',
+  sizeCm: 16,
+};
+
 const detector = {
   detectVideo: vi.fn().mockReturnValue(null),
   detectImage: vi.fn(),
@@ -24,6 +41,9 @@ const detector = {
 };
 
 const overlay = document.createElement('img');
+const secondOverlay = document.createElement('img');
+
+const LOADED: LoadedTryOnPiece = {piece: PIECE, image: overlay};
 
 function fakeStream() {
   const listeners = new Map<string, () => void>();
@@ -58,7 +78,7 @@ function renderStage(
   overrides: {
     onFailure?: () => void;
     onStatus?: () => void;
-    overlay?: HTMLImageElement | null;
+    pieces?: LoadedTryOnPiece[];
   } = {},
 ) {
   return render(
@@ -66,11 +86,9 @@ function renderStage(
       detector={detector}
       onFailure={overrides.onFailure ?? vi.fn()}
       onStatus={overrides.onStatus ?? vi.fn()}
-      overlay={overrides.overlay === undefined ? overlay : overrides.overlay}
-      overlayAspect={1}
-      piece={{kind: 'earring', sizeCm: 2}}
+      pieces={overrides.pieces ?? [LOADED]}
+      previewLabel="Preview with Aura Earrings on you"
       stream={streamWithTrack}
-      title="Aura Earrings"
     />,
   );
 }
@@ -124,23 +142,27 @@ describe('CameraStage', () => {
         detector={null}
         onFailure={vi.fn()}
         onStatus={onStatus}
-        overlay={overlay}
-        overlayAspect={1}
-        piece={{kind: 'earring', sizeCm: 2}}
+        pieces={[LOADED]}
+        previewLabel="Preview with Aura Earrings on you"
         stream={streamWithTrack}
-        title="Aura Earrings"
       />,
     );
 
     const video = container.querySelector('video')!;
-    Object.defineProperty(video, 'videoWidth', {configurable: true, value: 640});
-    Object.defineProperty(video, 'videoHeight', {configurable: true, value: 480});
+    Object.defineProperty(video, 'videoWidth', {
+      configurable: true,
+      value: 640,
+    });
+    Object.defineProperty(video, 'videoHeight', {
+      configurable: true,
+      value: 480,
+    });
 
     await waitFor(() => expect(onStatus).toHaveBeenCalledWith('preparing'));
   });
 
-  it('joins the PNG when it arrives without restarting the camera', async () => {
-    const {rerender} = renderStage({overlay: null});
+  it('joins a piece when its PNG arrives without restarting the camera', async () => {
+    const {rerender} = renderStage({pieces: []});
 
     await waitFor(() =>
       expect(mocks.attachCameraStream).toHaveBeenCalledTimes(1),
@@ -151,11 +173,30 @@ describe('CameraStage', () => {
         detector={detector}
         onFailure={vi.fn()}
         onStatus={vi.fn()}
-        overlay={overlay}
-        overlayAspect={1}
-        piece={{kind: 'earring', sizeCm: 2}}
+        pieces={[LOADED]}
+        previewLabel="Preview with Aura Earrings on you"
         stream={streamWithTrack}
-        title="Aura Earrings"
+      />,
+    );
+
+    expect(mocks.attachCameraStream).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the stream running when another piece joins the look', async () => {
+    const {rerender} = renderStage();
+
+    await waitFor(() =>
+      expect(mocks.attachCameraStream).toHaveBeenCalledTimes(1),
+    );
+
+    rerender(
+      <CameraStage
+        detector={detector}
+        onFailure={vi.fn()}
+        onStatus={vi.fn()}
+        pieces={[LOADED, {piece: SECOND_PIECE, image: secondOverlay}]}
+        previewLabel="Preview of your look on you"
+        stream={streamWithTrack}
       />,
     );
 

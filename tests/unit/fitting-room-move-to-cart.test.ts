@@ -2,7 +2,6 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 
 vi.mock('~/lib/variants.server', () => ({
   loadVariantsByIds: vi.fn(),
-  parseVariantIds: vi.fn(),
 }));
 
 vi.mock('~/lib/profile/customer.server', () => ({

@@ -3,7 +3,7 @@ import type {OverlayTransform} from '../../app/lib/try-on/anchors';
 import {
   drawOverlays,
   drawTryOnFrame,
-  type FrameOverlay,
+  type FrameLayer,
 } from '../../app/lib/try-on/render';
 
 type Recorded = [string, ...unknown[]];
@@ -37,6 +37,7 @@ function recorder() {
 
 const source = {label: 'video'} as unknown as CanvasImageSource;
 const overlay = {label: 'overlay'} as unknown as CanvasImageSource;
+const secondOverlay = {label: 'second-overlay'} as unknown as CanvasImageSource;
 
 const transform: OverlayTransform = {
   x: 100,
@@ -47,9 +48,13 @@ const transform: OverlayTransform = {
   mirrored: false,
 };
 
+function layer(overrides: Partial<FrameLayer> = {}): FrameLayer {
+  return {image: overlay, transform, masked: false, ...overrides};
+}
+
 function draw(options: {
   mirror: boolean;
-  overlays?: FrameOverlay[];
+  layers?: FrameLayer[];
   headMask?: Array<{x: number; y: number}> | null;
 }) {
   const {context, calls} = recorder();
@@ -58,8 +63,7 @@ function draw(options: {
     source,
     sourceWidth: 640,
     sourceHeight: 480,
-    overlay,
-    overlays: options.overlays ?? [{transform, masked: false}],
+    layers: options.layers ?? [layer()],
     headMask: options.headMask ?? null,
     mirror: options.mirror,
   });
@@ -90,7 +94,7 @@ describe('drawTryOnFrame', () => {
   it('flips the overlay side when the preview is mirrored', () => {
     const mirrored = draw({
       mirror: true,
-      overlays: [{transform: {...transform, mirrored: true}, masked: false}],
+      layers: [layer({transform: {...transform, mirrored: true}})],
     });
 
     // The video mirror is one flip; a mirrored overlay in a mirrored preview
@@ -99,7 +103,7 @@ describe('drawTryOnFrame', () => {
 
     const direct = draw({
       mirror: false,
-      overlays: [{transform: {...transform, mirrored: true}, masked: false}],
+      layers: [layer({transform: {...transform, mirrored: true}})],
     });
 
     expect(direct.filter(([name]) => name === 'scale')).toHaveLength(1);
@@ -108,7 +112,7 @@ describe('drawTryOnFrame', () => {
   it('clips masked overlays with the mirrored head polygon', () => {
     const calls = draw({
       mirror: true,
-      overlays: [{transform, masked: true}],
+      layers: [layer({masked: true})],
       headMask: [
         {x: 140, y: 240},
         {x: 320, y: 400},
@@ -134,10 +138,27 @@ describe('drawTryOnFrame', () => {
     expect(drawings).toEqual([source, overlay]);
   });
 
+  it('draws a whole look with each layer image, back to front', () => {
+    const calls = draw({
+      mirror: false,
+      layers: [
+        layer({masked: true}),
+        layer({image: secondOverlay, transform: {...transform, x: 200}}),
+      ],
+    });
+    const drawings = calls
+      .filter(([name]) => name === 'drawImage')
+      .map(([, image]) => image);
+
+    expect(drawings).toEqual([source, overlay, secondOverlay]);
+    expect(calls).toContainEqual(['translate', 100, 50]);
+    expect(calls).toContainEqual(['translate', 200, 50]);
+  });
+
   it('skips the clip when there is no head polygon', () => {
     const calls = draw({
       mirror: false,
-      overlays: [{transform, masked: true}],
+      layers: [layer({masked: true})],
       headMask: null,
     });
 
@@ -146,12 +167,11 @@ describe('drawTryOnFrame', () => {
 });
 
 describe('drawOverlays', () => {
-  it('clears the canvas and draws only the piece', () => {
+  it('clears the canvas and draws only the pieces', () => {
     const {context, calls} = recorder();
 
     drawOverlays(context, {
-      overlay,
-      overlays: [{transform, masked: false}],
+      layers: [layer()],
       headMask: null,
       mirror: false,
       sourceWidth: 640,
@@ -167,8 +187,7 @@ describe('drawOverlays', () => {
     const {context, calls} = recorder();
 
     drawOverlays(context, {
-      overlay,
-      overlays: [{transform, masked: false}],
+      layers: [layer()],
       headMask: null,
       mirror: true,
       sourceWidth: 640,
@@ -183,8 +202,7 @@ describe('drawOverlays', () => {
     const {context, calls} = recorder();
 
     drawOverlays(context, {
-      overlay,
-      overlays: [],
+      layers: [],
       headMask: null,
       mirror: false,
       sourceWidth: 640,

@@ -10,6 +10,7 @@ vi.mock('~/components/product/TryOnButton', () => ({
 import {TryOnSection} from '~/components/product/TryOnSection';
 
 const PIECE = {
+  id: 'gid://shopify/ProductVariant/1',
   kind: 'earring' as const,
   overlayUrl: 'https://cdn.example/earring.png?cors=1',
   sizeCm: 2,
@@ -17,11 +18,7 @@ const PIECE = {
 
 function renderSection() {
   return render(
-    <TryOnSection
-      isMobile={false}
-      piece={PIECE}
-      title="Aura Earrings"
-    />,
+    <TryOnSection isMobile={false} piece={PIECE} title="Aura Earrings" />,
   );
 }
 

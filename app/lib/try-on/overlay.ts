@@ -1,3 +1,5 @@
+import type {TryOnPiece} from './catalog';
+
 export type OverlayTransparency = 'transparent' | 'opaque' | 'unknown';
 
 const cache = new Map<string, Promise<HTMLImageElement>>();
@@ -30,6 +32,73 @@ export function loadOverlayImage(url: string): Promise<HTMLImageElement> {
 /** Fire-and-forget warm-up for the product/fitting-room pages. */
 export function preloadOverlayImage(url: string): void {
   void loadOverlayImage(url).catch(() => undefined);
+}
+
+/** Natural width / height of a decoded overlay; 1 when it is not available. */
+export function overlayAspect(
+  image: Pick<HTMLImageElement, 'naturalWidth' | 'naturalHeight'>,
+): number {
+  return image.naturalWidth > 0 && image.naturalHeight > 0
+    ? image.naturalWidth / image.naturalHeight
+    : 1;
+}
+
+export type LoadedTryOnPiece = {
+  piece: TryOnPiece;
+  image: HTMLImageElement;
+};
+
+export type LoadTryOnOverlaysResult = {
+  /** Usable overlays, in the order of the input pieces. */
+  ready: LoadedTryOnPiece[];
+  /** Pieces whose PNG is fully opaque and would cover the shopper. */
+  opaque: number;
+  /** Pieces whose PNG could not be fetched or decoded. */
+  failed: number;
+};
+
+type OverlayOutcome =
+  | {status: 'ready'; value: LoadedTryOnPiece}
+  | {status: 'opaque'}
+  | {status: 'failed'};
+
+/**
+ * Loads a whole look's overlays in parallel. A broken or opaque piece is left
+ * out instead of blocking the rest of the look; the caller decides what to do
+ * when nothing is usable.
+ */
+export async function loadTryOnOverlays(
+  pieces: readonly TryOnPiece[],
+): Promise<LoadTryOnOverlaysResult> {
+  const outcomes = await Promise.all(
+    pieces.map(async (piece): Promise<OverlayOutcome> => {
+      try {
+        const image = await loadOverlayImage(piece.overlayUrl);
+
+        if (overlayTransparency(image) === 'opaque') {
+          console.error(`Try-on overlay is opaque: ${piece.id}`);
+          return {status: 'opaque'};
+        }
+
+        return {status: 'ready', value: {piece, image}};
+      } catch (error) {
+        console.error(`Try-on overlay could not load: ${piece.id}`, error);
+        return {status: 'failed'};
+      }
+    }),
+  );
+
+  const ready: LoadedTryOnPiece[] = [];
+  let opaque = 0;
+  let failed = 0;
+
+  for (const outcome of outcomes) {
+    if (outcome.status === 'ready') ready.push(outcome.value);
+    else if (outcome.status === 'opaque') opaque += 1;
+    else failed += 1;
+  }
+
+  return {ready, opaque, failed};
 }
 
 /**

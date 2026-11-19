@@ -77,8 +77,7 @@ async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
 }
 
 export default function Product() {
-  const {product, recommendations, isMobile} =
-    useLoaderData<typeof loader>();
+  const {product, recommendations, isMobile} = useLoaderData<typeof loader>();
   const t = useTranslation();
 
   const selectedVariant = useOptimisticVariant(
@@ -157,7 +156,10 @@ export default function Product() {
           title={product.title}
         />
 
-        <div className="lg:sticky lg:top-24 lg:self-start">
+        <div
+          className="lg:sticky lg:top-24 lg:self-start"
+          data-selected-variant-id={selectedVariant?.id}
+        >
           <AllergenBadge allergens={product.allergens} className="mb-3" />
 
           <div className="mt-3 flex items-start justify-between gap-4">

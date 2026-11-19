@@ -10,11 +10,8 @@ import {
   type CameraAttempt,
   type CameraFailure,
 } from '~/lib/try-on/camera';
-import {
-  getFaceDetector,
-  type FaceDetector,
-} from '~/lib/try-on/face-landmarker';
-import {loadOverlayImage, overlayTransparency} from '~/lib/try-on/overlay';
+import {getFaceDetector, type FaceDetector} from '~/lib/try-on/face-landmarker';
+import {loadTryOnOverlays, type LoadedTryOnPiece} from '~/lib/try-on/overlay';
 import {Dialog, dialogButton} from '~/components/shared/Dialog';
 import {CameraStage, type CameraStatus} from './CameraStage';
 import {PhotoFallback} from './PhotoFallback';
@@ -24,8 +21,10 @@ type Phase = 'loading' | 'ready' | 'camera' | 'photo' | 'unavailable';
 
 type TryOnDialogProps = {
   onClose: () => void;
-  piece: TryOnPiece;
-  title: string;
+  /** One or more pieces drawn together in the same camera frame. */
+  pieces: TryOnPiece[];
+  /** Product title for a single piece; omitted for a fitting-room look. */
+  title?: string;
   initialMode: 'camera' | 'photo';
   /**
    * `false` for QR deep links: a page load has no tap gesture, so the dialog
@@ -39,15 +38,15 @@ type TryOnDialogProps = {
 /**
  * Try-on modal.
  *
- * Fast path: the camera stream (requested in the shopper's tap) and the overlay
- * are shown as soon as they are ready, while the heavy face landmarker loads in
+ * Fast path: the camera stream (requested in the shopper's tap) is shown as soon
+ * as it is ready, while the overlays and the heavy face landmarker load in
  * parallel. The landmarker and camera tracks are released on unmount; the
  * release is deferred by a tick so React StrictMode's simulated unmount does
  * not stop (and reopen) the hardware camera.
  */
 export function TryOnDialog({
   onClose,
-  piece,
+  pieces,
   title,
   initialMode,
   autoStart = true,
@@ -58,7 +57,10 @@ export function TryOnDialog({
   const [status, setStatus] = useState<CameraStatus | 'starting'>('starting');
   const [failure, setFailure] = useState<CameraFailure | null>(null);
   const [detail, setDetail] = useState<string | null>(null);
-  const [overlay, setOverlay] = useState<HTMLImageElement | null>(null);
+  const [unavailableMessage, setUnavailableMessage] = useState<string | null>(
+    null,
+  );
+  const [ready, setReady] = useState<LoadedTryOnPiece[]>([]);
   const [detector, setDetector] = useState<FaceDetector | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [cameraAttempt, setCameraAttempt] = useState(0);
@@ -66,6 +68,21 @@ export function TryOnDialog({
   const detectorRef = useRef<FaceDetector | null>(null);
   const requestRef = useRef<Promise<CameraAttempt> | null>(null);
   const releaseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const piecesRef = useRef(pieces);
+  const copyRef = useRef({t, title});
+
+  // A new array with the same pieces must not restart the camera.
+  const piecesKey = pieces
+    .map((piece) => `${piece.id}:${piece.overlayUrl}:${piece.sizeCm}`)
+    .join('|');
+
+  useEffect(() => {
+    piecesRef.current = pieces;
+  }, [pieces]);
+
+  useEffect(() => {
+    copyRef.current = {t, title};
+  }, [t, title]);
 
   useEffect(() => {
     // Cancel the deferred release from StrictMode's simulated unmount: the
@@ -81,13 +98,16 @@ export function TryOnDialog({
     const attempt: Promise<CameraAttempt> =
       !wantsCamera || !autoStart || support
         ? Promise.resolve({stream: null, error: null})
-        : camera ?? (requestRef.current ??= requestCamera());
+        : (camera ?? (requestRef.current ??= requestCamera()));
 
     // Start the landmarker immediately: it is the long pole and must not delay
     // the camera (or be delayed by it). It is shared for the page session.
     const detectorPromise = getFaceDetector();
-    // The PNG is fetched in parallel and never delays the preview.
-    const overlayPromise = loadOverlayImage(piece.overlayUrl);
+    // The overlay path may stop early (nothing usable); keep a rejection from
+    // becoming an unhandled promise while the main path still logs it.
+    void detectorPromise.catch(() => undefined);
+    // The PNGs are fetched in parallel and never delay the preview.
+    const overlayPromise = loadTryOnOverlays(piecesRef.current);
 
     async function load() {
       const opened = await attempt;
@@ -116,20 +136,30 @@ export function TryOnDialog({
         setPhase('photo');
       }
 
-      // The overlay PNG decodes while the live preview is already on screen.
+      // The overlay PNGs decode while the live preview is already on screen.
       try {
-        const image = await overlayPromise;
+        const overlays = await overlayPromise;
         if (!active) return;
 
-        if (overlayTransparency(image) === 'opaque') {
+        if (overlays.ready.length === 0) {
+          const {t: translate, title: currentTitle} = copyRef.current;
+
           stopStream(streamRef.current);
           streamRef.current = null;
           setStream(null);
+          setReady([]);
+          setUnavailableMessage(
+            overlays.opaque > 0
+              ? currentTitle
+                ? translate('tryOn.opaque')
+                : translate('tryOn.lookUnavailable')
+              : translate('tryOn.failed'),
+          );
           setPhase('unavailable');
           return;
         }
 
-        setOverlay(image);
+        setReady(overlays.ready);
       } catch (error) {
         if (!active) return;
         console.error('Try-on could not start', error);
@@ -184,7 +214,7 @@ export function TryOnDialog({
         void attempt.then((value) => stopStream(value.stream));
       }, 0);
     };
-  }, [piece.overlayUrl, initialMode, autoStart, camera]);
+  }, [piecesKey, initialMode, autoStart, camera]);
 
   const handleStatus = useCallback((next: CameraStatus) => {
     setStatus(next);
@@ -277,10 +307,13 @@ export function TryOnDialog({
           ? t('tryOn.noFace')
           : null;
 
-  const overlayAspect =
-    overlay && overlay.naturalHeight > 0
-      ? overlay.naturalWidth / overlay.naturalHeight
-      : 1;
+  const heading = title ? t('tryOn.title', {title}) : t('tryOn.lookTitle');
+  const startPrompt = title
+    ? t('tryOn.startPrompt', {title})
+    : t('tryOn.lookPrompt');
+  const previewLabel = title
+    ? t('tryOn.preview', {title})
+    : t('tryOn.lookPreview');
 
   return (
     <Dialog
@@ -308,7 +341,7 @@ export function TryOnDialog({
       }
       onClose={onClose}
       open
-      title={t('tryOn.title', {title})}
+      title={heading}
     >
       {phase === 'loading' ? (
         <div className="space-y-3">
@@ -322,9 +355,7 @@ export function TryOnDialog({
 
       {phase === 'ready' ? (
         <>
-          <p className="text-sm leading-7 text-primary">
-            {t('tryOn.startPrompt', {title})}
-          </p>
+          <p className="text-sm leading-7 text-primary">{startPrompt}</p>
           <button
             className={`${dialogButton.primary} w-full`}
             onClick={() => void startCameraNow()}
@@ -336,7 +367,9 @@ export function TryOnDialog({
       ) : null}
 
       {phase === 'unavailable' ? (
-        <p className="text-sm leading-7 text-primary">{t('tryOn.opaque')}</p>
+        <p className="text-sm leading-7 text-primary">
+          {unavailableMessage ?? t('tryOn.opaque')}
+        </p>
       ) : null}
 
       {phase === 'camera' && stream ? (
@@ -346,11 +379,9 @@ export function TryOnDialog({
             key={cameraAttempt}
             onFailure={handleFailure}
             onStatus={handleStatus}
-            overlay={overlay}
-            overlayAspect={overlayAspect}
-            piece={piece}
+            pieces={ready}
+            previewLabel={previewLabel}
             stream={stream}
-            title={title}
           />
           <StatusMessage message={cameraStatus} />
         </>
@@ -375,13 +406,11 @@ export function TryOnDialog({
               </button>
             </div>
           ) : null}
-          {detector && overlay ? (
+          {detector && ready.length > 0 ? (
             <PhotoFallback
               detector={detector}
-              overlay={overlay}
-              overlayAspect={overlayAspect}
-              piece={piece}
-              title={title}
+              pieces={ready}
+              previewLabel={previewLabel}
             />
           ) : (
             <StatusMessage message={t('tryOn.loading')} />

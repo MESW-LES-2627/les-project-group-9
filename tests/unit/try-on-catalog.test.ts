@@ -7,8 +7,10 @@ import {
   tryOnKind,
 } from '../../app/lib/try-on/catalog';
 
-const OVERLAY = 'https://cdn.shopify.com/s/files/1/0000/files/butterfly.png?v=1';
+const OVERLAY =
+  'https://cdn.shopify.com/s/files/1/0000/files/butterfly.png?v=1';
 const EARRINGS = {category: {name: 'Earrings'}};
+const VARIANT_ID = 'gid://shopify/ProductVariant/1';
 
 describe('tryOnKind', () => {
   it('accepts earrings and necklaces', () => {
@@ -48,7 +50,9 @@ describe('parseTryOnSizeCm', () => {
     expect(parseTryOnSizeCm('2cm', 'earring')).toBe(
       DEFAULT_TRY_ON_SIZE_CM.earring,
     );
-    expect(parseTryOnSizeCm('0', 'earring')).toBe(DEFAULT_TRY_ON_SIZE_CM.earring);
+    expect(parseTryOnSizeCm('0', 'earring')).toBe(
+      DEFAULT_TRY_ON_SIZE_CM.earring,
+    );
     expect(parseTryOnSizeCm('-2', 'earring')).toBe(
       DEFAULT_TRY_ON_SIZE_CM.earring,
     );
@@ -62,19 +66,28 @@ describe('resolveOverlayUrl', () => {
   it('reads the variant metafield (image or generic file)', () => {
     expect(
       resolveOverlayUrl({
+        id: VARIANT_ID,
         tryOnOverlay: {reference: {image: {url: OVERLAY}}},
       }),
     ).toBe(OVERLAY);
     expect(
-      resolveOverlayUrl({tryOnOverlay: {reference: {url: OVERLAY}}}),
+      resolveOverlayUrl({
+        id: VARIANT_ID,
+        tryOnOverlay: {reference: {url: OVERLAY}},
+      }),
     ).toBe(OVERLAY);
   });
 
   it('has no product-level fallback', () => {
-    expect(resolveOverlayUrl({})).toBe(null);
-    expect(resolveOverlayUrl({tryOnOverlay: {reference: null}})).toBe(null);
+    expect(resolveOverlayUrl({id: VARIANT_ID})).toBe(null);
     expect(
-      resolveOverlayUrl({tryOnOverlay: {reference: {image: {url: '   '}}}}),
+      resolveOverlayUrl({id: VARIANT_ID, tryOnOverlay: {reference: null}}),
+    ).toBe(null);
+    expect(
+      resolveOverlayUrl({
+        id: VARIANT_ID,
+        tryOnOverlay: {reference: {image: {url: '   '}}},
+      }),
     ).toBe(null);
   });
 });
@@ -82,15 +95,18 @@ describe('resolveOverlayUrl', () => {
 describe('resolveTryOn', () => {
   it('gates on the selected variant, not the product', () => {
     const clear = resolveTryOn(EARRINGS, {
+      id: VARIANT_ID,
       tryOnOverlay: {reference: {image: {url: OVERLAY}}},
       tryOnSize: {value: '1.8'},
     });
     const pink = resolveTryOn(EARRINGS, {
+      id: VARIANT_ID,
       tryOnOverlay: null,
       tryOnSize: {value: '1.8'},
     });
 
     expect(clear).toEqual({
+      id: VARIANT_ID,
       kind: 'earring',
       overlayUrl: `${OVERLAY}&cors=1`,
       sizeCm: 1.8,
@@ -101,7 +117,10 @@ describe('resolveTryOn', () => {
   it('does not add the CORS param twice', () => {
     const piece = resolveTryOn(
       {category: {name: 'Necklaces'}},
-      {tryOnOverlay: {reference: {image: {url: `${OVERLAY}&cors=1`}}}},
+      {
+        id: VARIANT_ID,
+        tryOnOverlay: {reference: {image: {url: `${OVERLAY}&cors=1`}}},
+      },
     );
 
     expect(piece?.overlayUrl).toBe(`${OVERLAY}&cors=1`);
@@ -111,7 +130,10 @@ describe('resolveTryOn', () => {
     expect(
       resolveTryOn(
         {category: {name: 'Bracelets'}},
-        {tryOnOverlay: {reference: {image: {url: OVERLAY}}}},
+        {
+          id: VARIANT_ID,
+          tryOnOverlay: {reference: {image: {url: OVERLAY}}},
+        },
       ),
     ).toBe(null);
   });
@@ -119,14 +141,17 @@ describe('resolveTryOn', () => {
   it('hides the button when there is no variant overlay', () => {
     expect(resolveTryOn(EARRINGS, null)).toBe(null);
     expect(resolveTryOn(EARRINGS, undefined)).toBe(null);
-    expect(resolveTryOn(EARRINGS, {})).toBe(null);
+    expect(resolveTryOn(EARRINGS, {id: VARIANT_ID})).toBe(null);
   });
 
   it('uses the kind default size when the metafield is missing', () => {
     expect(
       resolveTryOn(
         {category: {name: 'Necklaces'}},
-        {tryOnOverlay: {reference: {url: OVERLAY}}},
+        {
+          id: VARIANT_ID,
+          tryOnOverlay: {reference: {url: OVERLAY}},
+        },
       )?.sizeCm,
     ).toBe(DEFAULT_TRY_ON_SIZE_CM.necklace);
   });

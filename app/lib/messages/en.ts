@@ -219,8 +219,7 @@ export const en = {
   'tryOn.failed': 'Something went wrong. Please try again.',
   'tryOn.errorDetail': 'Details: {detail}',
   'tryOn.retry': 'Try again',
-  'tryOn.startPrompt':
-    'Tap below to open your camera and try {title} on.',
+  'tryOn.startPrompt': 'Tap below to open your camera and try {title} on.',
   'tryOn.startCamera': 'Open camera',
   'tryOn.upload': 'Upload a photo',
   'tryOn.uploadHint': 'Choose a front-facing photo to see the piece on you.',
@@ -240,6 +239,10 @@ export const en = {
   'tryOn.openLink': 'Open the try-on link',
   'tryOn.privacy': 'Your camera and photos stay on this device.',
   'tryOn.preview': 'Preview with {title} on you',
+  'tryOn.lookTitle': 'Try on your look',
+  'tryOn.lookPrompt': 'Tap below to open your camera and try your look on.',
+  'tryOn.lookPreview': 'Preview of your look on you',
+  'tryOn.lookUnavailable': 'Try-on isn’t available for this look yet.',
 
   // Allergens and the allergy warning
   'allergen.nickel': 'Nickel',
@@ -340,8 +343,9 @@ export const en = {
   'fittingRoom.tryOn': 'Virtual try-on',
   'fittingRoom.tryOnTitle': 'See it on you',
   'fittingRoom.tryOnText':
-    'Select the pieces you want to compare, then use Try on next to an earring or necklace to see it on your camera.',
-  'fittingRoom.tryOnPiece': 'Try on {title}',
+    'Select the pieces you want to see together, then open the look.',
+  'fittingRoom.tryOnLook': 'Try on the look',
+  'fittingRoom.no3d': 'No 3D',
   'fittingRoom.readyToTry': {
     one: '{count} piece ready to try',
     other: '{count} pieces ready to try',

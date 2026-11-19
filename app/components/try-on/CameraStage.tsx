@@ -1,6 +1,4 @@
 import {useEffect, useRef, useState} from 'react';
-import {useTranslation} from '~/lib/i18n';
-import type {TryOnPiece} from '~/lib/try-on/catalog';
 import {
   TRACKING_GRACE_MS,
   bufferTransform,
@@ -21,7 +19,8 @@ import {
 } from '~/lib/try-on/camera';
 import type {FaceDetector} from '~/lib/try-on/face-landmarker';
 import {NECKLACE_SMOOTHING_TAU_MS, planFrame} from '~/lib/try-on/frame';
-import {drawOverlays, type FrameOverlay} from '~/lib/try-on/render';
+import {overlayAspect, type LoadedTryOnPiece} from '~/lib/try-on/overlay';
+import {drawOverlays, type FrameLayer} from '~/lib/try-on/render';
 
 export type CameraStatus = 'preparing' | 'tracking' | 'no-face';
 
@@ -35,13 +34,12 @@ const MIN_FRAME_MS = 1000 / 30;
 type CameraStageProps = {
   /** The heavy landmarker; `null` while it is still loading. */
   detector: FaceDetector | null;
-  /** The PNG cut-out; `null` until it has been fetched and decoded. */
-  overlay: HTMLImageElement | null;
-  overlayAspect: number;
-  piece: Pick<TryOnPiece, 'kind' | 'sizeCm'>;
+  /** Every usable piece of the look, with its decoded PNG. */
+  pieces: LoadedTryOnPiece[];
   /** Stream acquired by the dialog right after the tap (iOS-friendly). */
   stream: MediaStream;
-  title: string;
+  /** Ready-made accessible label for the preview canvas. */
+  previewLabel: string;
   onStatus: (status: CameraStatus) => void;
   onFailure: (failure: CameraFailure, detail?: string) => void;
 };
@@ -50,25 +48,21 @@ type CameraStageProps = {
  * Front-camera stage.
  *
  * The preview is the `<video>` element itself (visible, mirrored with CSS): iOS
- * Safari suspends a hidden video and releases the camera with it. The piece is
+ * Safari suspends a hidden video and releases the camera with it. The pieces are
  * painted on a transparent canvas on top, and the landmarker joins later.
  */
 export function CameraStage({
   detector,
-  overlay,
-  overlayAspect,
-  piece,
+  pieces,
   stream,
-  title,
+  previewLabel,
   onStatus,
   onFailure,
 }: CameraStageProps) {
-  const t = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const detectorRef = useRef<FaceDetector | null>(detector);
-  const overlayRef = useRef<HTMLImageElement | null>(overlay);
-  const overlayAspectRef = useRef(overlayAspect);
+  const piecesRef = useRef<LoadedTryOnPiece[]>(pieces);
   const onStatusRef = useRef(onStatus);
   const onFailureRef = useRef(onFailure);
   const [aspect, setAspect] = useState<string | undefined>(undefined);
@@ -77,11 +71,10 @@ export function CameraStage({
     detectorRef.current = detector;
   }, [detector]);
 
-  // The PNG arrives (or is replaced) without restarting the camera stream.
+  // Pieces join (or are replaced) without restarting the camera stream.
   useEffect(() => {
-    overlayRef.current = overlay;
-    overlayAspectRef.current = overlayAspect;
-  }, [overlay, overlayAspect]);
+    piecesRef.current = pieces;
+  }, [pieces]);
 
   // Callback identity changes must not restart the camera either.
   useEffect(() => {
@@ -106,8 +99,7 @@ export function CameraStage({
     let earState = createEarVisibilityState();
     const smoothing: Record<string, SmoothingState> = {};
     const anchorBuffers: Record<string, AnchorBuffer> = {};
-    const tauMs = piece.kind === 'necklace' ? NECKLACE_SMOOTHING_TAU_MS : undefined;
-    let lastOverlays: FrameOverlay[] = [];
+    let lastLayers: FrameLayer[] = [];
     let lastMask: Point[] | null = null;
     let lastPlanAt = 0;
 
@@ -155,9 +147,9 @@ export function CameraStage({
       }
 
       const activeDetector = detectorRef.current;
-      const activeOverlay = overlayRef.current;
+      const activePieces = piecesRef.current;
 
-      if (!activeDetector || !activeOverlay) {
+      if (!activeDetector || activePieces.length === 0) {
         report('preparing');
         schedule();
         return;
@@ -167,55 +159,82 @@ export function CameraStage({
       const plan = points
         ? planFrame({
             points: toPixelLandmarks(points, width, height),
-            kind: piece.kind,
-            sizeCm: piece.sizeCm,
-            overlayAspect: overlayAspectRef.current,
+            pieces: activePieces.map(({piece, image}) => ({
+              ...piece,
+              overlayAspect: overlayAspect(image),
+            })),
             bounds: {width, height},
             earState,
           })
         : null;
 
-      let overlaysToDraw: FrameOverlay[] = [];
+      let layersToDraw: FrameLayer[] = [];
       let maskToDraw: Point[] | null = null;
 
       if (plan) {
         earState = plan.earState;
         lastPlanAt = now;
 
-        overlaysToDraw = plan.overlays.flatMap((planned) => {
+        const images = new Map(
+          activePieces.map(({piece, image}) => [piece.id, image]),
+        );
+        const activeKeys = new Set<string>();
+
+        layersToDraw = plan.overlays.flatMap((planned) => {
+          const key = `${planned.id}:${planned.slot}`;
+          activeKeys.add(key);
+
           // 1) short weighted buffer: rejects one-frame landmark spikes.
           const buffered = bufferTransform(
-            anchorBuffers[planned.id] ?? createAnchorBuffer(),
+            anchorBuffers[key] ?? createAnchorBuffer(),
             planned.transform,
           );
-          anchorBuffers[planned.id] = buffered.buffer;
+          anchorBuffers[key] = buffered.buffer;
 
           // 2) exponential smoothing: removes sub-frame jitter.
-          const previous = smoothing[planned.id] ?? createSmoothingState();
+          const previous = smoothing[key] ?? createSmoothingState();
           const smoothed = smoothTransform(previous, buffered.transform, {
             now,
-            faceWidth: plan.faceWidth,
-            tauMs,
+            faceWidth: planned.referenceWidth,
+            tauMs:
+              planned.slot === 'necklace'
+                ? NECKLACE_SMOOTHING_TAU_MS
+                : undefined,
           });
-          smoothing[planned.id] = smoothed.state;
+          smoothing[key] = smoothed.state;
 
-          return smoothed.value
-            ? [{transform: smoothed.value, masked: planned.masked}]
+          const image = images.get(planned.id);
+
+          return smoothed.value && image
+            ? [
+                {
+                  image,
+                  transform: smoothed.value,
+                  masked: planned.masked,
+                },
+              ]
             : [];
         });
 
+        for (const key of Object.keys(smoothing)) {
+          if (!activeKeys.has(key)) delete smoothing[key];
+        }
+        for (const key of Object.keys(anchorBuffers)) {
+          if (!activeKeys.has(key)) delete anchorBuffers[key];
+        }
+
         maskToDraw = plan.headMask;
-        lastOverlays = overlaysToDraw;
+        lastLayers = layersToDraw;
         lastMask = plan.headMask;
       } else if (now - lastPlanAt < TRACKING_GRACE_MS) {
         // Keep the last placement for a beat instead of flickering off.
-        overlaysToDraw = lastOverlays;
+        layersToDraw = lastLayers;
         maskToDraw = lastMask;
       } else {
         earState = createEarVisibilityState();
         Object.keys(smoothing).forEach((key) => delete smoothing[key]);
         Object.keys(anchorBuffers).forEach((key) => delete anchorBuffers[key]);
-        lastOverlays = [];
+        lastLayers = [];
         lastMask = null;
       }
 
@@ -223,8 +242,7 @@ export function CameraStage({
 
       if (context) {
         drawOverlays(context, {
-          overlay: activeOverlay,
-          overlays: overlaysToDraw,
+          layers: layersToDraw,
           headMask: maskToDraw,
           mirror: true,
           sourceWidth: width,
@@ -232,7 +250,7 @@ export function CameraStage({
         });
       }
 
-      report(overlaysToDraw.length > 0 ? 'tracking' : 'no-face');
+      report(layersToDraw.length > 0 ? 'tracking' : 'no-face');
       schedule();
     }
 
@@ -249,7 +267,10 @@ export function CameraStage({
     const track = stream.getVideoTracks?.()[0];
     track?.addEventListener?.('ended', () => {
       if (!disposed) {
-        onFailureRef.current('unavailable', 'TrackEnded: the camera stream ended');
+        onFailureRef.current(
+          'unavailable',
+          'TrackEnded: the camera stream ended',
+        );
       }
     });
 
@@ -265,7 +286,7 @@ export function CameraStage({
         );
       }
     };
-  }, [piece.kind, piece.sizeCm, stream]);
+  }, [stream]);
 
   return (
     <div
@@ -281,7 +302,7 @@ export function CameraStage({
         ref={videoRef}
       />
       <canvas
-        aria-label={t('tryOn.preview', {title})}
+        aria-label={previewLabel}
         className="pointer-events-none absolute inset-0 h-full w-full"
         ref={canvasRef}
         role="img"

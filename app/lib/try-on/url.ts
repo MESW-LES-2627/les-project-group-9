@@ -55,14 +55,26 @@ export function currentTryOnLink(pageUrl: string): string {
 }
 
 /**
+ * Fitting-room look link: the page plus the selected variant ids and `tryOn=1`.
+ * The phone preselects the same pieces before opening the look.
+ */
+export function lookTryOnLink(pageUrl: string, ids: readonly string[]): string {
+  const url = new URL(pageUrl);
+  url.searchParams.delete('tryOn');
+  url.searchParams.delete('ids');
+
+  if (ids.length) url.searchParams.set('ids', ids.join(','));
+  url.searchParams.set('tryOn', '1');
+
+  return url.toString();
+}
+
+/**
  * Keeps the QR/deep link on HTTPS when the page is served over HTTPS but the
  * server built it from an internal `http://` request URL (dev tunnels and
  * proxies terminate TLS and forward plain HTTP, which HSTS then has to fix).
  */
-export function secureTryOnLink(
-  link: string,
-  pageProtocol?: string,
-): string {
+export function secureTryOnLink(link: string, pageProtocol?: string): string {
   const current =
     pageProtocol ??
     (typeof window === 'undefined' ? null : window.location.protocol);

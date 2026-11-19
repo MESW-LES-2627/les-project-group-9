@@ -6,10 +6,14 @@ export type FrameOverlay = {
   masked: boolean;
 };
 
+/** One drawable overlay: its transform and the PNG it paints. */
+export type FrameLayer = FrameOverlay & {
+  image: CanvasImageSource;
+};
+
 export type DrawOverlaysOptions = {
-  /** The piece drawn on top of the preview. */
-  overlay: CanvasImageSource;
-  overlays: FrameOverlay[];
+  /** The pieces drawn on top of the preview, in back-to-front order. */
+  layers: readonly FrameLayer[];
   /** Head polygon from `headMaskPolygon`, in pixel space. */
   headMask: Point[] | null;
   /** The preview is mirrored (front camera); uploaded photos are not. */
@@ -22,7 +26,7 @@ export type DrawOverlaysOptions = {
 
 /**
  * Draws the piece(s) on a transparent canvas. The camera preview is a real
- * `<video>` element, so only the overlay is painted here.
+ * `<video>` element, so only the overlays are painted here.
  */
 export function drawOverlays(
   context: CanvasRenderingContext2D,
@@ -36,7 +40,7 @@ export function drawOverlays(
     context.clearRect(0, 0, width, height);
   }
 
-  for (const {transform, masked} of options.overlays) {
+  for (const {image, transform, masked} of options.layers) {
     context.save();
 
     if (masked && options.headMask) {
@@ -46,10 +50,7 @@ export function drawOverlays(
       context.clip('evenodd');
     }
 
-    context.translate(
-      mirror ? width - transform.x : transform.x,
-      transform.y,
-    );
+    context.translate(mirror ? width - transform.x : transform.x, transform.y);
     context.rotate(mirror ? -transform.rotation : transform.rotation);
 
     if (mirror ? !transform.mirrored : transform.mirrored) {
@@ -57,7 +58,7 @@ export function drawOverlays(
     }
 
     context.drawImage(
-      options.overlay,
+      image,
       -transform.width / 2,
       0,
       transform.width,

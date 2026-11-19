@@ -3,6 +3,7 @@ import {
   EAR_HYSTERESIS_FRAMES,
   EAR_LOBE_LIFT_RATIO,
   EAR_OUTWARD_RATIO,
+  EAR_STACK_GAP_RATIO,
   FACE_WIDTH_CM,
   MAX_JUMP_RATIO,
   MAX_ROLL_RADIANS,
@@ -57,7 +58,9 @@ function landmarks(overrides: Record<number, Point> = {}): Point[] {
 
 const VISIBLE = {a: true, b: true};
 
-function transform(overrides: Partial<OverlayTransform> = {}): OverlayTransform {
+function transform(
+  overrides: Partial<OverlayTransform> = {},
+): OverlayTransform {
   return {
     x: 100,
     y: 100,
@@ -105,7 +108,9 @@ describe('faceMetrics', () => {
   it('returns null when the landmarks cannot describe a face', () => {
     expect(faceMetrics([])).toBe(null);
     expect(
-      faceMetrics(landmarks({[TRY_ON_LANDMARKS.eyeB]: {x: Number.NaN, y: 200}})),
+      faceMetrics(
+        landmarks({[TRY_ON_LANDMARKS.eyeB]: {x: Number.NaN, y: 200}}),
+      ),
     ).toBe(null);
     expect(
       faceMetrics(landmarks({[TRY_ON_LANDMARKS.faceB]: {x: 140, y: 240}})),
@@ -328,6 +333,32 @@ describe('earTransforms', () => {
     expect(transforms?.a?.y).toBeCloseTo(250 - vertical.y * lift);
   });
 
+  it('stacks an extra earring above the lobe', () => {
+    const points = landmarks();
+    const metrics = faceMetrics(points)!;
+    const lobe = earTransforms(points, metrics, {
+      sizeCm: 2,
+      overlayAspect: 1,
+      visibility: VISIBLE,
+      stackIndex: 0,
+    });
+    const second = earTransforms(points, metrics, {
+      sizeCm: 2,
+      overlayAspect: 1,
+      visibility: VISIBLE,
+      stackIndex: 1,
+    });
+
+    const gap = metrics.width * EAR_STACK_GAP_RATIO;
+
+    expect(lobe?.a?.y).toBeGreaterThan(second!.a!.y);
+    expect(lobe?.a?.y! - second!.a!.y!).toBeCloseTo(gap);
+    expect(lobe?.b?.y! - second!.b!.y!).toBeCloseTo(gap);
+    // Stacking only lifts the piece; its size and lateral placement stay put.
+    expect(second?.a?.x).toBeCloseTo(lobe!.a!.x);
+    expect(second?.a?.width).toBeCloseTo(lobe!.a!.width);
+  });
+
   it('keeps the overlay aspect ratio and the head roll', () => {
     const points = landmarks({[TRY_ON_LANDMARKS.eyeB]: {x: 360, y: 240}});
     const metrics = faceMetrics(points);
@@ -385,7 +416,7 @@ describe('necklaceTransform', () => {
     });
 
     const drop = 320 * NECK_BASE_DROP_RATIO;
-    const height = (16 / SHOULDER_WIDTH_CM) * shoulderWidthPx(320) / 2;
+    const height = ((16 / SHOULDER_WIDTH_CM) * shoulderWidthPx(320)) / 2;
 
     expect(transform?.x).toBeCloseTo(320);
     // Top-centre sits on the neck base, so the chain arcs around the neck.
@@ -396,7 +427,9 @@ describe('necklaceTransform', () => {
   });
 
   it('returns null without a chin or metrics', () => {
-    const points = landmarks({[TRY_ON_LANDMARKS.chin]: {x: Number.NaN, y: 400}});
+    const points = landmarks({
+      [TRY_ON_LANDMARKS.chin]: {x: Number.NaN, y: 400},
+    });
 
     expect(
       necklaceTransform(points, faceMetrics(landmarks()), {
@@ -517,20 +550,18 @@ describe('smoothTransform', () => {
       faceWidth: 320,
     });
 
-    const afterGap = smoothTransform(
-      first.state,
-      transform({x: 120}),
-      {now: SMOOTHING_GAP_MS + 10, faceWidth: 320},
-    );
+    const afterGap = smoothTransform(first.state, transform({x: 120}), {
+      now: SMOOTHING_GAP_MS + 10,
+      faceWidth: 320,
+    });
     expect(afterGap.value?.x).toBe(120);
 
     // A one-frame spike is clamped to MAX_JUMP_RATIO of the face width, then
     // eased: no teleport, no visible snap.
-    const afterJump = smoothTransform(
-      first.state,
-      transform({x: 300}),
-      {now: 30, faceWidth: 320},
-    );
+    const afterJump = smoothTransform(first.state, transform({x: 300}), {
+      now: 30,
+      faceWidth: 320,
+    });
     expect(afterJump.value?.x).toBeCloseTo(
       100 + 320 * MAX_JUMP_RATIO * (1 - Math.exp(-30 / SMOOTHING_TAU_MS)),
     );
@@ -561,11 +592,10 @@ describe('smoothTransform', () => {
       transform({rotation: 3}),
       {now: 0, faceWidth: 320},
     );
-    const next = smoothTransform(
-      first.state,
-      transform({rotation: -3}),
-      {now: 90, faceWidth: 320},
-    );
+    const next = smoothTransform(first.state, transform({rotation: -3}), {
+      now: 90,
+      faceWidth: 320,
+    });
 
     expect(next.value?.rotation).toBeGreaterThan(3);
     expect(next.value?.rotation).toBeCloseTo(
@@ -579,11 +609,10 @@ describe('smoothTransform', () => {
       now: 0,
       faceWidth: 320,
     });
-    const next = smoothTransform(
-      first.state,
-      transform({mirrored: true}),
-      {now: 30, faceWidth: 320},
-    );
+    const next = smoothTransform(first.state, transform({mirrored: true}), {
+      now: 30,
+      faceWidth: 320,
+    });
 
     expect(next.value?.mirrored).toBe(true);
   });

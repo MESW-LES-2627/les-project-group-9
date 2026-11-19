@@ -11,6 +11,8 @@ import {withCorsParam} from './url';
 export type TryOnKind = 'earring' | 'necklace';
 
 export type TryOnPiece = {
+  /** Variant GID; stable key when several pieces share one camera frame. */
+  id: string;
   kind: TryOnKind;
   /** Absolute overlay URL, already cache-busted for CORS (see `url.ts`). */
   overlayUrl: string;
@@ -31,6 +33,7 @@ export type TryOnProduct = {
 
 /** Variant fields that carry the overlay. */
 export type TryOnVariant = {
+  id: string;
   tryOnOverlay?: {reference?: TryOnReference | null} | null;
   tryOnSize?: {value?: string | null} | null;
 };
@@ -71,7 +74,11 @@ export function parseTryOnSizeCm(
 
   const parsed = Number(text);
 
-  if (!Number.isFinite(parsed) || parsed < MIN_SIZE_CM || parsed > MAX_SIZE_CM) {
+  if (
+    !Number.isFinite(parsed) ||
+    parsed < MIN_SIZE_CM ||
+    parsed > MAX_SIZE_CM
+  ) {
     return DEFAULT_TRY_ON_SIZE_CM[kind];
   }
 
@@ -101,6 +108,7 @@ export function resolveTryOn(
   if (!overlayUrl) return null;
 
   return {
+    id: variant.id,
     kind,
     overlayUrl: withCorsParam(overlayUrl),
     sizeCm: parseTryOnSizeCm(variant.tryOnSize?.value, kind),

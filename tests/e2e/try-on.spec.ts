@@ -1,53 +1,16 @@
 import {expect, test, type Page} from '@playwright/test';
+import {openProduct, productLinks} from './support/catalog';
 
 const IPHONE =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1';
 
-async function productLinks(page: Page) {
-  await page.goto('/collections/all');
-
-  return page
-    .locator('a[href^="/products/"]')
-    .evaluateAll((links) =>
-      Array.from(
-        new Set(
-          links
-            .map((link) => link.getAttribute('href') ?? '')
-            .filter((href) => href.startsWith('/products/')),
-        ),
-      ),
-    );
-}
-
-/**
- * Opens the first product of the collection (used by the gate test) and returns
- * its href.
- */
+/** Opens the first product of the collection (the gate test) and returns its href. */
 async function openFirstProduct(page: Page) {
   const href = (await productLinks(page))[0];
 
   await page.goto(href!);
 
   return href!;
-}
-
-/**
- * Finds a product whose page actually offers try-on (a supported category plus
- * a transparent overlay). Returns `null` when the catalog has none, so the
- * store-dependent tests can skip instead of failing.
- */
-async function openTryOnProduct(page: Page): Promise<string | null> {
-  const hrefs = await productLinks(page);
-
-  for (const href of hrefs.slice(0, 12)) {
-    await page.goto(href);
-
-    if ((await page.getByRole('button', {name: 'Try on'}).count()) > 0) {
-      return href;
-    }
-  }
-
-  return null;
 }
 
 test('products without a transparent try-on overlay do not offer try-on', async ({
@@ -67,10 +30,10 @@ test('products without a transparent try-on overlay do not offer try-on', async 
 });
 
 test('a computer shows a QR code for the try-on', async ({page}) => {
-  const href = await openTryOnProduct(page);
+  const product = await openProduct(page, {tryOn: true});
 
   test.skip(
-    href === null,
+    product === null,
     'The active store has no earring/necklace with a transparent overlay metafield',
   );
 
@@ -82,7 +45,7 @@ test('a computer shows a QR code for the try-on', async ({page}) => {
   await expect(dialog.getByRole('img')).toBeVisible();
   await expect(
     dialog.getByRole('link', {name: 'Open the try-on link'}),
-  ).toHaveAttribute('href', /\?tryOn=1/);
+  ).toHaveAttribute('href', /[?&]tryOn=1/);
 
   await page.keyboard.press('Escape');
   await expect(dialog).toBeHidden();
@@ -91,14 +54,14 @@ test('a computer shows a QR code for the try-on', async ({page}) => {
 test('a ?tryOn=1 link opens the try-on and clears the parameter', async ({
   page,
 }) => {
-  const href = await openTryOnProduct(page);
+  const product = await openProduct(page, {tryOn: true});
 
   test.skip(
-    href === null,
+    product === null,
     'The active store has no earring/necklace with a transparent overlay metafield',
   );
 
-  await page.goto(`${href}?tryOn=1`);
+  await page.goto(`${product!.href}?tryOn=1`);
 
   await expect(
     page.getByRole('dialog', {name: 'Try it on your phone'}),
@@ -128,10 +91,10 @@ test.describe('phone', () => {
       }
     });
 
-    const href = await openTryOnProduct(page);
+    const product = await openProduct(page, {tryOn: true});
 
     test.skip(
-      href === null,
+      product === null,
       'The active store has no earring/necklace with a transparent overlay metafield',
     );
 

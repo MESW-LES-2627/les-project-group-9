@@ -2,7 +2,7 @@ import {Image} from '@shopify/hydrogen';
 import {Money} from '~/components/shared/Money';
 import type {FittingRoomPiece} from '~/lib/profile/fitting-room';
 import {useTranslation} from '~/lib/i18n';
-import {FittingRoomTryOn} from './FittingRoomTryOn';
+import {FittingRoomLookTryOn} from './FittingRoomLookTryOn';
 
 type FittingRoomViewProps = {
   pieces: FittingRoomPiece[];
@@ -40,8 +40,8 @@ export function FittingRoomView({
   onClear,
 }: FittingRoomViewProps) {
   const t = useTranslation();
-  const selected = pieces.filter((piece) =>
-    selectedIds.includes(piece.variantId),
+  const selectedLook = pieces.filter(
+    (piece) => selectedIds.includes(piece.variantId) && piece.tryOn !== null,
   );
 
   return (
@@ -73,18 +73,20 @@ export function FittingRoomView({
             const title = pieceTitle(piece);
             const checked = selectedIds.includes(piece.variantId);
             const moving = movingId === piece.variantId;
+            const canTryOn = piece.tryOn !== null;
 
             return (
               <li key={piece.variantId} className="py-4">
                 <label
-                  className={`flex cursor-pointer items-center gap-4 transition-opacity ${
-                    checked ? 'opacity-100' : 'opacity-60'
-                  }`}
+                  className={`flex items-center gap-4 ${
+                    canTryOn ? 'cursor-pointer' : 'cursor-default'
+                  } transition-opacity ${checked ? 'opacity-100' : 'opacity-60'}`}
                 >
                   <input
                     aria-label={t('fittingRoom.select', {title})}
                     checked={checked}
-                    className="h-4 w-4 shrink-0 accent-ink"
+                    className="h-4 w-4 shrink-0 accent-ink disabled:cursor-not-allowed"
+                    disabled={!canTryOn}
                     onChange={() => onToggle(piece.variantId)}
                     type="checkbox"
                   />
@@ -109,20 +111,17 @@ export function FittingRoomView({
                         {piece.variantTitle}
                       </span>
                     ) : null}
-                    <span className="mt-1 block text-sm text-primary">
+                    <span className="mt-1 flex flex-wrap items-center gap-2 text-sm text-primary">
                       <Money data={piece.price} withoutTrailingZeros />
+                      {canTryOn ? null : (
+                        <span className="border border-line px-2 py-0.5 text-[10px] uppercase tracking-widest">
+                          {t('fittingRoom.no3d')}
+                        </span>
+                      )}
                     </span>
                   </span>
                 </label>
                 <div className="mt-3 flex items-center gap-4 pl-8 text-[11px] uppercase tracking-widest text-primary">
-                  {piece.tryOn ? (
-                    <FittingRoomTryOn
-                      isMobile={isMobile}
-                      piece={piece.tryOn}
-                      title={title}
-                      tryOnLink={piece.tryOnLink}
-                    />
-                  ) : null}
                   <button
                     type="button"
                     aria-label={t('product.fittingRoomRemove', {title})}
@@ -169,10 +168,10 @@ export function FittingRoomView({
         </div>
 
         <div className="mt-6 flex flex-1 items-center justify-center">
-          {selected.length ? (
-            <div className="text-center">
+          {selectedLook.length ? (
+            <div className="w-full text-center">
               <div className="mx-auto flex max-w-xs flex-wrap justify-center gap-2">
-                {selected.map((piece) =>
+                {selectedLook.map((piece) =>
                   piece.image ? (
                     <Image
                       key={piece.variantId}
@@ -186,8 +185,17 @@ export function FittingRoomView({
                 )}
               </div>
               <p className="mt-4 text-sm text-primary">
-                {t('fittingRoom.readyToTry', {count: selected.length})}
+                {t('fittingRoom.readyToTry', {count: selectedLook.length})}
               </p>
+              <div className="mt-4">
+                <FittingRoomLookTryOn
+                  ids={selectedLook.map((piece) => piece.variantId)}
+                  isMobile={isMobile}
+                  pieces={selectedLook.flatMap((piece) =>
+                    piece.tryOn ? [piece.tryOn] : [],
+                  )}
+                />
+              </div>
             </div>
           ) : (
             <p className="max-w-[30ch] text-center text-sm text-primary">

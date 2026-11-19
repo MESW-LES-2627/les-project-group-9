@@ -237,6 +237,12 @@ export const fr: Messages = {
   'tryOn.openLink': 'Ouvrir le lien de l’essayage',
   'tryOn.privacy': 'Votre caméra et vos photos restent sur cet appareil.',
   'tryOn.preview': 'Aperçu avec {title} sur vous',
+  'tryOn.lookTitle': 'Essayez votre look',
+  'tryOn.lookPrompt':
+    'Touchez ci-dessous pour ouvrir votre caméra et essayer votre look.',
+  'tryOn.lookPreview': 'Aperçu de votre look sur vous',
+  'tryOn.lookUnavailable':
+    'L’essayage n’est pas encore disponible pour ce look.',
 
   // Allergens and the allergy warning
   'allergen.nickel': 'Nickel',
@@ -341,8 +347,9 @@ export const fr: Messages = {
   'fittingRoom.tryOn': 'Essayage virtuel',
   'fittingRoom.tryOnTitle': 'Voyez le rendu sur vous',
   'fittingRoom.tryOnText':
-    'Sélectionnez les pièces à comparer, puis utilisez Essayer à côté d’une boucle d’oreille ou d’un collier pour le voir sur votre caméra.',
-  'fittingRoom.tryOnPiece': 'Essayer {title}',
+    'Sélectionnez les pièces à voir ensemble, puis ouvrez le look.',
+  'fittingRoom.tryOnLook': 'Essayer le look',
+  'fittingRoom.no3d': 'Sans 3D',
   'fittingRoom.readyToTry': {
     one: '{count} pièce prête à essayer',
     other: '{count} pièces prêtes à essayer',

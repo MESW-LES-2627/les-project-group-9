@@ -12,8 +12,8 @@ import {
 import {isVariantGid} from '~/lib/profile/list-schema';
 import {resolveTryOn} from '~/lib/try-on/catalog';
 import {isMobileRequest} from '~/lib/try-on/device';
-import {tryOnPageUrl} from '~/lib/try-on/url';
-import {loadVariantsByIds, parseVariantIds} from '~/lib/variants.server';
+import {loadVariantsByIds} from '~/lib/variants.server';
+import {parseVariantIds} from '~/lib/variants';
 
 export const meta: Route.MetaFunction = ({matches}) => [
   {title: `${translatorFromMatches(matches)('nav.fittingRoom')} | Jeweliette`},
@@ -27,24 +27,17 @@ export async function loader({request, context}: Route.LoaderArgs) {
   );
   const variants = await loadVariantsByIds(context, ids);
 
-  const pieces: FittingRoomPiece[] = variants
-    .map((variant) => ({
-      variantId: variant.id,
-      product: variant.product,
-      image: variant.image ?? variant.product.featuredImage ?? null,
-      variantTitle: variant.title,
-      price: variant.price,
-      available: variant.availableForSale,
-      tryOn: resolveTryOn(variant.product, variant),
-      tryOnLink: tryOnPageUrl(
-        request.url,
-        variant.product.handle,
-        variant.selectedOptions,
-      ),
-    }))
-    // Stale entries (overlay removed, category changed) are pruned by the
-    // profile endpoint; filtering here keeps them out of the page meanwhile.
-    .filter((piece) => piece.tryOn !== null);
+  const pieces: FittingRoomPiece[] = variants.map((variant) => ({
+    variantId: variant.id,
+    product: variant.product,
+    image: variant.image ?? variant.product.featuredImage ?? null,
+    variantTitle: variant.title,
+    price: variant.price,
+    available: variant.availableForSale,
+    tryOn: resolveTryOn(variant.product, variant),
+  }));
+  // Stale entries (overlay removed, category changed) are pruned by the
+  // profile endpoint; keeping them here lets the view mark them "No 3D".
 
   return {pieces, isMobile: isMobileRequest(request)};
 }
@@ -106,14 +99,20 @@ export async function action({request, context}: Route.ActionArgs) {
 }
 
 export default function FittingRoom() {
-  const {ids, ready, isLoggedIn, toggle: toggleFittingRoom, setIds} =
-    useFittingRoom();
+  const {
+    ids,
+    ready,
+    isLoggedIn,
+    toggle: toggleFittingRoom,
+    setIds,
+  } = useFittingRoom();
   const t = useTranslation();
   const fetcher = useFetcher<typeof loader>();
   const moveFetcher = useFetcher<typeof action>();
   const key = ids.join(',');
   const [selected, setSelected] = useState<string[]>([]);
   const handledMove = useRef<unknown>(null);
+  const handledLookLink = useRef(false);
   const movingId =
     (moveFetcher.formData?.get('variantId') as string | null) ?? null;
 
@@ -127,15 +126,29 @@ export default function FittingRoom() {
   useEffect(() => {
     const currentIds = key ? key.split(',') : [];
 
-    setSelected((current) =>
-      Array.from(
-        new Set([
-          ...current.filter((id) => currentIds.includes(id)),
-          ...currentIds,
-        ]),
-      ),
-    );
+    // Selections are explicit: drop pieces that left the room, but never
+    // select anything automatically.
+    setSelected((current) => current.filter((id) => currentIds.includes(id)));
   }, [key]);
+
+  // A QR link carries the desktop look's variant ids: select them on the phone
+  // so the launcher can open the same pieces.
+  useEffect(() => {
+    if (handledLookLink.current || !ids.length) return;
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('tryOn') !== '1') {
+      handledLookLink.current = true;
+      return;
+    }
+
+    const linked = parseVariantIds(params.get('ids'), MAX_FITTING_ROOM).filter(
+      (id) => ids.includes(id),
+    );
+
+    if (linked.length) setSelected(linked);
+    handledLookLink.current = true;
+  }, [ids]);
 
   const pieces = (fetcher.data?.pieces ?? []).filter((piece) =>
     ids.includes(piece.variantId),
@@ -204,7 +217,9 @@ export default function FittingRoom() {
         </div>
       ) : ids.length === 0 ? (
         <div className="mx-auto mt-14 max-w-md border-y border-line py-14 text-center">
-          <h2 className="font-display text-2xl">{t('fittingRoom.emptyTitle')}</h2>
+          <h2 className="font-display text-2xl">
+            {t('fittingRoom.emptyTitle')}
+          </h2>
           <p className="mt-3 text-sm text-primary">
             {t('fittingRoom.emptyText')}
           </p>
@@ -241,7 +256,13 @@ export default function FittingRoom() {
             onClear={() => setSelected([])}
             onMoveToCart={moveToCart}
             onRemove={toggleFittingRoom}
-            onSelectAll={() => setSelected(ids)}
+            onSelectAll={() =>
+              setSelected(
+                pieces
+                  .filter((piece) => piece.tryOn !== null)
+                  .map((piece) => piece.variantId),
+              )
+            }
             onToggle={toggleSelected}
             pieces={pieces}
             selectedIds={selected}

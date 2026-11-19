@@ -2,7 +2,11 @@ import {GidList} from './profile-field';
 import {isVariantGid} from './list-schema';
 import type {CustomerProfile, ListOperation} from './types';
 
-import type {CatalogImage, CatalogMoney, CatalogProduct} from '../jeweliette-catalog';
+import type {
+  CatalogImage,
+  CatalogMoney,
+  CatalogProduct,
+} from '../jeweliette-catalog';
 import type {TryOnPiece} from '../try-on/catalog';
 
 export const MAX_FITTING_ROOM = 50;
@@ -16,7 +20,6 @@ export type FittingRoomPiece = {
   price: CatalogMoney;
   available: boolean;
   tryOn: TryOnPiece | null;
-  tryOnLink: string;
 };
 
 /**

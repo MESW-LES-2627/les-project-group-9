@@ -1,6 +1,16 @@
 import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {afterAll, beforeAll, beforeEach, describe, expect, it, vi} from 'vitest';
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
+import type {TryOnPiece} from '~/lib/try-on/catalog';
+import type {LoadedTryOnPiece} from '~/lib/try-on/overlay';
 
 const mocks = vi.hoisted(() => ({
   decodePhoto: vi.fn(),
@@ -18,9 +28,7 @@ vi.mock('~/lib/try-on/render', () => ({
 
 import {PhotoFallback} from '~/components/try-on/PhotoFallback';
 
-const LANDMARKS = [
-  1, 33, 263, 152, 234, 454, 132, 361, 177, 401,
-];
+const LANDMARKS = [1, 33, 263, 152, 234, 454, 132, 361, 177, 401];
 
 function faceLandmarks() {
   const points = Array.from({length: 478}, () => ({x: 0.5, y: 0.5}));
@@ -57,6 +65,25 @@ const detector = {
 };
 
 const overlay = document.createElement('img');
+Object.defineProperty(overlay, 'naturalWidth', {value: 200});
+Object.defineProperty(overlay, 'naturalHeight', {value: 100});
+const necklaceOverlay = document.createElement('img');
+Object.defineProperty(necklaceOverlay, 'naturalWidth', {value: 400});
+Object.defineProperty(necklaceOverlay, 'naturalHeight', {value: 200});
+
+const EARRING: TryOnPiece = {
+  id: 'gid://shopify/ProductVariant/1',
+  kind: 'earring',
+  overlayUrl: 'https://cdn.example/earring.png?cors=1',
+  sizeCm: 2,
+};
+const NECKLACE: TryOnPiece = {
+  id: 'gid://shopify/ProductVariant/2',
+  kind: 'necklace',
+  overlayUrl: 'https://cdn.example/necklace.png?cors=1',
+  sizeCm: 16,
+};
+const LOADED: LoadedTryOnPiece = {piece: EARRING, image: overlay};
 const originalGetContext = HTMLCanvasElement.prototype.getContext;
 
 beforeAll(() => {
@@ -71,14 +98,12 @@ beforeEach(() => {
   detector.detectImage.mockReset();
 });
 
-function renderFallback() {
+function renderFallback(pieces: LoadedTryOnPiece[] = [LOADED]) {
   return render(
     <PhotoFallback
       detector={detector}
-      overlay={overlay}
-      overlayAspect={2}
-      piece={{kind: 'earring', sizeCm: 2}}
-      title="Aura Earrings"
+      pieces={pieces}
+      previewLabel="Preview with Aura Earrings on you"
     />,
   );
 }
@@ -99,7 +124,7 @@ describe('PhotoFallback', () => {
 
     const options = mocks.drawTryOnFrame.mock.calls[0][1];
     expect(options.mirror).toBe(false);
-    expect(options.overlays).toHaveLength(2);
+    expect(options.layers).toHaveLength(2);
     expect(options.sourceWidth).toBe(800);
     expect(options.sourceHeight).toBe(600);
     expect(detector.detectImage).toHaveBeenCalledWith(bitmap);
@@ -109,6 +134,29 @@ describe('PhotoFallback', () => {
 
     unmount();
     expect(bitmap.close).toHaveBeenCalledTimes(1);
+  });
+
+  it('composes a whole look on the photo', async () => {
+    const user = userEvent.setup();
+    mocks.decodePhoto.mockResolvedValue(fakeBitmap());
+    detector.detectImage.mockResolvedValue(faceLandmarks());
+
+    renderFallback([LOADED, {piece: NECKLACE, image: necklaceOverlay}]);
+
+    await user.upload(
+      screen.getByLabelText('Upload a photo'),
+      new File(['photo'], 'selfie.png', {type: 'image/png'}),
+    );
+
+    await waitFor(() => expect(mocks.drawTryOnFrame).toHaveBeenCalledTimes(1));
+
+    const options = mocks.drawTryOnFrame.mock.calls[0][1];
+    // Two ears for the earring plus one masked necklace.
+    expect(options.layers).toHaveLength(3);
+    expect(
+      options.layers.map((layer: {image: unknown}) => layer.image),
+    ).toEqual([necklaceOverlay, overlay, overlay]);
+    expect(options.layers[0].masked).toBe(true);
   });
 
   it('keeps the photo and explains when no face is found', async () => {
@@ -129,7 +177,7 @@ describe('PhotoFallback', () => {
       ),
     ).toBeInTheDocument();
     const options = mocks.drawTryOnFrame.mock.calls[0][1];
-    expect(options.overlays).toEqual([]);
+    expect(options.layers).toEqual([]);
   });
 
   it('rejects files that are not images', async () => {
@@ -176,13 +224,13 @@ describe('PhotoFallback', () => {
     await waitFor(() => expect(mocks.drawTryOnFrame).toHaveBeenCalledTimes(1));
 
     const initialWidth =
-      mocks.drawTryOnFrame.mock.calls[0][1].overlays[0].transform.width;
+      mocks.drawTryOnFrame.mock.calls[0][1].layers[0].transform.width;
 
     await user.click(screen.getByRole('button', {name: 'Larger'}));
     await waitFor(() => expect(mocks.drawTryOnFrame).toHaveBeenCalledTimes(2));
 
     const largerWidth =
-      mocks.drawTryOnFrame.mock.calls[1][1].overlays[0].transform.width;
+      mocks.drawTryOnFrame.mock.calls[1][1].layers[0].transform.width;
     expect(largerWidth).toBeGreaterThan(initialWidth);
 
     await user.click(screen.getByRole('button', {name: 'Smaller'}));
@@ -190,7 +238,7 @@ describe('PhotoFallback', () => {
     await waitFor(() => expect(mocks.drawTryOnFrame).toHaveBeenCalledTimes(4));
 
     expect(
-      mocks.drawTryOnFrame.mock.calls[3][1].overlays[0].transform.width,
+      mocks.drawTryOnFrame.mock.calls[3][1].layers[0].transform.width,
     ).toBeCloseTo(initialWidth);
   });
 
@@ -229,10 +277,9 @@ describe('PhotoFallback', () => {
       expect(mocks.drawTryOnFrame.mock.calls.length).toBeGreaterThan(1),
     );
 
-    const before =
-      mocks.drawTryOnFrame.mock.calls[0][1].overlays[0].transform.x;
+    const before = mocks.drawTryOnFrame.mock.calls[0][1].layers[0].transform.x;
     const after =
-      mocks.drawTryOnFrame.mock.calls.at(-1)![1].overlays[0].transform.x;
+      mocks.drawTryOnFrame.mock.calls.at(-1)![1].layers[0].transform.x;
 
     expect(after - before).toBeCloseTo(80);
   });

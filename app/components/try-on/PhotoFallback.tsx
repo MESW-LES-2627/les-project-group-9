@@ -1,13 +1,10 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
 import type {PointerEvent as ReactPointerEvent} from 'react';
 import {useTranslation, type MessageKey} from '~/lib/i18n';
-import type {TryOnPiece} from '~/lib/try-on/catalog';
-import {
-  createEarVisibilityState,
-  toPixelLandmarks,
-} from '~/lib/try-on/anchors';
+import {createEarVisibilityState, toPixelLandmarks} from '~/lib/try-on/anchors';
 import type {FaceDetector} from '~/lib/try-on/face-landmarker';
 import {planFrame} from '~/lib/try-on/frame';
+import {overlayAspect, type LoadedTryOnPiece} from '~/lib/try-on/overlay';
 import {drawTryOnFrame} from '~/lib/try-on/render';
 import {decodePhoto, validatePhotoFile} from '~/lib/try-on/upload';
 import {StatusMessage} from './StatusMessage';
@@ -23,10 +20,10 @@ const NO_ADJUST: Adjust = {dx: 0, dy: 0, scale: 1};
 
 type PhotoFallbackProps = {
   detector: FaceDetector;
-  overlay: HTMLImageElement;
-  overlayAspect: number;
-  piece: Pick<TryOnPiece, 'kind' | 'sizeCm'>;
-  title: string;
+  /** Every usable piece of the look, with its decoded PNG. */
+  pieces: LoadedTryOnPiece[];
+  /** Ready-made accessible label for the preview canvas. */
+  previewLabel: string;
 };
 
 /**
@@ -38,10 +35,8 @@ type PhotoFallbackProps = {
  */
 export function PhotoFallback({
   detector,
-  overlay,
-  overlayAspect,
-  piece,
-  title,
+  pieces,
+  previewLabel,
 }: PhotoFallbackProps) {
   const t = useTranslation();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -71,39 +66,45 @@ export function PhotoFallback({
 
       const plan = planRef.current;
       const {width, height} = sizeRef.current;
-      const overlays = (plan?.overlays ?? []).map(({transform, masked}) => {
-        const scaledWidth = transform.width * next.scale;
-        const scaledHeight = transform.height * next.scale;
+      const images = new Map(pieces.map(({piece, image}) => [piece.id, image]));
+      const layers = (plan?.overlays ?? []).flatMap((planned) => {
+        const image = images.get(planned.id);
+        if (!image) return [];
+
+        const scaledWidth = planned.transform.width * next.scale;
+        const scaledHeight = planned.transform.height * next.scale;
         // Necklaces are centred on the collarbone; keep that centre fixed while
         // resizing so the piece grows evenly around the anchor.
         const centeringOffset =
-          piece.kind === 'necklace'
-            ? (scaledHeight - transform.height) / 2
+          planned.slot === 'necklace'
+            ? (scaledHeight - planned.transform.height) / 2
             : 0;
 
-        return {
-          masked,
-          transform: {
-            ...transform,
-            x: transform.x + next.dx * width,
-            y: transform.y + next.dy * height - centeringOffset,
-            width: scaledWidth,
-            height: scaledHeight,
+        return [
+          {
+            image,
+            masked: planned.masked,
+            transform: {
+              ...planned.transform,
+              x: planned.transform.x + next.dx * width,
+              y: planned.transform.y + next.dy * height - centeringOffset,
+              width: scaledWidth,
+              height: scaledHeight,
+            },
           },
-        };
+        ];
       });
 
       drawTryOnFrame(context, {
         source: bitmap,
         sourceWidth: width,
         sourceHeight: height,
-        overlay,
-        overlays,
+        layers,
         headMask: plan?.headMask ?? null,
         mirror: false,
       });
     },
-    [overlay, piece.kind],
+    [pieces],
   );
 
   useEffect(() => {
@@ -144,9 +145,10 @@ export function PhotoFallback({
       const plan = points
         ? planFrame({
             points: toPixelLandmarks(points, width, height),
-            kind: piece.kind,
-            sizeCm: piece.sizeCm,
-            overlayAspect,
+            pieces: pieces.map(({piece, image}) => ({
+              ...piece,
+              overlayAspect: overlayAspect(image),
+            })),
             bounds: {width, height},
             earState: createEarVisibilityState(),
             instant: true,
@@ -162,9 +164,7 @@ export function PhotoFallback({
       setAdjust(NO_ADJUST);
       draw(NO_ADJUST);
       setMessage(
-        points && (plan?.overlays.length ?? 0) > 0
-          ? null
-          : 'tryOn.photoNoFace',
+        points && (plan?.overlays.length ?? 0) > 0 ? null : 'tryOn.photoNoFace',
       );
     } catch {
       bitmap?.close();
@@ -237,7 +237,7 @@ export function PhotoFallback({
   return (
     <div className="space-y-3">
       <canvas
-        aria-label={t('tryOn.preview', {title})}
+        aria-label={previewLabel}
         className={
           hasPhoto
             ? 'block h-auto w-full cursor-grab touch-none bg-secondary'

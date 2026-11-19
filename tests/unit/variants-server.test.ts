@@ -1,8 +1,6 @@
 import {describe, expect, it, vi} from 'vitest';
-import {
-  loadVariantsByIds,
-  parseVariantIds,
-} from '../../app/lib/variants.server';
+import {loadVariantsByIds} from '../../app/lib/variants.server';
+import {parseVariantIds} from '../../app/lib/variants';
 
 describe('parseVariantIds', () => {
   it('keeps only variant GIDs', () => {

@@ -4,8 +4,7 @@ import userEvent from '@testing-library/user-event';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 
 const mocks = vi.hoisted(() => ({
-  loadOverlayImage: vi.fn(),
-  overlayTransparency: vi.fn(),
+  loadTryOnOverlays: vi.fn(),
   getFaceDetector: vi.fn(),
   close: vi.fn(),
   requestCamera: vi.fn(),
@@ -14,8 +13,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('~/lib/try-on/overlay', () => ({
-  loadOverlayImage: mocks.loadOverlayImage,
-  overlayTransparency: mocks.overlayTransparency,
+  loadTryOnOverlays: mocks.loadTryOnOverlays,
 }));
 
 vi.mock('~/lib/try-on/face-landmarker', () => ({
@@ -35,16 +33,16 @@ vi.mock('~/lib/try-on/camera', async (importOriginal) => {
 vi.mock('~/components/try-on/CameraStage', () => ({
   CameraStage: ({
     detector,
-    overlay,
+    pieces,
     onFailure,
   }: {
     detector: unknown;
-    overlay: unknown;
+    pieces: unknown[];
     onFailure: (reason: string) => void;
   }) => (
     <div
       data-detector={detector ? 'ready' : 'pending'}
-      data-overlay={overlay ? 'ready' : 'pending'}
+      data-overlay={pieces.length > 0 ? 'ready' : 'pending'}
       data-testid="camera-stage"
     >
       <button onClick={() => onFailure('denied')} type="button">
@@ -57,10 +55,22 @@ vi.mock('~/components/try-on/CameraStage', () => ({
 import {TryOnDialog} from '~/components/try-on/TryOnDialog';
 
 const PIECE = {
+  id: 'gid://shopify/ProductVariant/1',
   kind: 'earring' as const,
   overlayUrl: 'https://cdn.example/earring.png?cors=1',
   sizeCm: 2,
 };
+
+const NECKLACE = {
+  id: 'gid://shopify/ProductVariant/2',
+  kind: 'necklace' as const,
+  overlayUrl: 'https://cdn.example/necklace.png?cors=1',
+  sizeCm: 16,
+};
+
+const PIECES = [PIECE, NECKLACE];
+
+const OVERLAY = document.createElement('img');
 
 function fakeDetector() {
   return {
@@ -80,24 +90,30 @@ function deferred<T>() {
 
 function renderDialog(
   initialMode: 'camera' | 'photo' = 'camera',
-  overrides: {autoStart?: boolean} = {},
+  overrides: {
+    autoStart?: boolean;
+    pieces?: typeof PIECES;
+    title?: string;
+    look?: boolean;
+  } = {},
 ) {
   return render(
     <TryOnDialog
       autoStart={overrides.autoStart ?? true}
       initialMode={initialMode}
       onClose={vi.fn()}
-      piece={PIECE}
-      title="Aura Earrings"
+      pieces={overrides.pieces ?? [PIECE]}
+      title={overrides.look ? undefined : (overrides.title ?? 'Aura Earrings')}
     />,
   );
 }
 
 beforeEach(() => {
-  mocks.loadOverlayImage
-    .mockReset()
-    .mockResolvedValue({naturalWidth: 200, naturalHeight: 100});
-  mocks.overlayTransparency.mockReset().mockReturnValue('transparent');
+  mocks.loadTryOnOverlays.mockReset().mockResolvedValue({
+    ready: [{piece: PIECE, image: OVERLAY}],
+    opaque: 0,
+    failed: 0,
+  });
   mocks.close.mockReset();
   mocks.requestCamera
     .mockReset()
@@ -108,9 +124,13 @@ beforeEach(() => {
 });
 
 describe('TryOnDialog', () => {
-  it('shows the live preview while the PNG is still loading', async () => {
-    const overlayTask = deferred<{naturalWidth: number; naturalHeight: number}>();
-    mocks.loadOverlayImage.mockReturnValue(overlayTask.promise);
+  it('shows the live preview while the PNGs are still loading', async () => {
+    const overlayTask = deferred<{
+      ready: Array<{piece: typeof PIECE; image: HTMLImageElement}>;
+      opaque: number;
+      failed: number;
+    }>();
+    mocks.loadTryOnOverlays.mockReturnValue(overlayTask.promise);
 
     renderDialog();
 
@@ -118,7 +138,11 @@ describe('TryOnDialog', () => {
     expect(stage).toHaveAttribute('data-overlay', 'pending');
 
     await act(async () => {
-      overlayTask.resolve({naturalWidth: 200, naturalHeight: 100});
+      overlayTask.resolve({
+        ready: [{piece: PIECE, image: OVERLAY}],
+        opaque: 0,
+        failed: 0,
+      });
     });
 
     await waitFor(() =>
@@ -173,7 +197,7 @@ describe('TryOnDialog', () => {
           autoStart
           initialMode="camera"
           onClose={vi.fn()}
-          piece={PIECE}
+          pieces={[PIECE]}
           title="Aura Earrings"
         />
       </StrictMode>,
@@ -202,7 +226,11 @@ describe('TryOnDialog', () => {
   });
 
   it('refuses to paint an opaque overlay over the shopper', async () => {
-    mocks.overlayTransparency.mockReturnValue('opaque');
+    mocks.loadTryOnOverlays.mockResolvedValue({
+      ready: [],
+      opaque: 1,
+      failed: 0,
+    });
 
     renderDialog();
 
@@ -213,6 +241,22 @@ describe('TryOnDialog', () => {
     // The landmarker starts in parallel; it is closed when the dialog unmounts.
     expect(mocks.getFaceDetector).toHaveBeenCalledTimes(1);
     expect(mocks.stopStream).toHaveBeenCalled();
+  });
+
+  it('loads every piece and uses the look copy', async () => {
+    renderDialog('camera', {pieces: PIECES, look: true});
+
+    expect(await screen.findByRole('dialog')).toHaveTextContent(
+      'Try on your look',
+    );
+    expect(mocks.loadTryOnOverlays).toHaveBeenCalledWith(PIECES);
+
+    await waitFor(() =>
+      expect(screen.getByTestId('camera-stage')).toHaveAttribute(
+        'data-overlay',
+        'ready',
+      ),
+    );
   });
 
   it('falls back to the photo upload when the camera is denied', async () => {
@@ -288,11 +332,12 @@ describe('TryOnDialog', () => {
     expect(mocks.requestCamera).not.toHaveBeenCalled();
   });
 
-  it('shows a single failure message when the overlay cannot load', async () => {
-    const consoleError = vi
-      .spyOn(console, 'error')
-      .mockImplementation(() => undefined);
-    mocks.loadOverlayImage.mockRejectedValue(new Error('overlay-load: 404'));
+  it('shows a single failure message when no overlay can load', async () => {
+    mocks.loadTryOnOverlays.mockResolvedValue({
+      ready: [],
+      opaque: 0,
+      failed: 1,
+    });
 
     renderDialog();
 
@@ -302,7 +347,6 @@ describe('TryOnDialog', () => {
 
     expect(messages).toHaveLength(1);
     expect(mocks.stopStream).toHaveBeenCalled();
-    consoleError.mockRestore();
   });
 
   it('keeps the shared landmarker alive for the next open', async () => {

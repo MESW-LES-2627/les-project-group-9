@@ -50,6 +50,7 @@ vi.mock('~/components/try-on/TryOnQrDialog', () => ({
 import {TryOnButton} from '~/components/product/TryOnButton';
 
 const PIECE = {
+  id: 'gid://shopify/ProductVariant/1',
   kind: 'earring' as const,
   overlayUrl: 'https://cdn.example/earring.png?cors=1',
   sizeCm: 2,
@@ -57,11 +58,7 @@ const PIECE = {
 
 function renderButton(isMobile = false) {
   return render(
-    <TryOnButton
-      isMobile={isMobile}
-      piece={PIECE}
-      title="Aura Earrings"
-    />,
+    <TryOnButton isMobile={isMobile} piece={PIECE} title="Aura Earrings" />,
   );
 }
 

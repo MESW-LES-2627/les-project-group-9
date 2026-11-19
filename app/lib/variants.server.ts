@@ -4,7 +4,6 @@ import type {
   CatalogMoney,
   CatalogProduct,
 } from './jeweliette-catalog';
-import {isVariantGid} from './profile/list-schema';
 import type {TryOnReference} from './try-on/catalog';
 
 type Context = Pick<HydrogenRouterContextProvider, 'storefront'>;
@@ -66,14 +65,6 @@ const VARIANTS_BY_IDS_QUERY = `#graphql
     }
   }
 ` as const;
-
-/** Reads a comma-separated `ids` query parameter of variant GIDs. */
-export function parseVariantIds(
-  raw: string | null | undefined,
-  max = 50,
-): string[] {
-  return (raw ?? '').split(',').filter(isVariantGid).slice(0, max);
-}
 
 /** Loads variants (with their product and overlay) preserving query order. */
 export async function loadVariantsByIds(

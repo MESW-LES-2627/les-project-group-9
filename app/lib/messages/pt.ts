@@ -201,8 +201,7 @@ export const pt: Messages = {
   'tryOn.preparing': 'A preparar a prova virtual…',
   'tryOn.starting': 'A iniciar a câmara…',
   'tryOn.noFace': 'Coloque o rosto dentro do enquadramento.',
-  'tryOn.denied':
-    'O acesso à câmara está desativado. Carregue uma fotografia.',
+  'tryOn.denied': 'O acesso à câmara está desativado. Carregue uma fotografia.',
   'tryOn.unavailable':
     'Este dispositivo não consegue iniciar a câmara. Carregue uma fotografia.',
   'tryOn.unsupported':
@@ -214,8 +213,7 @@ export const pt: Messages = {
     'Toque abaixo para abrir a câmara e experimentar {title}.',
   'tryOn.startCamera': 'Abrir a câmara',
   'tryOn.upload': 'Carregar fotografia',
-  'tryOn.uploadHint':
-    'Escolha uma fotografia de frente para ver a peça em si.',
+  'tryOn.uploadHint': 'Escolha uma fotografia de frente para ver a peça em si.',
   'tryOn.uploadError': 'Use uma imagem JPG, PNG ou HEIC com menos de 12 MB.',
   'tryOn.adjustHint':
     'Arraste a fotografia para mover a peça ou use os botões para redimensioná-la.',
@@ -232,6 +230,12 @@ export const pt: Messages = {
   'tryOn.openLink': 'Abrir a ligação da prova virtual',
   'tryOn.privacy': 'A câmara e as fotografias ficam neste dispositivo.',
   'tryOn.preview': 'Pré-visualização com {title} em si',
+  'tryOn.lookTitle': 'Experimente o seu visual',
+  'tryOn.lookPrompt':
+    'Toque abaixo para abrir a câmara e experimentar o seu visual.',
+  'tryOn.lookPreview': 'Pré-visualização do seu visual em si',
+  'tryOn.lookUnavailable':
+    'A prova virtual ainda não está disponível para este visual.',
 
   // Allergens and the allergy warning
   'allergen.nickel': 'Níquel',
@@ -335,8 +339,9 @@ export const pt: Messages = {
   'fittingRoom.tryOn': 'Prova virtual',
   'fittingRoom.tryOnTitle': 'Veja como lhe fica',
   'fittingRoom.tryOnText':
-    'Selecione as peças que quer comparar e use Experimentar junto a um brinco ou colar para o ver na sua câmara.',
-  'fittingRoom.tryOnPiece': 'Experimentar {title}',
+    'Selecione as peças que quer ver juntas e abra o visual.',
+  'fittingRoom.tryOnLook': 'Experimentar o visual',
+  'fittingRoom.no3d': 'Sem 3D',
   'fittingRoom.readyToTry': {
     one: '{count} peça pronta a experimentar',
     other: '{count} peças prontas a experimentar',

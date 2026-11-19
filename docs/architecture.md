@@ -166,7 +166,7 @@ metafields (namespace `custom`) through the Customer Account API.
   once on mount and exposes optimistic toggles. If a write returns 401, it reloads the profile.
   `useFavorites()` (`lib/favorites.ts`) and `useFittingRoom()` (`lib/fitting-room.ts`)
   are thin views over it.
-- **Fitting-room gate** — the fitting room exists to try pieces on and now stores **variant
+- **Fitting-room gate** — the fitting room exists to try pieces on and stores **variant
   GIDs** (one entry per colourway), so a clear and a pink variant can live side by side.
   Only variants with try-on data (`resolveTryOn(product, variant)`, i.e. Earrings/Necklaces
   with a transparent overlay on the variant) can enter: the product page hides the hanger
@@ -176,8 +176,10 @@ metafields (namespace `custom`) through the Customer Account API.
   always allowed. Entries that stop being eligible (overlay removed, category changed,
   product unpublished) are **pruned when the profile loads** (`pruneFittingRoom` in
   `lib/profile/fitting-room-gate.server.ts`), and legacy product GIDs simply stop parsing
-  into the variant list, so old entries disappear immediately. The wardrobe loader filters
-  them out as a safety net if the prune could not be written.
+  into the variant list, so old entries disappear immediately. If an unsupported entry
+  still reaches the page (for example the overlay changed between the prune and the load),
+  the loader returns it with `tryOn: null` and the view lists it with a **No 3D** marker
+  instead of hiding it; it cannot be selected for a look.
 - **Pages**: `/favorites` and `/fitting-room` render client-side. They call their own loader with
   `?ids=` from the profile state (`useFetcher`); favorites load product cards via
   `loadProductsByIds`, the fitting room loads variant entries via `loadVariantsByIds`
@@ -185,11 +187,13 @@ metafields (namespace `custom`) through the Customer Account API.
   cart and removes it from the fitting room.
 - **Fitting room view** (`components/fitting-room/FittingRoomView.tsx`) lists one row per
   **variant** (product title + colour, variant image and price): rows can be selected,
-  compared, moved to the cart or removed, and sold-out rows keep Try on while Move to cart
-  is disabled. Variants with try-on data get an inline **Try on** action
-  (`FittingRoomTryOn.tsx`) that opens the same camera/QR dialogs as the product page; the
-  loader attaches `tryOn`/`tryOnLink` per variant, the latter preselecting the variant's
-  options on the product page.
+  moved to the cart or removed, and sold-out rows keep Move to cart disabled. Selection is
+  explicit (nothing is selected on open); the checkboxes feed the look builder on the right,
+  and pieces without a model are disabled and marked **No 3D**. The look builder shows the
+  selected pieces and one **Try on the look** action (`FittingRoomLookTryOn.tsx`) that opens
+  a single try-on session with every selected piece that has an overlay. The look link
+  carries the selected variant ids (`lookTryOnLink`), so the desktop QR reproduces the same
+  set on the phone.
 - **Allergens**: `useAllergenMatches()` compares product allergens with the customer's
   allergies. `AllergenBadge` and `AddToBagGuard` (a confirm dialog before adding) use it.
 - **Ring sizes**: `RingSizeForm` (account) and `RingSizeHelp` (product page, ring products
@@ -262,27 +266,40 @@ surface placement: the piece is drawn on a live selfie face.
   necklace, whose chin/chest anchor is noisier), and a large jump is clamped to 15 % of the
   reference width per frame instead of teleporting. When the face is briefly lost the last
   placement is kept for 250 ms so the piece does not flicker. `try-on/frame.ts` turns one
-  landmark set into overlays; `try-on/render.ts` paints the overlay on the transparent
-  canvas (and the full frame for photos).
+  landmark set into **all the overlays of a look**: necklaces are planned first (longest
+  first, so shorter chains sit on top), then every earring. Each planned overlay carries its
+  piece id, slot (`earA`, `earB`, `necklace`) and its own smoothing reference width (face for
+  earrings, shoulders for necklaces), so mixed looks filter correctly. Multiple earrings of
+  the same ear are **stacked**: the first sits on the lobe and each next one is lifted by
+  `EAR_STACK_GAP_RATIO` (5.5 % of the face width) along the face's vertical axis, simulating
+  several piercings without any catalog change. `try-on/render.ts` paints each layer with its
+  own PNG on the transparent canvas (and the full frame for photos).
+- **Many pieces** — `TryOnPiece` carries the variant id, and the dialog takes `pieces[]`.
+  `loadTryOnOverlays()` fetches every PNG in parallel and drops a piece whose overlay is
+  opaque or cannot load, so one bad file does not block the rest of the look; when nothing is
+  usable the dialog shows the unavailable/failure message. `CameraStage` and `PhotoFallback`
+  read the loaded pieces from props/refs, key their smoothing state by `id:slot` and never
+  restart the camera when another piece joins.
 - **Photo fallback** — `PhotoFallback` decodes a picked image, switches the landmarker to
   `IMAGE` mode and composes the same overlays. Nothing is uploaded; the camera and photos
-  stay in the browser. The composed piece can be dragged (pointer or arrow keys) and resized
+  stay in the browser. The composed look can be dragged (pointer or arrow keys) and resized
   with the − / + buttons, and "Reset position" returns to the face-based placement; this
   covers poses, crops and necklace lengths the automatic anchor cannot know. The overlay is
   checked for real transparency client-side (`try-on/overlay.ts`); an opaque PNG shows
   "not available" instead of a rectangle.
-- **UI** — `components/product/TryOnSection.tsx` renders the try-on block **below Add to
-  bag**: a hairline (`border-line`), a "See it on you" eyebrow and the full-width outlined
-  button, so it stays secondary to the purchase action and matches the accordion rhythm.
-  `TryOnButton` (button + deep link) opens
-  `components/try-on/TryOnDialog.tsx` (camera/photo) or `TryOnQrDialog.tsx` (desktop QR,
-  encoded locally with `uqr`). The PNG is preloaded and cached (`try-on/overlay.ts`) while
-  the shopper browses; the dialog shows the live preview as soon as the stream is ready and
-  the piece joins when the PNG and landmarker arrive — neither restarts the camera (the
-  stage reads them from refs). A skeleton block is rendered during the initial permission
-  handshake. The fitting room reuses the same dialogs per piece
-  (`components/fitting-room/FittingRoomTryOn.tsx`). A `?tryOn=1` link opens the dialog after
-  a QR scan and is then removed from the URL.
+- **UI** — `components/try-on/TryOnLauncher.tsx` owns the shared entry-point behaviour
+  (camera/QR mode, preloading every overlay, the camera request inside the tap, and the
+  `?tryOn=1` deep link). `components/product/TryOnSection.tsx` renders the product block
+  below Add to bag and `TryOnButton` is a thin launcher wrapper for one piece. The fitting
+  room uses the same launcher for the **whole selected look** (`FittingRoomLookTryOn.tsx`);
+  its QR link includes the selected variant ids, so scanning it preselects the same pieces
+  on the phone. The dialog title and copy switch between the single-piece product strings
+  and `tryOn.look*` when no product title is passed. The PNGs are preloaded and cached
+  (`try-on/overlay.ts`) while the shopper browses, the dialog shows the live preview as soon
+  as the stream is ready, and the pieces join when the PNGs and landmarker arrive — neither
+  restarts the camera (the stages read them from refs). A skeleton block is rendered during
+  the initial permission handshake. A `?tryOn=1` link opens the dialog after a QR scan and is
+  then removed from the URL.
 - **Copy** — `product.tryOn*` and `tryOn.*` keys in all three dictionaries.
 
 
@@ -409,7 +426,7 @@ has been decided.
 | 7 | The root font size is 14px, so inputs styled `text-base` render at 14px. iOS Safari zooms on focus for inputs below 16px; this zoom was not tested on a device (**unverified**). | `app/styles/tailwind.css` | US-048 (another team member) |
 | 8 | Touch targets below 44px. Header favorites and fitting-room links are `h-10 w-10`. Because spacing is `rem`-based and the root is 14px, the codebase-wide `size-11`/`min-h-11` targets compute to 38.5px, and `h-10` to 35px (calculated from the CSS, not measured in a browser). | `components/layout/Header.tsx`, `app/styles/tailwind.css` | US-048 (another team member). The new language selector uses explicit 44px targets (US-046). |
 | 9 | Playwright has only a desktop Chromium project. Phone-sized viewports are set per test in `footer.spec.ts` (375px) and, for the header and language selector only, `header.spec.ts` and `language.spec.ts` (US-046). Other flows are not tested on a phone-sized screen. | `playwright.config.ts`, `tests/e2e/` | US-048 (another team member) |
-| 10 | ~~The fitting room's virtual try-on panel is still a placeholder.~~ Resolved in US-017: the panel is a look builder and each supported piece has an inline Try on action that opens the camera/QR dialogs (`app/lib/try-on/`, `app/components/try-on/`, `components/fitting-room/FittingRoomTryOn.tsx`). | `app/lib/try-on/`, `components/fitting-room/` | US-017 |
+| 10 | ~~The fitting room's virtual try-on panel is still a placeholder.~~ Resolved in US-017/US-021: the panel is a look builder; the selected pieces open one camera/QR session, the desktop QR carries their variant ids, and pieces without a model are marked "No 3D" (`app/lib/try-on/`, `app/components/try-on/`, `components/fitting-room/`). | `app/lib/try-on/`, `components/fitting-room/` | US-021 |
 | 11 | `api.profile.tsx` redefines `NO_STORE`, identical to the one exported by `lib/profile/operation.server.ts`. | source | Proposed cleanup |
 | 12 | Comments in `app/lib/context.ts` and `react-router.config.ts` mention React Router 7.9.x; the installed version is 7.16.0. | source, `package.json` | Proposed cleanup |
 | 13 | CI (`test.yml`) does not run `npm run build`. The Oxygen workflow deploys on every push to any branch. | `.github/workflows/` | Information |
