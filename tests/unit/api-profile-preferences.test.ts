@@ -6,7 +6,13 @@ type ActionArgs = Parameters<typeof action>[0];
 
 const CUSTOMER_ID = 'gid://shopify/Customer/1';
 
-function contextWith({loggedIn = true} = {}) {
+function contextWith({
+  loggedIn = true,
+  stored = null,
+}: {
+  loggedIn?: boolean;
+  stored?: Record<string, unknown> | null;
+} = {}) {
   const calls: Array<{
     metafields: Array<{
       ownerId: string;
@@ -25,7 +31,7 @@ function contextWith({loggedIn = true} = {}) {
           customer: {
             id: CUSTOMER_ID,
             favorites: {value: '[]'},
-            preferences: null,
+            preferences: stored ? {value: JSON.stringify(stored)} : null,
           },
         },
       }),
@@ -103,6 +109,32 @@ describe('POST /api/profile/preferences', () => {
       allergies: ['nickel'],
       skin: {tone: 'medium'},
     });
+  });
+
+  it('clears the preferences the shopper deletes', async () => {
+    const {context, calls} = contextWith({
+      stored: {
+        allergies: ['nickel', 'zinc'],
+        skin: {tone: 'medium', undertone: 'warm'},
+        preferredColors: ['gold'],
+        preferredMaterials: ['gold-plated'],
+        ringSizes: {'left-ring': '6'},
+      },
+    });
+    const result = await callAction(
+      context,
+      JSON.stringify({allergies: [], skin: {}, preferredMaterials: []}),
+    );
+    const expected = {
+      allergies: [],
+      skin: {},
+      preferredColors: ['gold'],
+      preferredMaterials: [],
+      ringSizes: {'left-ring': '6'},
+    };
+
+    expect(result.data).toEqual({preferences: expected});
+    expect(parsePreferences(calls[0].metafields[0].value)).toEqual(expected);
   });
 
   it('saves only the ring sizes it receives and drops invalid ones', async () => {

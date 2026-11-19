@@ -33,7 +33,9 @@ test('the search page asks for a term when none is given', async ({page}) => {
 });
 
 test('a term with no matches shows the empty state', async ({page}) => {
-  await page.goto('/search?q=zzqxwvnomatch');
+  // Shopify's search fuzzy-matches loose terms (a nonsense word can still
+  // return products); an exact phrase does not.
+  await page.goto(`/search?q=${encodeURIComponent('"zzqxwvnomatch"')}`);
 
   await expect(page.getByRole('heading', {name: 'No results'})).toBeVisible();
 });

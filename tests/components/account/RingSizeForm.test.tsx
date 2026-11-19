@@ -45,6 +45,23 @@ describe('RingSizeFields', () => {
     expect(screen.getByText('Ring sizes saved.')).toBeInTheDocument();
   });
 
+  it('replaces a saved size for the same finger', async () => {
+    const user = userEvent.setup();
+    const onSave = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <RingSizeFields ringSizes={{'left-ring': '6'}} onSave={onSave} />,
+    );
+
+    await user.selectOptions(
+      screen.getByLabelText('Ring', {selector: '#ring-size-left-ring'}),
+      '7',
+    );
+    await user.click(screen.getByRole('button', {name: 'Save ring sizes'}));
+
+    expect(onSave).toHaveBeenCalledWith({'left-ring': '7'});
+  });
+
   it('removes a finger when it is set back to Not set', async () => {
     const user = userEvent.setup();
     const onSave = vi.fn().mockResolvedValue(undefined);
