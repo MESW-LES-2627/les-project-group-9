@@ -7,10 +7,15 @@ import {RingSizeForm} from '~/components/account/RingSizeForm';
 import {AllergenBadge} from '~/components/product/AllergenBadge';
 import {RingSizeHelp} from '~/components/product/RingSizeHelp';
 import {ProfileProvider} from '~/lib/profile/ProfileProvider';
+import {
+  normalizePreferencesPatch,
+  preferencesField,
+} from '~/lib/profile/preferences';
+import type {PreferenceProfile} from '~/lib/profile/types';
 
 const api = vi.hoisted(() => ({
-  preferences: {} as Record<string, unknown>,
-  posts: [] as Array<Record<string, unknown>>,
+  preferences: {} as PreferenceProfile,
+  posts: [] as Array<Partial<PreferenceProfile>>,
 }));
 
 function json(data: unknown) {
@@ -61,11 +66,23 @@ beforeEach(() => {
       }
 
       if (url.endsWith('/api/profile/preferences')) {
-        const patch = JSON.parse(
-          String(init?.body ?? '{}'),
-        ) as Record<string, unknown>;
+        // Mirror the route: normalize the patch, then merge it into the
+        // stored preferences with the same field the server uses.
+        const patch = normalizePreferencesPatch(
+          JSON.parse(String(init?.body ?? '{}')),
+        );
         api.posts.push(patch);
-        api.preferences = {...api.preferences, ...patch};
+        api.preferences = preferencesField.parse(
+          preferencesField.nextValue(
+            {
+              customerId: 'gid://shopify/Customer/1',
+              favorites: [],
+              fittingRoom: [],
+              preferences: api.preferences,
+            },
+            patch,
+          ),
+        );
 
         return json({preferences: api.preferences});
       }

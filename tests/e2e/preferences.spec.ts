@@ -12,16 +12,29 @@ async function mockProfile(page: Page, preferences: unknown) {
   );
 }
 
+// Store fixtures: the Teardrop Pavé Necklace is the only product with an
+// allergen metafield, and the Round Signet Ring exposes a Size option.
 test('stops warning about an allergen once it is deleted', async ({page}) => {
   await mockProfile(page, {allergies: ['zinc']});
   await page.goto('/products/teardrop-pave-necklace');
 
+  // The logged-in favorite button proves the mocked profile was applied.
+  await expect(
+    page.getByRole('button', {
+      name: 'Add Teardrop Pavé Necklace to favorites',
+    }),
+  ).toBeVisible();
   await expect(page.getByText('Allergen', {exact: true})).toBeVisible();
 
   await page.unroute('**/api/profile');
   await mockProfile(page, {allergies: []});
   await page.reload();
 
+  await expect(
+    page.getByRole('button', {
+      name: 'Add Teardrop Pavé Necklace to favorites',
+    }),
+  ).toBeVisible();
   await expect(page.getByText('Allergen', {exact: true})).toHaveCount(0);
 });
 
