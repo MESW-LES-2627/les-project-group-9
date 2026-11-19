@@ -6,11 +6,11 @@ type State = 'idle' | 'confirming' | 'deleting' | 'deleted' | 'error';
 
 /** Download or delete the shopper's saved preferences. */
 export function PreferencesData() {
-  const {status, clearPreferences} = useProfile();
+  const {status, isLoggedIn, clearPreferences} = useProfile();
   const t = useTranslation();
   const [state, setState] = useState<State>('idle');
 
-  if (status !== 'ready') return null;
+  if (status !== 'ready' || !isLoggedIn) return null;
 
   const remove = () => {
     setState('deleting');

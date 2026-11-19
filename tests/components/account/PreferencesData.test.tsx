@@ -16,6 +16,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   profile.useProfile.mockReturnValue({
     status: 'ready',
+    isLoggedIn: true,
     clearPreferences,
   });
 });
@@ -86,6 +87,18 @@ describe('PreferencesData', () => {
   it('renders nothing until the profile is ready', () => {
     profile.useProfile.mockReturnValue({
       status: 'loading',
+      clearPreferences,
+    });
+
+    const {container} = render(<PreferencesData />);
+
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('renders nothing for a logged-out shopper', () => {
+    profile.useProfile.mockReturnValue({
+      status: 'ready',
+      isLoggedIn: false,
       clearPreferences,
     });
 
