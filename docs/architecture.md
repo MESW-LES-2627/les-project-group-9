@@ -177,7 +177,10 @@ metafields (namespace `custom`) through the Customer Account API.
   product unpublished) are **pruned when the profile loads** (`pruneFittingRoom` in
   `lib/profile/fitting-room-gate.server.ts`), and legacy product GIDs simply stop parsing
   into the variant list, so old entries disappear immediately. The wardrobe loader filters
-  them out as a safety net if the prune could not be written.
+  them out as a safety net if the prune could not be written. The prune is skipped when a
+  variant still has an overlay but no recognised category: that is the signature of a
+  catalogue/localization regression, and deleting the shopper's wardrobe would be worse than
+  keeping an entry that cannot be tried on.
 - **Pages**: `/favorites` and `/fitting-room` render client-side. They call their own loader with
   `?ids=` from the profile state (`useFetcher`); favorites load product cards via
   `loadProductsByIds`, the fitting room loads variant entries via `loadVariantsByIds`
@@ -200,9 +203,12 @@ metafields (namespace `custom`) through the Customer Account API.
 A shopper can try earrings and necklaces on with the phone camera (US-017). It is not AR
 surface placement: the piece is drawn on a live selfie face.
 
-- **Gate** — `app/lib/try-on/catalog.ts`: the product's `category.name` must be `Earrings`
-  or `Necklaces` **and the selected variant** must have `custom.try_on_overlay` (a
-  transparent PNG in Files). There is no product-level fallback: colours are independent, so
+- **Gate** — `app/lib/try-on/catalog.ts`: the product's taxonomy category must be
+  **Earrings** or **Necklaces** **and the selected variant** must have `custom.try_on_overlay`
+  (a transparent PNG in Files). The category is matched by its taxonomy GID
+  (`app/lib/taxonomy.ts`), not by `category.name`, because Shopify localises the name
+  (`Earrings` → `Brincos` → `Boucles d’oreilles`); the English name is only a fallback when
+  a caller has no id. There is no product-level fallback: colours are independent, so
   a product whose clear variant has an overlay and whose pink variant does not shows Try on
   (and the hanger) only for clear. `custom.try_on_size_cm` on the variant sets the piece's
   real width (default 2 cm earrings, 16 cm necklaces). Overlay URLs are loaded with

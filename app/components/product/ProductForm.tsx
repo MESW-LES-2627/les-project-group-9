@@ -9,7 +9,7 @@ import {useAside} from '~/components/layout/Aside';
 import {useTranslation} from '~/lib/i18n';
 import {AddToBagGuard} from '~/components/product/AddToBagGuard';
 import {RingSizeHelp} from '~/components/product/RingSizeHelp';
-import {isColorOption} from '~/lib/options';
+import {isColorOption, isSizeOption} from '~/lib/options';
 
 type Props = {
   productOptions: MappedProductOptions[];
@@ -134,7 +134,7 @@ export function ProductForm({
                 })}
               </div>
 
-              {isRing && /^size$/i.test(option.name) ? <RingSizeHelp /> : null}
+              {isRing && isSizeOption(option.name) ? <RingSizeHelp /> : null}
             </fieldset>
           );
         })}

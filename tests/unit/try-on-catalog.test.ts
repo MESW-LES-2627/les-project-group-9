@@ -8,6 +8,8 @@ import {
 } from '../../app/lib/try-on/catalog';
 
 const OVERLAY = 'https://cdn.shopify.com/s/files/1/0000/files/butterfly.png?v=1';
+const EARRINGS_ID = 'gid://shopify/TaxonomyCategory/aa-6-6';
+const NECKLACES_ID = 'gid://shopify/TaxonomyCategory/aa-6-8';
 const EARRINGS = {category: {name: 'Earrings'}};
 
 describe('tryOnKind', () => {
@@ -21,11 +23,42 @@ describe('tryOnKind', () => {
     expect(tryOnKind({category: {name: 'Earring'}})).toBe('earring');
   });
 
+  it('matches the taxonomy id when Shopify localises the name', () => {
+    expect(tryOnKind({category: {id: EARRINGS_ID, name: 'Brincos'}})).toBe(
+      'earring',
+    );
+    expect(
+      tryOnKind({category: {id: NECKLACES_ID, name: 'Colares'}}),
+    ).toBe('necklace');
+    expect(
+      tryOnKind({category: {id: NECKLACES_ID, name: 'Colliers'}}),
+    ).toBe('necklace');
+  });
+
+  it('trusts the id over a stale name', () => {
+    expect(
+      tryOnKind({
+        category: {
+          id: 'gid://shopify/TaxonomyCategory/aa-6-3',
+          name: 'Earrings',
+        },
+      }),
+    ).toBe(null);
+  });
+
   it('rejects other jewellery and missing categories', () => {
     expect(tryOnKind({category: {name: 'Bracelets'}})).toBe(null);
     expect(tryOnKind({category: {name: 'Rings'}})).toBe(null);
     expect(tryOnKind({category: {name: 'Charms'}})).toBe(null);
     expect(tryOnKind({category: {name: 'Watches'}})).toBe(null);
+    expect(
+      tryOnKind({
+        category: {
+          id: 'gid://shopify/TaxonomyCategory/aa-6-3',
+          name: 'Pulseiras',
+        },
+      }),
+    ).toBe(null);
     expect(tryOnKind({category: null})).toBe(null);
     expect(tryOnKind({})).toBe(null);
   });
@@ -114,6 +147,15 @@ describe('resolveTryOn', () => {
         {tryOnOverlay: {reference: {image: {url: OVERLAY}}}},
       ),
     ).toBe(null);
+  });
+
+  it('keeps the button when the category name is localized', () => {
+    const piece = resolveTryOn(
+      {category: {id: EARRINGS_ID, name: 'Brincos'}},
+      {tryOnOverlay: {reference: {image: {url: OVERLAY}}}},
+    );
+
+    expect(piece?.kind).toBe('earring');
   });
 
   it('hides the button when there is no variant overlay', () => {

@@ -853,7 +853,7 @@ export type JewelietteVariantsByIdsQuery = {
               'id' | 'title' | 'handle' | 'productType'
             > & {
               category?: StorefrontAPI.Maybe<
-                Pick<StorefrontAPI.TaxonomyCategory, 'name'>
+                Pick<StorefrontAPI.TaxonomyCategory, 'id' | 'name'>
               >;
               featuredImage?: StorefrontAPI.Maybe<
                 Pick<
@@ -2534,7 +2534,7 @@ interface GeneratedQueryTypes {
     return: JewelietteRecommendationCandidatesQuery;
     variables: JewelietteRecommendationCandidatesQueryVariables;
   };
-  '#graphql\n  query JewelietteVariantsByIds(\n    $ids: [ID!]!\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    nodes(ids: $ids) {\n      __typename\n      ... on ProductVariant {\n        id\n        title\n        availableForSale\n        image { id url altText width height }\n        selectedOptions { name value }\n        price { amount currencyCode }\n        compareAtPrice { amount currencyCode }\n        product {\n          id\n          title\n          handle\n          productType\n          category { name }\n          featuredImage { id url altText width height }\n          priceRange {\n            minVariantPrice { amount currencyCode }\n            maxVariantPrice { amount currencyCode }\n          }\n        }\n        tryOnOverlay: metafield(namespace: "custom", key: "try_on_overlay") {\n          reference {\n            ... on MediaImage { image { url } }\n            ... on GenericFile { url }\n          }\n        }\n        tryOnSize: metafield(namespace: "custom", key: "try_on_size_cm") { value }\n      }\n    }\n  }\n': {
+  '#graphql\n  query JewelietteVariantsByIds(\n    $ids: [ID!]!\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(country: $country, language: $language) {\n    nodes(ids: $ids) {\n      __typename\n      ... on ProductVariant {\n        id\n        title\n        availableForSale\n        image { id url altText width height }\n        selectedOptions { name value }\n        price { amount currencyCode }\n        compareAtPrice { amount currencyCode }\n        product {\n          id\n          title\n          handle\n          productType\n          category { id name }\n          featuredImage { id url altText width height }\n          priceRange {\n            minVariantPrice { amount currencyCode }\n            maxVariantPrice { amount currencyCode }\n          }\n        }\n        tryOnOverlay: metafield(namespace: "custom", key: "try_on_overlay") {\n          reference {\n            ... on MediaImage { image { url } }\n            ... on GenericFile { url }\n          }\n        }\n        tryOnSize: metafield(namespace: "custom", key: "try_on_size_cm") { value }\n      }\n    }\n  }\n': {
     return: JewelietteVariantsByIdsQuery;
     variables: JewelietteVariantsByIdsQueryVariables;
   };

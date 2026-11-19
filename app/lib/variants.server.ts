@@ -48,7 +48,7 @@ const VARIANTS_BY_IDS_QUERY = `#graphql
           title
           handle
           productType
-          category { name }
+          category { id name }
           featuredImage { id url altText width height }
           priceRange {
             minVariantPrice { amount currencyCode }
