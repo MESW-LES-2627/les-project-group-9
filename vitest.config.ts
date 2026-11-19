@@ -8,6 +8,18 @@ export default defineConfig({
     },
   },
   test: {
+    coverage: {
+      provider: 'v8',
+      include: ['app/**/*.{ts,tsx}'],
+      reporter: ['text', 'json-summary', 'json'],
+      reportOnFailure: true,
+      thresholds: {
+        statements: 45,
+        branches: 40,
+        functions: 45,
+        lines: 45,
+      },
+    },
     projects: [
       {
         extends: true,
