@@ -236,9 +236,13 @@ export class ShopifyRatingStore implements RatingStore {
       throw error;
     }
 
+    // Call fetch as a plain function: the Workers runtime (Oxygen, MiniOxygen)
+    // throws "Illegal invocation" when the global fetch runs with another
+    // object as `this`, as `this.fetchImpl(...)` would.
+    const fetchImpl = this.fetchImpl;
     let response: Response;
     try {
-      response = await this.fetchImpl(this.endpoint, {
+      response = await fetchImpl(this.endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -248,7 +252,11 @@ export class ShopifyRatingStore implements RatingStore {
         body: JSON.stringify({query, variables}),
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       });
-    } catch {
+    } catch (error) {
+      console.error(
+        '[ratings] Admin API request failed:',
+        error instanceof Error ? error.name : 'unknown',
+      );
       throw new RatingStoreError('network');
     }
     if (response.status === 401) this.tokens.invalidate();

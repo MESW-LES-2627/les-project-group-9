@@ -53,6 +53,7 @@ export async function loadOrderRatings({
     order = await loadOrderForRating(customerAccount, orderId);
   } catch (error) {
     if (error instanceof RatingVerificationError) {
+      console.error('[ratings] order verification failed:', error.code);
       return {status: 'verification_error'};
     }
     throw error;
@@ -75,7 +76,10 @@ export async function loadOrderRatings({
       })),
     );
   } catch (error) {
-    if (error instanceof RatingStoreError) return {status: 'load_error'};
+    if (error instanceof RatingStoreError) {
+      console.error('[ratings] reading saved ratings failed:', error.code);
+      return {status: 'load_error'};
+    }
     throw error;
   }
 
@@ -126,6 +130,7 @@ export async function submitRating({
     order = await loadOrderForRating(customerAccount, submission.orderId);
   } catch (error) {
     if (error instanceof RatingVerificationError) {
+      console.error('[ratings] order verification failed:', error.code);
       return {ok: false, error: 'verification_unavailable'};
     }
     throw error;
@@ -152,6 +157,7 @@ export async function submitRating({
       : {ok: false, error: 'already_rated', rating: result.rating.rating};
   } catch (error) {
     if (error instanceof RatingStoreError) {
+      console.error('[ratings] saving a rating failed:', error.code);
       return {ok: false, error: 'save_failed'};
     }
     throw error;

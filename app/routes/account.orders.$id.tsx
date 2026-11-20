@@ -96,7 +96,13 @@ export async function loader({params, context}: Route.LoaderArgs) {
     customerAccount,
     store: createRatingStore(context.env),
     orderId: order.id,
-  }).catch(() => ({status: 'load_error'}));
+  }).catch((error: unknown) => {
+    console.error(
+      '[ratings] unexpected error:',
+      error instanceof Error ? error.name : 'unknown',
+    );
+    return {status: 'load_error'};
+  });
 
   return {
     order,

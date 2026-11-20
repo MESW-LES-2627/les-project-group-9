@@ -65,6 +65,20 @@ describe('Admin API credentials', () => {
     expect(await provider.get()).toBe('exchanged-2');
   });
 
+  it('exchanges the token with a Workers-compatible fetch call', async () => {
+    const admin = fakeAdminApi();
+    const workersFetch = function (this: unknown, input: RequestInfo | URL, init?: RequestInit) {
+      if (this !== undefined && this !== globalThis) {
+        throw new TypeError('Illegal invocation: function called with incorrect `this` reference');
+      }
+      return admin.fetch(input, init);
+    } as typeof fetch;
+    const store = createRatingStore(CLIENT_ENV, workersFetch, new Map());
+
+    expect(await store?.findRatings([KEY])).toEqual([null]);
+    expect(admin.tokenExchanges).toHaveLength(1);
+  });
+
   it('fails closed and retries later when the exchange is rejected', async () => {
     const admin = fakeAdminApi();
     const cache: AccessTokenCache = new Map();

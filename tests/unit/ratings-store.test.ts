@@ -61,6 +61,22 @@ describe('ShopifyRatingStore HTTP contract', () => {
     });
   });
 
+  it('calls fetch the way the Workers runtime requires', async () => {
+    // Oxygen/MiniOxygen (workerd) throw when the global fetch runs with another
+    // object as `this`; Node does not, so model the stricter rule here.
+    const admin = fakeAdminApi();
+    const workersFetch = function (this: unknown, input: RequestInfo | URL, init?: RequestInit) {
+      if (this !== undefined && this !== globalThis) {
+        throw new TypeError('Illegal invocation: function called with incorrect `this` reference');
+      }
+      return admin.fetch(input, init);
+    } as typeof fetch;
+    const store = createRatingStore(ADMIN_ENV, workersFetch);
+
+    expect(await store?.findRatings([KEY])).toEqual([null]);
+    expect(await store?.createRating(KEY, 3)).toEqual({status: 'created', rating: {...KEY, rating: 3}});
+  });
+
   it('never upserts or updates', async () => {
     const admin = fakeAdminApi();
     const store = storeFor(admin);
