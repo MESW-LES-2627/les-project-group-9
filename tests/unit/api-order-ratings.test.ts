@@ -148,6 +148,37 @@ describe('POST /api/order-ratings', () => {
     expect(fake.calls).toHaveLength(0);
   });
 
+  it.each([
+    ['same-site', {'Sec-Fetch-Site': 'same-site', Origin: ORIGIN}],
+    ['cross-site with a matching Origin', {'Sec-Fetch-Site': 'cross-site', Origin: ORIGIN}],
+    ['none', {'Sec-Fetch-Site': 'none'}],
+  ])('rejects Sec-Fetch-Site %s', async (_name, headers) => {
+    const {context, fake} = contextFor({orders: [deliveredOrder(ORDER_1, CUSTOMER_A, [PRODUCT_A])]});
+    const response = await submit(context, rate(ORDER_1, PRODUCT_A, 5), {headers});
+    expect(response).toMatchObject({status: 403, body: {error: 'cross_origin'}});
+    expect(fake.calls).toHaveLength(0);
+  });
+
+  it('accepts a same-origin browser request behind a TLS-terminating proxy', async () => {
+    // The worker sees http:// while the page (and its Origin header) is https://,
+    // as with the Hydrogen dev tunnel.
+    const {context} = contextFor({orders: [deliveredOrder(ORDER_1, CUSTOMER_A, [PRODUCT_A])]});
+    const result = (await action({
+      request: new Request('http://shop.example/api/order-ratings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Origin: 'https://shop.example',
+          'Sec-Fetch-Site': 'same-origin',
+        },
+        body: JSON.stringify(rate(ORDER_1, PRODUCT_A, 4)),
+      }),
+      context,
+      params: {},
+    } as ActionFunctionArgs)) as unknown as {init: ResponseInit | null};
+    expect(result.init?.status).toBe(201);
+  });
+
   it('accepts Sec-Fetch-Site same-origin when Origin is absent', async () => {
     const {context} = contextFor({orders: [deliveredOrder(ORDER_1, CUSTOMER_A, [PRODUCT_A])]});
     const response = await submit(context, rate(ORDER_1, PRODUCT_A, 5), {

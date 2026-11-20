@@ -390,11 +390,14 @@ not fully delivered (403 `not_delivered`), Shopify unavailable (503
 `already_rated` with the existing value, or 503 `save_failed`. Every response is
 `Cache-Control: no-store`, `Vary: Cookie`; so is the order page (`headers` export).
 
-**Same-origin check** (`lib/request-origin.server.ts`): the `Origin` header must equal the
-request's own origin; without `Origin`, `Sec-Fetch-Site` must be `same-origin`; with
-neither, the request is rejected. Browsers send `Origin` on `fetch` POSTs, so only
-non-browser clients are affected. If a proxy in front of Oxygen changed the host seen by the
-worker, legitimate requests would be rejected; check this on staging.
+**Same-origin check** (`lib/request-origin.server.ts`): when the browser sends
+`Sec-Fetch-Site` (set by the browser, not by page scripts), only `same-origin` is accepted;
+`same-site`, `cross-site` and `none` are rejected. Without it (older browsers) the `Origin`
+header must equal the request's own origin. With neither header the request is rejected, so
+only non-browser clients are affected. `Sec-Fetch-Site` is checked first because the worker
+can see a different URL than the browser: behind the Hydrogen dev tunnel (and any proxy that
+terminates TLS) the worker sees `http://…` while the page's `Origin` is `https://…`, and an
+`Origin`-only comparison rejected genuine submissions (found in the first real browser test).
 
 ### Storage: private metaobjects
 

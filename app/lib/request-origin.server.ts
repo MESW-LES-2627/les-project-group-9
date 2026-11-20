@@ -2,15 +2,19 @@
  * Cross-site request protection for state-changing JSON endpoints that rely on
  * the session cookie (US-058 rating writes).
  *
- * Accepts the request only when the browser says it comes from this site:
- * an `Origin` header equal to the request's own origin or, if `Origin` is
- * absent, `Sec-Fetch-Site: same-origin`. A request with neither header is
- * rejected: browsers send `Origin` on every `fetch` POST, so only non-browser
- * clients are affected.
+ * - When the browser sends `Sec-Fetch-Site` (a header pages cannot set), only
+ *   `same-origin` is accepted; `same-site`, `cross-site` and `none` are not.
+ *   This does not depend on the URL the worker sees, which is `http://` behind
+ *   a proxy or tunnel that terminates TLS while the page's origin is `https://`.
+ * - Otherwise (older browsers) the `Origin` header must equal the request's
+ *   own origin.
+ * - A request with neither header is rejected; only non-browser clients send
+ *   neither.
  */
 export function isSameOriginRequest(request: Request): boolean {
-  const expected = new URL(request.url).origin;
+  const site = request.headers.get('Sec-Fetch-Site');
+  if (site !== null) return site === 'same-origin';
+
   const origin = request.headers.get('Origin');
-  if (origin !== null) return origin === expected;
-  return request.headers.get('Sec-Fetch-Site') === 'same-origin';
+  return origin !== null && origin === new URL(request.url).origin;
 }
