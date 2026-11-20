@@ -461,8 +461,19 @@ Nothing is created automatically.
    - Name `Product rating`, type (API handle) **`product_rating`**.
    - Fields as in the table above, with exactly those keys; on `rating` set the validations
      minimum 1 and maximum 5. Make all fields required.
-   - **Storefronts access: off** (no Storefront API access). Do not enable *Publishable*,
-     *Translatable* or *Web pages* (online store) options.
+   - Two separate access settings:
+     - **Admin API access: `PUBLIC_READ_WRITE`** ("merchant and other apps can read and
+       write"). Required: with `MERCHANT_READ_WRITE` or `MERCHANT_READ`, Shopify gives other
+       apps no access, so the ratings app could neither save nor read entries. This only
+       concerns authenticated Admin API apps installed on the store, not shoppers.
+     - **Storefronts access: off** (`NONE`). This is the public Storefront API; it must stay
+       off so rating records are never readable from the storefront.
+   - Turn off *Active-draft status* (publishable), *Translations* and *Web pages* (online
+     store); a rating has no draft state, nothing to translate and no public page.
+   - To check the result without the admin UI, an app with `read_metaobject_definitions`
+     can query `metaobjectDefinitionByType(type: "product_rating") { access { admin
+     storefront } fieldDefinitions { key required type { name } validations { name value } } }`.
+     The ratings code itself does not need that scope.
 2. **App with Admin API access.** Scopes: **`read_metaobjects`, `write_metaobjects`** only
    (no product, order or customer scopes). Two options:
    - **Dev Dashboard app (new apps since 2026-01-01).** Shopify no longer lets admins create
