@@ -407,7 +407,7 @@ export const pt: Messages = {
   'order.viewStatus': 'Ver estado da encomenda',
   'rating.heading': 'Avalie as suas peças',
   'rating.intro':
-    'Dê a cada peça desta encomenda de 1 a 5 estrelas, para que outros clientes saibam o que pensa.',
+    'Dê a cada peça desta encomenda uma classificação de 1 a 5 estrelas.',
   'rating.final': 'Depois de enviada, a avaliação não pode ser alterada.',
   'rating.loading': 'A verificar se esta encomenda pode ser avaliada…',
   'rating.notDelivered':

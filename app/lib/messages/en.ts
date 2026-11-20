@@ -409,7 +409,7 @@ export const en = {
   'order.viewStatus': 'View order status',
   'rating.heading': 'Rate your pieces',
   'rating.intro':
-    'Give each piece in this order from 1 to 5 stars so other shoppers know what you think.',
+    'Give each piece in this order a rating from 1 to 5 stars.',
   'rating.final': 'A rating cannot be changed after you submit it.',
   'rating.loading': 'Checking whether this order can be rated…',
   'rating.notDelivered':

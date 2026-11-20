@@ -416,7 +416,7 @@ export const fr: Messages = {
   'order.viewStatus': 'Voir le suivi de la commande',
   'rating.heading': 'Notez vos pièces',
   'rating.intro':
-    'Donnez de 1 à 5 étoiles à chaque pièce de cette commande pour que les autres clients sachent ce que vous en pensez.',
+    'Attribuez une note de 1 à 5 étoiles à chaque pièce de cette commande.',
   'rating.final': 'Une note ne peut plus être modifiée une fois envoyée.',
   'rating.loading': 'Vérification de la possibilité de noter cette commande…',
   'rating.notDelivered':
