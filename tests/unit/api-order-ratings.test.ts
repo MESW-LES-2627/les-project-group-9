@@ -214,9 +214,12 @@ describe('POST /api/order-ratings', () => {
 
   it('rejects other methods', async () => {
     const {context} = contextFor({orders: []});
-    expect((await submit(context, {}, {method: 'PUT'})).status).toBe(405);
+    const put = await submit(context, {}, {method: 'PUT'});
+    expect(put.status).toBe(405);
+    expect(put.headers.get('Allow')).toBe('POST');
     const get = (await ratingLoader()) as unknown as {init: ResponseInit};
     expect(get.init.status).toBe(405);
+    expect(new Headers(get.init.headers).get('Allow')).toBe('POST');
   });
 
   it("rejects another customer's order as not found", async () => {

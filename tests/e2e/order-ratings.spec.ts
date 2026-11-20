@@ -48,6 +48,7 @@ test.describe('rating endpoint', () => {
   test('only accepts POST', async ({request}) => {
     const response = await request.get('/api/order-ratings');
     expect(response.status()).toBe(405);
+    expect(response.headers()['allow']).toBe('POST');
     expect(response.headers()['cache-control']).toContain('no-store');
   });
 

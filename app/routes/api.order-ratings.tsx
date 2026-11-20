@@ -18,7 +18,12 @@ export type RatingActionData =
 function fail(error: RatingErrorCode, rating?: number) {
   return data<RatingActionData>(
     rating === undefined ? {error} : {error, rating},
-    {status: RATING_ERROR_STATUS[error], headers: NO_STORE},
+    {
+      status: RATING_ERROR_STATUS[error],
+      // RFC 9110: a 405 answer lists the methods the resource supports.
+      headers:
+        error === 'method_not_allowed' ? {...NO_STORE, Allow: 'POST'} : NO_STORE,
+    },
   );
 }
 
