@@ -436,6 +436,18 @@ export const en = {
   'preferences.save': 'Save preferences',
   'preferences.saved': 'Preferences saved.',
   'preferences.saveError': 'Could not save preferences.',
+  'profile.data.title': 'Your data',
+  'profile.data.intro':
+    'Download a copy of your preferences or delete them from your profile.',
+  'profile.data.download': 'Download my preferences',
+  'profile.data.delete': 'Delete my preferences',
+  'profile.data.deleteConfirm':
+    'This removes your saved preferences. Continue?',
+  'profile.data.confirm': 'Confirm delete',
+  'profile.data.cancel': 'Cancel',
+  'profile.data.deleting': 'Deleting…',
+  'profile.data.deleted': 'Your preferences were deleted.',
+  'profile.data.deleteError': 'Could not delete your preferences.',
   'ring.title': 'Ring sizes',
   'ring.intro':
     'Save your US ring size for each finger. Ring products will show your saved sizes.',

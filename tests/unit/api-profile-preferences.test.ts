@@ -9,9 +9,13 @@ const CUSTOMER_ID = 'gid://shopify/Customer/1';
 function contextWith({
   loggedIn = true,
   stored = null,
+  customerId = CUSTOMER_ID,
+  deleteReply,
 }: {
   loggedIn?: boolean;
   stored?: Record<string, unknown> | null;
+  customerId?: string | null;
+  deleteReply?: unknown;
 } = {}) {
   const calls: Array<{
     metafields: Array<{
@@ -22,23 +26,43 @@ function contextWith({
       value: string;
     }>;
   }> = [];
+  const deleteCalls: Array<{
+    metafields: Array<{ownerId: string; namespace: string; key: string}>;
+  }> = [];
 
   const context = {
     customerAccount: {
       isLoggedIn: async () => loggedIn,
       query: async () => ({
         data: {
-          customer: {
-            id: CUSTOMER_ID,
-            favorites: {value: '[]'},
-            preferences: stored ? {value: JSON.stringify(stored)} : null,
-          },
+          customer: customerId
+            ? {
+                id: customerId,
+                favorites: {value: '[]'},
+                preferences: stored ? {value: JSON.stringify(stored)} : null,
+              }
+            : null,
         },
       }),
       mutate: async (
-        _mutation: string,
+        mutation: string,
         options: {variables: (typeof calls)[number]},
       ) => {
+        if (mutation.includes('metafieldsDelete')) {
+          deleteCalls.push(options.variables);
+
+          if (deleteReply !== undefined) return deleteReply;
+
+          return {
+            data: {
+              metafieldsDelete: {
+                deletedMetafields: options.variables.metafields,
+                userErrors: [],
+              },
+            },
+          };
+        }
+
         calls.push(options.variables);
 
         return {
@@ -53,13 +77,17 @@ function contextWith({
     },
   } as unknown as ActionArgs['context'];
 
-  return {context, calls};
+  return {context, calls, deleteCalls};
 }
 
-function callAction(context: ActionArgs['context'], body: string) {
+function callAction(
+  context: ActionArgs['context'],
+  body: string | undefined,
+  method = 'POST',
+) {
   return action({
     request: new Request('http://localhost/api/profile/preferences', {
-      method: 'POST',
+      method,
       headers: {'Content-Type': 'application/json'},
       body,
     }),
@@ -150,5 +178,80 @@ describe('POST /api/profile/preferences', () => {
       preferences: {allergies: [], skin: {}, ringSizes: {'left-ring': '6.5'}},
     });
     expect(calls).toHaveLength(1);
+  });
+});
+
+describe('DELETE /api/profile/preferences', () => {
+  it('rejects guests', async () => {
+    const {context, deleteCalls} = contextWith({loggedIn: false});
+    const result = await callAction(context, undefined, 'DELETE');
+
+    expect(result.init?.status).toBe(401);
+    expect(result.data).toEqual({error: 'Unauthorized'});
+    expect(deleteCalls).toHaveLength(0);
+  });
+
+  it.each([
+    [
+      'Shopify reports a user error',
+      {
+        deleteReply: {
+          data: {
+            metafieldsDelete: {
+              deletedMetafields: [],
+              userErrors: [{message: 'Metafield is locked'}],
+            },
+          },
+        },
+      },
+    ],
+    [
+      'the mutation returns GraphQL errors',
+      {deleteReply: {errors: [{message: 'Throttled'}]}},
+    ],
+  ])('fails without clearing anything when %s', async (_case, options) => {
+    const {context, deleteCalls} = contextWith(options);
+    const result = await callAction(context, undefined, 'DELETE');
+
+    expect(result.init?.status).toBeGreaterThanOrEqual(400);
+    expect(result.init?.headers).toMatchObject({'Cache-Control': 'no-store'});
+    expect(result.data).toHaveProperty('error');
+    expect(result.data).not.toHaveProperty('preferences');
+    expect(deleteCalls).toHaveLength(1);
+  });
+
+  it('fails without calling Shopify when the customer is missing', async () => {
+    const {context, deleteCalls} = contextWith({customerId: null});
+    const result = await callAction(context, undefined, 'DELETE');
+
+    expect(result.init?.status).toBeGreaterThanOrEqual(400);
+    expect(result.data).not.toHaveProperty('preferences');
+    expect(deleteCalls).toHaveLength(0);
+  });
+
+  it('rejects other methods', async () => {
+    const {context} = contextWith();
+    const result = await callAction(context, undefined, 'PUT');
+
+    expect(result.init?.status).toBe(405);
+  });
+
+  it('deletes the stored preferences', async () => {
+    const {context, deleteCalls} = contextWith({
+      stored: {allergies: ['nickel'], skin: {tone: 'medium'}},
+    });
+    const result = await callAction(context, undefined, 'DELETE');
+
+    expect(result.data).toEqual({
+      preferences: {allergies: [], skin: {}},
+    });
+    expect(deleteCalls).toHaveLength(1);
+    expect(deleteCalls[0].metafields).toEqual([
+      {
+        ownerId: CUSTOMER_ID,
+        namespace: 'custom',
+        key: 'preferences',
+      },
+    ]);
   });
 });

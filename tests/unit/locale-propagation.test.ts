@@ -81,7 +81,11 @@ function graphqlOperations(appDir: string) {
  * Operations that return no translatable content: customer metafields hold
  * product IDs and JSON preferences only.
  */
-const LANGUAGE_FREE_OPERATIONS = ['CustomerProfile', 'CustomerFavoritesSet'];
+const LANGUAGE_FREE_OPERATIONS = [
+  'CustomerProfile',
+  'CustomerFavoritesSet',
+  'CustomerMetafieldsDelete',
+];
 
 describe('Shopify locale variables', () => {
   const appDir = join(__dirname, '../../app');
