@@ -52,7 +52,11 @@ app/lib/                   Domain logic and utilities (pure where possible)
   profile/                            Favorites, fitting room, preferences (customer metafields)
   recommendation/                     Recommendation engine (pure) + candidate loader
   search.ts                           Filter parsing shared by collections and search
+  ratings/                            Order ratings (US-058): delivery rule, validation,
+                                      eligibility loader, Admin API rating store
+  request-origin.server.ts            Same-origin check for cookie-authenticated writes
 app/graphql/customer-account/  Customer Account API documents
+app/graphql/admin/         Admin API documents (no codegen; server-only)
 app/styles/tailwind.css    Tailwind 4 theme tokens (colors, fonts, breakpoints, shadows)
 tests/{unit,components,e2e}/
 docs/                      Technical and process documentation
