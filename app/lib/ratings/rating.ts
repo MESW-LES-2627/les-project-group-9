@@ -80,9 +80,20 @@ export type RateableProduct = {
 export function rateableProducts(
   lines: OrderLineForRating[],
 ): RateableProduct[] {
+  return productsInOrder(lines.filter((line) => line.quantity > 0));
+}
+
+/**
+ * Every distinct product of an order, whatever its current quantity. Used to
+ * read saved ratings, so a rating stays visible even if Shopify later reports
+ * a smaller quantity for its line; it never authorizes a new rating.
+ */
+export function productsInOrder(
+  lines: OrderLineForRating[],
+): RateableProduct[] {
   const products = new Map<string, RateableProduct>();
   for (const line of lines) {
-    if (line.quantity <= 0 || !isProductGid(line.productId)) continue;
+    if (!isProductGid(line.productId)) continue;
     if (products.has(line.productId)) continue;
     products.set(line.productId, {
       productId: line.productId,

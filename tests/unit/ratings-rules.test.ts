@@ -3,6 +3,7 @@ import {isOrderFullyDelivered, type DeliveryEvidence} from '~/lib/ratings/delive
 import {
   isRatingValue,
   parseRatingSubmission,
+  productsInOrder,
   rateableProducts,
   ratingHandle,
 } from '~/lib/ratings/rating';
@@ -88,6 +89,14 @@ describe('rateableProducts', () => {
         line('l3', 'gid://shopify/Product/22', 1),
       ]).map((product) => product.productId),
     ).toEqual([PRODUCT, 'gid://shopify/Product/22']);
+  });
+
+  it('lists every product for reading, whatever its quantity', () => {
+    expect(
+      productsInOrder([line('l1', PRODUCT, 0), line('l2', null)]).map(
+        (product) => product.productId,
+      ),
+    ).toEqual([PRODUCT]);
   });
 
   it('skips lines without a Shopify product or remaining quantity', () => {

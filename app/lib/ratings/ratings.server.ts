@@ -5,6 +5,7 @@ import {
   RatingVerificationError,
 } from './order-eligibility.server';
 import {
+  productsInOrder,
   rateableProducts,
   type RateableProduct,
   type RatingSubmission,
@@ -58,7 +59,12 @@ export async function loadOrderRatings({
   }
   if (!order) return {status: 'verification_error'};
 
-  const products = rateableProducts(order.lines);
+  // Reading and authorizing are separate: saved ratings are read for every
+  // product of the order; only products with a quantity can get a new one.
+  const products = productsInOrder(order.lines);
+  const rateable = new Set(
+    rateableProducts(order.lines).map((product) => product.productId),
+  );
   let saved;
   try {
     saved = await store.findRatings(
@@ -77,10 +83,14 @@ export async function loadOrderRatings({
     status: 'ready',
     orderId: order.orderId,
     delivered: isOrderFullyDelivered(order),
-    products: products.map((product, index) => ({
-      ...product,
-      rating: saved[index]?.rating ?? null,
-    })),
+    products: products
+      .map((product, index) => ({
+        ...product,
+        rating: saved[index]?.rating ?? null,
+      }))
+      .filter(
+        (product) => product.rating !== null || rateable.has(product.productId),
+      ),
   };
 }
 

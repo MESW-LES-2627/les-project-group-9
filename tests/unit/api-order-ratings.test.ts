@@ -280,6 +280,34 @@ describe('POST /api/order-ratings', () => {
     expect(admin.requests).toHaveLength(0);
   });
 
+  it('fails closed when there are more fulfillment pages than the limit', async () => {
+    const order = deliveredOrder(ORDER_1, CUSTOMER_A, [PRODUCT_A]);
+    order.lines[0].quantity = 25;
+    order.fulfillments = Array.from({length: 25}, (_, index) => ({
+      id: `f${index}`,
+      status: 'SUCCESS',
+      latestShipmentStatus: 'DELIVERED',
+      items: [{lineItemId: order.lines[0].id, quantity: 1}],
+    }));
+    const {context} = contextFor({orders: [order], fulfillmentPageSize: 1});
+    const response = await submit(context, rate(ORDER_1, PRODUCT_A, 5));
+    expect(response).toMatchObject({status: 503, body: {error: 'verification_unavailable'}});
+    expect(admin.requests).toHaveLength(0);
+  });
+
+  it('does not unlock a split order while a later fulfillment page is undelivered', async () => {
+    const order = deliveredOrder(ORDER_1, CUSTOMER_A, [PRODUCT_A, PRODUCT_B]);
+    const [first, second] = order.lines;
+    order.fulfillments = [
+      {id: 'f1', status: 'SUCCESS', latestShipmentStatus: 'DELIVERED', items: [{lineItemId: first.id, quantity: 1}]},
+      {id: 'f2', status: 'SUCCESS', latestShipmentStatus: 'DELIVERED', items: []},
+      {id: 'f3', status: 'SUCCESS', latestShipmentStatus: 'OUT_FOR_DELIVERY', items: [{lineItemId: second.id, quantity: 1}]},
+    ];
+    const {context} = contextFor({orders: [order], fulfillmentPageSize: 1});
+    const response = await submit(context, rate(ORDER_1, PRODUCT_A, 5));
+    expect(response).toMatchObject({status: 403, body: {error: 'not_delivered'}});
+  });
+
   it.each([
     ['OrderRatingLines', 'errors'],
     ['OrderRatingLines', 'throw'],
@@ -321,6 +349,8 @@ describe('POST /api/order-ratings', () => {
 
     expect(retry).toMatchObject({status: 409, body: {error: 'already_rated', rating: 2}});
     expect(admin.ratings()).toEqual([expect.objectContaining({rating: '2'})]);
+    // The retry reached Shopify's create (no read-before-create shortcut).
+    expect(admin.requests.filter(({query}) => query.includes('metaobjectCreate('))).toHaveLength(2);
   });
 
   it('keeps one record for concurrent conflicting submissions', async () => {
@@ -409,6 +439,33 @@ describe('order page loader', () => {
     expect(await loadPage(context)).toMatchObject({
       delivered: false,
       products: [{productId: PRODUCT_A, rating: 4}],
+    });
+  });
+
+  it('still shows a saved rating if its line later reports no quantity', async () => {
+    const order = deliveredOrder(ORDER_1, CUSTOMER_A, [PRODUCT_A, PRODUCT_B]);
+    const {context} = contextFor({orders: [order]});
+    await submit(context, rate(ORDER_1, PRODUCT_A, 5));
+    // e.g. after a return or order edit, if Shopify lowers the line quantity.
+    order.lines[0].quantity = 0;
+
+    expect(await loadPage(context)).toMatchObject({
+      products: [
+        {productId: PRODUCT_A, rating: 5},
+        {productId: PRODUCT_B, rating: null},
+      ],
+    });
+    // Reading is allowed; a new rating for a product with no quantity is not.
+    expect((await submit(context, rate(ORDER_1, PRODUCT_A, 1))).status).toBe(422);
+  });
+
+  it('hides an unrated product whose line has no quantity', async () => {
+    const order = deliveredOrder(ORDER_1, CUSTOMER_A, [PRODUCT_A, PRODUCT_B]);
+    order.lines[1].quantity = 0;
+    const {context} = contextFor({orders: [order]});
+
+    expect(await loadPage(context)).toMatchObject({
+      products: [{productId: PRODUCT_A, rating: null}],
     });
   });
 
