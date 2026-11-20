@@ -2,7 +2,7 @@
 
 @AGENTS.md
 
-Jeweliette is a headless Shopify storefront for a fashion-jewelry brand, built
+Jeweliette is a headless Shopify storefront for a fashion jewelry and accessories brand, built
 on Hydrogen (React Router 7, React 18, TypeScript, Tailwind CSS 4) and deployed
 to Oxygen. This file holds the standing rules for every session. Details live in:
 
@@ -23,6 +23,7 @@ to Oxygen. This file holds the standing rules for every session. Details live in
 | `npm run typecheck` | `react-router typegen` + `tsc --noEmit` |
 | `npm run lint` | ESLint |
 | `npm test` | Vitest: unit (node) and component (jsdom) projects |
+| `npm run test:coverage` | `npm test` with coverage thresholds (what CI runs) |
 | `npm run test:e2e` | Playwright, desktop Chromium, against `npm run preview` |
 | `npm run codegen` | Regenerate GraphQL and route types |
 | `npm run test:staging:ratings` | Opt-in US-058 storage checks against a real staging store (never in CI; writes only with `RATINGS_STAGING_CONFIRM_WRITES`) |
@@ -65,6 +66,7 @@ app/assets/                logo.svg and models/face_landmarker.task (imported wi
 app/styles/tailwind.css    Tailwind 4 theme tokens (colors, fonts, breakpoints, shadows)
 public/                    Remaining static files (none required at runtime)
 tests/{unit,components,e2e}/
+tests/staging/             Opt-in checks against a real store (never in CI)
 docs/                      Technical and process documentation
 ```
 
