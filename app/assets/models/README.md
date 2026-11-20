@@ -8,6 +8,8 @@ front-camera try-on. It runs entirely in the browser.
 - Size: 3,758,596 bytes (md5 `b0e7274907a1644404fef66b28dd6d85`)
 
 Do not edit or re-encode the file. If it is replaced, update the checksum here and re-verify the
-try-on on a phone. The WASM runtime that loads it is copied from
-`node_modules/@mediapipe/tasks-vision/wasm` into `public/mediapipe/` by
-`scripts/copy-mediapipe-assets.mjs` and is not committed (see `.gitignore`).
+try-on on a phone.
+
+The file is imported with Vite's `?url` from `app/lib/try-on/assets.ts`, so it is emitted as a
+hashed client asset under `/assets/`. The WASM runtime is imported the same way from
+`node_modules/@mediapipe/tasks-vision`; nothing is copied into `public/` at build time.

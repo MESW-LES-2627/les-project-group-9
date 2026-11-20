@@ -13,12 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "codegen": "shopify hydrogen codegen && react-router typegen",
-    "test:e2e": "playwright test",
-    "mediapipe:assets": "node scripts/copy-mediapipe-assets.mjs",
-    "postinstall": "npm run mediapipe:assets",
-    "predev": "npm run mediapipe:assets",
-    "prebuild": "npm run mediapipe:assets",
-    "prepreview": "npm run mediapipe:assets"
+    "test:e2e": "playwright test"
   },
   "prettier": "@shopify/prettier-config",
   "dependencies": {

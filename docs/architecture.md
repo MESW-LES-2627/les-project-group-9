@@ -176,10 +176,13 @@ metafields (namespace `custom`) through the Customer Account API.
   always allowed. Entries that stop being eligible (overlay removed, category changed,
   product unpublished) are **pruned when the profile loads** (`pruneFittingRoom` in
   `lib/profile/fitting-room-gate.server.ts`), and legacy product GIDs simply stop parsing
-  into the variant list, so old entries disappear immediately. If an unsupported entry
-  still reaches the page (for example the overlay changed between the prune and the load),
-  the loader returns it with `tryOn: null` and the view lists it with a **No 3D** marker
-  instead of hiding it; it cannot be selected for a look.
+  into the variant list, so old entries disappear immediately. The prune is skipped when a
+  variant still has an overlay but no recognised category: that is the signature of a
+  catalogue/localization regression, and deleting the shopper's wardrobe would be worse than
+  keeping an entry that cannot be tried on. If an unsupported entry still reaches the page
+  (for example the overlay changed between the prune and the load), the loader returns it
+  with `tryOn: null` and the view lists it with a **No 3D** marker instead of hiding it; it
+  cannot be selected for a look.
 - **Pages**: `/favorites` and `/fitting-room` render client-side. They call their own loader with
   `?ids=` from the profile state (`useFetcher`); favorites load product cards via
   `loadProductsByIds`, the fitting room loads variant entries via `loadVariantsByIds`
@@ -204,9 +207,12 @@ metafields (namespace `custom`) through the Customer Account API.
 A shopper can try earrings and necklaces on with the phone camera (US-017). It is not AR
 surface placement: the piece is drawn on a live selfie face.
 
-- **Gate** — `app/lib/try-on/catalog.ts`: the product's `category.name` must be `Earrings`
-  or `Necklaces` **and the selected variant** must have `custom.try_on_overlay` (a
-  transparent PNG in Files). There is no product-level fallback: colours are independent, so
+- **Gate** — `app/lib/try-on/catalog.ts`: the product's taxonomy category must be
+  **Earrings** or **Necklaces** **and the selected variant** must have `custom.try_on_overlay`
+  (a transparent PNG in Files). The category is matched by its taxonomy GID
+  (`app/lib/taxonomy.ts`), not by `category.name`, because Shopify localises the name
+  (`Earrings` → `Brincos` → `Boucles d’oreilles`); the English name is only a fallback when
+  a caller has no id. There is no product-level fallback: colours are independent, so
   a product whose clear variant has an overlay and whose pink variant does not shows Try on
   (and the hanger) only for clear. `custom.try_on_size_cm` on the variant sets the piece's
   real width (default 2 cm earrings, 16 cm necklaces). Overlay URLs are loaded with
@@ -225,13 +231,18 @@ surface placement: the piece is drawn on a live selfie face.
   product loader; phones open the camera dialog and computers the QR dialog. iPadOS's
   desktop user agent is refined client-side with `maxTouchPoints`.
 - **Runtime** — `@mediapipe/tasks-vision` (FaceLandmarker, 478 landmarks) is imported
-  lazily when the dialog opens. WASM (`public/mediapipe/`, copied from `node_modules` by
-  `scripts/copy-mediapipe-assets.mjs`) and the model (`public/models/face_landmarker.task`)
-  are self-hosted, so no request leaves our origin. The dialog tries the GPU delegate and
-  falls back to CPU. The **classic** WASM loader is used (`forVisionTasks(path, false)` and
-  `vision_wasm_internal.*`): the ES-module variant is evaluated as a classic script and
-  fails at runtime with `ModuleFactory not set.` The camera is requested **inside the shopper's
-  tap** (`requestCamera()` is called from the button handler, before React updates): iOS
+  lazily when the dialog opens. The classic loader (`vision_wasm_internal.js`), the WASM
+  binary and the model (`app/assets/models/face_landmarker.task`) are imported with Vite's
+  `?url` (`app/lib/try-on/assets.ts`), so Vite emits them under hashed `/assets/…` names
+  next to the app's JS/CSS and Oxygen serves them with the right MIME type and an immutable
+  cache. They used to be unversioned `public/` files; the Oxygen deployment answered a
+  missing public path with its HTML 404 page, which aborts the WASM fetch with
+  `both async and sync fetching of the wasm failed`. The dialog tries the GPU delegate and
+  falls back to CPU. The **classic** loader is used (`vision_wasm_internal.js`, passed to
+  `FaceLandmarker.createFromOptions()` in an explicit fileset): the ES-module variant is
+  evaluated as a classic script and fails at runtime with `ModuleFactory not set.` The camera
+  is requested **inside the shopper's tap** (`requestCamera()` is called from the button
+  handler, before React updates): iOS
   Safari ties `getUserMedia` to the user gesture, so a request from an effect can be silently
   refused. QR deep links have no gesture, so they open the dialog with an "Open camera"
   button; `cameraSupport()` catches in-app browsers without `getUserMedia` and non-HTTPS
@@ -251,7 +262,10 @@ surface placement: the piece is drawn on a live selfie face.
   `playsinline`/`webkit-playsinline`/`muted` **before** `srcObject`; the modal defers the
   camera release by one tick so React StrictMode's simulated unmount does not stop and
   reopen the hardware camera. When the camera or the WASM fails, the banner shows the
-  translated message **plus the raw `Name: message`** so a phone can report the cause.
+  translated message **plus the raw `Name: message`** so a phone can report the cause. A
+  failed landmarker creation probes the three asset URLs (HTTP status and content type) and
+  logs the result, and the banner's detail includes the short summary, so a deployment that
+  serves HTML instead of the WASM is identifiable without a debugger.
 - **Geometry** (`try-on/anchors.ts`, pure, pixel space): earrings are top-centre anchored at
   landmarks 177/401, pushed outwards to the lobe by `EAR_OUTWARD_RATIO` (4 % of the face
   width, along the face's lateral axis) and lifted along the face's vertical axis by
@@ -400,7 +414,7 @@ See [testing.md](testing.md). In short:
 | Add a product trait for recommendations | `JEWELIETTE_RECOMMENDATION_PRODUCT_FRAGMENT`, `recommendation/types.ts`, `traits.ts`, `weights.ts`, `signals.ts`, plus tests. |
 | Add a catalog filter | Shopify admin (Search & Discovery filters). If it needs a new filter key, extend `allowedKeys` in `readCatalogFilters()` (`app/lib/search.ts`). UI changes go in `CatalogFilters.tsx`. |
 | Add a sort option | `SORT_OPTIONS` in `app/routes/collections.$handle.tsx`. |
-| Change the try-on gate or overlay | `app/lib/try-on/catalog.ts` (supported categories, the variant's `custom.try_on_overlay` PNG, `custom.try_on_size_cm`); variant/product loading in `app/lib/variants.server.ts`; geometry in `app/lib/try-on/anchors.ts`; MediaPipe assets in `public/models/` and `public/mediapipe/` (copied by `scripts/copy-mediapipe-assets.mjs`). |
+| Change the try-on gate or overlay | `app/lib/try-on/catalog.ts` (supported categories, the variant's `custom.try_on_overlay` PNG, `custom.try_on_size_cm`); variant/product loading in `app/lib/variants.server.ts`; geometry in `app/lib/try-on/anchors.ts`; MediaPipe assets in `app/lib/try-on/assets.ts` (the model lives in `app/assets/models/`). |
 | Add a customer preference | `PreferenceProfile` (`profile/types.ts`), `profile/preferences.ts` (normalise/parse), `PreferencesForm.tsx`, tests. |
 | Add a UI string / translation | Add the key to `app/lib/messages/en.ts`, `pt.ts` and `fr.ts` and use `useTranslation()` (or `translatorFor` / `translatorFromMatches`). See [i18n.md](i18n.md#adding-a-string). |
 | Add a language | Add an entry to `LOCALES` and a message object in `app/lib/i18n.ts`, then publish the language in the Shopify admin. |

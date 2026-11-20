@@ -6,17 +6,31 @@ type LoaderArgs = Parameters<typeof loader>[0];
 const CUSTOMER_ID = 'gid://shopify/Customer/1';
 const CLEAR = 'gid://shopify/ProductVariant/1';
 const STEEL = 'gid://shopify/ProductVariant/2';
+const MISCLASSIFIED = 'gid://shopify/ProductVariant/3';
 const LEGACY_PRODUCT = 'gid://shopify/Product/1';
 
-function variantNode(id: string) {
+const NECKLACES = {id: 'gid://shopify/TaxonomyCategory/aa-6-8', name: 'Necklaces'};
+const BRACELETS = {id: 'gid://shopify/TaxonomyCategory/aa-6-3', name: 'Bracelets'};
+
+function variantNode(id: string, portuguese = false) {
   const capable = id === CLEAR;
+  const misclassified = id === MISCLASSIFIED;
+  const hasOverlay = capable || misclassified;
+  const name = (category: 'necklaces' | 'bracelets') =>
+    !portuguese
+      ? category === 'necklaces'
+        ? 'Necklaces'
+        : 'Bracelets'
+      : category === 'necklaces'
+        ? 'Colares'
+        : 'Pulseiras';
 
   return {
     __typename: 'ProductVariant',
     id,
-    title: capable ? 'Clear' : 'Steel',
+    title: 'Piece',
     availableForSale: true,
-    selectedOptions: [{name: 'Color', value: capable ? 'Clear' : 'Steel'}],
+    selectedOptions: [{name: 'Color', value: 'Gold'}],
     price: {amount: '1.0', currencyCode: 'EUR'},
     compareAtPrice: null,
     product: {
@@ -24,14 +38,16 @@ function variantNode(id: string) {
       title: 'Piece',
       handle: 'piece',
       productType: '',
-      category: {name: capable ? 'Necklaces' : 'Bracelets'},
+      category: capable
+        ? {...NECKLACES, name: name('necklaces')}
+        : {...BRACELETS, name: name('bracelets')},
       featuredImage: null,
       priceRange: {
         minVariantPrice: {amount: '1.0', currencyCode: 'EUR'},
         maxVariantPrice: {amount: '1.0', currencyCode: 'EUR'},
       },
     },
-    tryOnOverlay: capable
+    tryOnOverlay: hasOverlay
       ? {reference: {image: {url: 'https://cdn.example/piece.png'}}}
       : null,
     tryOnSize: null,
@@ -43,11 +59,13 @@ function contextWith({
   fail = false,
   fittingRoom = '[]',
   storefrontFails = false,
+  portuguese = false,
 }: {
   loggedIn?: boolean;
   fail?: boolean;
   fittingRoom?: string;
   storefrontFails?: boolean;
+  portuguese?: boolean;
 } = {}) {
   const writes: string[] = [];
 
@@ -91,7 +109,7 @@ function contextWith({
       ) => {
         if (storefrontFails) throw new Error('Storefront unavailable');
 
-        return {nodes: options.variables.ids.map(variantNode)};
+        return {nodes: options.variables.ids.map((id) => variantNode(id, portuguese))};
       },
     },
   } as unknown as LoaderArgs['context'];
@@ -152,6 +170,30 @@ describe('GET /api/profile', () => {
     expect(result.data).toMatchObject({fittingRoom: [CLEAR]});
     expect(writes).toHaveLength(1);
     expect(JSON.parse(writes[0])).toEqual([CLEAR]);
+  });
+
+  it('keeps a try-on piece when its category name is localized', async () => {
+    const {context, writes} = contextWith({
+      fittingRoom: JSON.stringify([CLEAR]),
+      portuguese: true,
+    });
+
+    const result = await callLoader(context);
+
+    expect(result.data).toMatchObject({fittingRoom: [CLEAR]});
+    expect(writes).toHaveLength(0);
+  });
+
+  it('skips the prune when a piece has an overlay but no supported category', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const {context, writes} = contextWith({
+      fittingRoom: JSON.stringify([CLEAR, MISCLASSIFIED]),
+    });
+
+    const result = await callLoader(context);
+
+    expect(result.data).toMatchObject({fittingRoom: [CLEAR, MISCLASSIFIED]});
+    expect(writes).toHaveLength(0);
   });
 
   it('drops legacy product GIDs from the stored list', async () => {

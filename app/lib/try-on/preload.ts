@@ -1,3 +1,4 @@
+import {TRY_ON_ASSETS} from './assets';
 import {releaseFaceDetector, warmFaceDetector} from './face-landmarker';
 
 let started = false;
@@ -13,10 +14,7 @@ export function preloadTryOnAssets(): void {
 
   if (!shouldPreload()) return;
 
-  const assets = [
-    '/mediapipe/wasm/vision_wasm_internal.wasm',
-    '/models/face_landmarker.task',
-  ];
+  const assets = [TRY_ON_ASSETS.wasmUrl, TRY_ON_ASSETS.modelUrl];
 
   const load = () => {
     for (const asset of assets) {

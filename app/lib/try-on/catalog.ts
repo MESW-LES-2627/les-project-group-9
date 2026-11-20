@@ -1,3 +1,4 @@
+import {matchesCategory, type ProductCategory} from '~/lib/taxonomy';
 import {withCorsParam} from './url';
 
 /**
@@ -28,7 +29,7 @@ export type TryOnReference = {
 
 /** Product fields needed to decide the kind. */
 export type TryOnProduct = {
-  category?: {name?: string | null} | null;
+  category?: ProductCategory | null;
 };
 
 /** Variant fields that carry the overlay. */
@@ -36,13 +37,6 @@ export type TryOnVariant = {
   id: string;
   tryOnOverlay?: {reference?: TryOnReference | null} | null;
   tryOnSize?: {value?: string | null} | null;
-};
-
-const KIND_BY_CATEGORY: Record<string, TryOnKind> = {
-  earring: 'earring',
-  earrings: 'earring',
-  necklace: 'necklace',
-  necklaces: 'necklace',
 };
 
 export const DEFAULT_TRY_ON_SIZE_CM: Record<TryOnKind, number> = {
@@ -53,12 +47,16 @@ export const DEFAULT_TRY_ON_SIZE_CM: Record<TryOnKind, number> = {
 const MIN_SIZE_CM = 0.2;
 const MAX_SIZE_CM = 100;
 
-/** The try-on kind for a product, or `null` for unsupported categories. */
+/**
+ * The try-on kind for a product, or `null` for unsupported categories.
+ * Matches the taxonomy id, so a localized category name cannot hide the
+ * button after the shopper changes language.
+ */
 export function tryOnKind(product: TryOnProduct): TryOnKind | null {
-  const name = product.category?.name?.trim().toLowerCase();
-  if (!name) return null;
+  if (matchesCategory(product.category, 'earrings')) return 'earring';
+  if (matchesCategory(product.category, 'necklaces')) return 'necklace';
 
-  return KIND_BY_CATEGORY[name] ?? null;
+  return null;
 }
 
 /**

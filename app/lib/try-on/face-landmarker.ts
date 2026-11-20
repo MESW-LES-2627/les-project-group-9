@@ -1,5 +1,11 @@
 import type {FaceLandmarker} from '@mediapipe/tasks-vision';
 import type {Point} from './anchors';
+import {
+  TRY_ON_ASSETS,
+  TryOnAssetError,
+  describeAssetProbes,
+  diagnoseTryOnAssets,
+} from './assets';
 
 type DetectorMode = 'VIDEO' | 'IMAGE';
 
@@ -12,9 +18,6 @@ export type FaceDetector = {
   ): Promise<Point[] | null>;
   close(): void;
 };
-
-const WASM_BASE = '/mediapipe/wasm';
-const MODEL_URL = '/models/face_landmarker.task';
 
 let sharedDetector: Promise<FaceDetector> | null = null;
 
@@ -53,32 +56,27 @@ export function warmFaceDetector(): void {
 
 /**
  * Loads the MediaPipe FaceLandmarker lazily (14 MB WASM + 3.8 MB model, both
- * self-hosted). Tries the GPU delegate first and falls back to CPU, which is
- * slower but works where WebGL is unavailable.
+ * emitted as hashed client assets). Tries the GPU delegate first and falls back
+ * to CPU, which is slower but works where WebGL is unavailable.
  *
  * An instance is created per try-on session and closed when the dialog closes.
+ * On failure the asset URLs are probed and logged, so a deployment that serves
+ * the wrong file (for example an HTML 404 page instead of the WASM) is obvious
+ * from the console and from the banner.
  */
 export async function createFaceDetector(): Promise<FaceDetector> {
-  const {FilesetResolver, FaceLandmarker} = await import(
-    '@mediapipe/tasks-vision'
-  );
-
-  const fileset = await FilesetResolver.forVisionTasks(WASM_BASE, false);
-  const create = (delegate: 'GPU' | 'CPU') =>
-    FaceLandmarker.createFromOptions(fileset, {
-      baseOptions: {modelAssetPath: MODEL_URL, delegate},
-      runningMode: 'VIDEO',
-      numFaces: 1,
-      outputFaceBlendshapes: false,
-      outputFacialTransformationMatrixes: false,
-    });
-
   let landmarker: FaceLandmarker;
 
   try {
-    landmarker = await create('GPU');
-  } catch {
-    landmarker = await create('CPU');
+    landmarker = await createLandmarker();
+  } catch (error) {
+    const probes = await diagnoseTryOnAssets();
+    console.error('[try-on] MediaPipe could not start', error, probes);
+
+    throw new TryOnAssetError(
+      `MediaPipe assets: ${describeAssetProbes(probes)}`,
+      {cause: error},
+    );
   }
 
   let mode: DetectorMode = 'VIDEO';
@@ -105,6 +103,34 @@ export async function createFaceDetector(): Promise<FaceDetector> {
       landmarker.close();
     },
   };
+}
+
+/**
+ * Creates the landmarker from the explicit fileset: the classic loader maps
+ * every `.wasm` request to `wasmBinaryPath`, so both the script and the binary
+ * can carry Vite's content hash. No `FilesetResolver` base path can drift.
+ */
+async function createLandmarker(): Promise<FaceLandmarker> {
+  const {FaceLandmarker} = await import('@mediapipe/tasks-vision');
+
+  const fileset = {
+    wasmLoaderPath: TRY_ON_ASSETS.loaderUrl,
+    wasmBinaryPath: TRY_ON_ASSETS.wasmUrl,
+  };
+
+  const options = (delegate: 'GPU' | 'CPU') => ({
+    baseOptions: {modelAssetPath: TRY_ON_ASSETS.modelUrl, delegate},
+    runningMode: 'VIDEO' as const,
+    numFaces: 1,
+    outputFaceBlendshapes: false,
+    outputFacialTransformationMatrixes: false,
+  });
+
+  try {
+    return await FaceLandmarker.createFromOptions(fileset, options('GPU'));
+  } catch {
+    return await FaceLandmarker.createFromOptions(fileset, options('CPU'));
+  }
 }
 
 function toPoints(

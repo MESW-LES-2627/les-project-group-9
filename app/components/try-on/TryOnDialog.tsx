@@ -412,7 +412,7 @@ export function TryOnDialog({
               pieces={ready}
               previewLabel={previewLabel}
             />
-          ) : (
+          ) : failureMessage ? null : (
             <StatusMessage message={t('tryOn.loading')} />
           )}
         </>
