@@ -522,6 +522,7 @@ section then shows the verification error.
 | Group lines by product; validate the submission | `lib/ratings/rating.ts` |
 | Saved ratings read by exact handle | `lib/ratings/rating-store.server.ts` |
 | Form: radio group per unrated product, then read-only stars | `components/account/OrderRatings.tsx`, `StarRating.tsx` |
+| After a save: no reload of the order page. Its `shouldRevalidate` returns `false` only for POSTs to `/api/order-ratings` (201 and 409 alike), so the form shows the saved or existing value with its confirmation and other products keep unsaved choices; every other action, navigation and reload uses React Router's default | `routes/account.orders.$id.tsx` |
 | Save: `POST /api/order-ratings` `{orderId, productId, rating}` (JSON) | `routes/api.order-ratings.tsx` → `submitRating()` (`lib/ratings/ratings.server.ts`) |
 
 `POST /api/order-ratings` checks, in this order: method (405), same-origin (403
@@ -668,6 +669,7 @@ store chooses to run it.
 | Not manually verified | Undelivered and split-delivery blocking (B2), several units/variants, a later order of the same product, other customers and anonymous requests (B5, B6), privacy checks (B7). These are covered by automated tests with fakes only |
 | Storage uniqueness and concurrency (A, B4) | **Pending.** Not run; requires separate authorization of the store and its test writes |
 | Signed-in Playwright coverage | Still blocked; see [testing.md](testing.md) |
+| Post-save reload (PR #172 review) | The order page re-ran its loader after a 201 save (not after a 409) and dropped the confirmation; fixed with the targeted `shouldRevalidate` above and covered by `tests/components/account/OrderRatingsRevalidation.test.tsx` |
 
 **A. Storage uniqueness (acceptance blocker).** From a machine with the staging credentials,
 set these in the shell (never in committed files), then run the opt-in suite:

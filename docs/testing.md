@@ -47,7 +47,7 @@ Component tests cover:
 | Folder | Components |
 | --- | --- |
 | *(top level)* | `FittingRoomButton`, `FittingRoomView` |
-| `account` | `AccountProfile` (the profile route's form in EN, PT and FR, the "Profile updated." confirmation and the error instead of it), `OrderRatings` (US-058: star radio group with the keyboard, submit through a real `useFetcher` to a stubbed `/api/order-ratings`, pending/saved/already-rated/error states, read-only saved ratings, not-delivered and unavailable states, EN/PT/FR), `PreferencesForm`, `RingSizeForm` |
+| `account` | `AccountProfile` (the profile route's form in EN, PT and FR, the "Profile updated." confirmation and the error instead of it), `OrderRatings` (US-058: star radio group with the keyboard, submit through a real `useFetcher` to a stubbed `/api/order-ratings`, pending/saved/already-rated/error states, read-only saved ratings, not-delivered and unavailable states, EN/PT/FR), `OrderRatingsRevalidation` (US-058: the real order route with a stub loader and rating action: after saving one product the confirmation stays, another product's unsaved choice stays, the order loader does not re-run for 201 or 409, a reload reads the saved rating; `shouldRevalidate` keeps the default for other actions), `PreferencesForm`, `RingSizeForm` |
 | `cart` | `CartLineItem`, `CartSummary` |
 | `collections` | `CatalogFilters`: app-named filter labels in EN, PT and FR; other filters keep the Shopify label |
 | `layout` | `LanguageSelector` dropdown (closed trigger with the localized current language in EN/PT/FR, EN/PT/FR options with flags, names, `lang` and `aria-current`, posting path, query and hash, arrow keys/Home/End/Escape with focus return, keyboard choice, outside click and focus-out closing, inline layout) |

@@ -1,5 +1,10 @@
 import {Suspense} from 'react';
-import {Await, redirect, useLoaderData} from 'react-router';
+import {
+  Await,
+  redirect,
+  useLoaderData,
+  type ShouldRevalidateFunction,
+} from 'react-router';
 import type {Route} from './+types/account.orders.$id';
 import {Image} from '@shopify/hydrogen';
 import {Money} from '~/components/shared/Money';
@@ -12,6 +17,7 @@ import {accountOrderDetail} from '~/lib/account-ui';
 import {
   OrderRatings,
   OrderRatingsLoading,
+  RATING_ENDPOINT,
 } from '~/components/account/OrderRatings';
 import {NO_STORE} from '~/lib/profile/operation.server';
 import {createRatingStore} from '~/lib/ratings/rating-store.server';
@@ -37,6 +43,22 @@ export const meta: Route.MetaFunction = ({data, matches}) => {
 
 /** Order details and ratings are specific to the signed-in customer. */
 export const headers: Route.HeadersFunction = () => NO_STORE;
+
+/**
+ * A rating submission does not change the order, and the form already shows
+ * the saved (or existing) value from the endpoint's answer. Reloading here
+ * would only repeat the Shopify reads and drop the confirmation message, and
+ * React Router would do it after a 201 but not after a 409. Every other
+ * action, navigation and reload keeps the default behaviour.
+ */
+export const shouldRevalidate: ShouldRevalidateFunction = ({
+  formMethod,
+  formAction,
+  defaultShouldRevalidate,
+}) => {
+  if (formMethod === 'POST' && formAction === RATING_ENDPOINT) return false;
+  return defaultShouldRevalidate;
+};
 
 export async function loader({params, context}: Route.LoaderArgs) {
   const {customerAccount} = context;
