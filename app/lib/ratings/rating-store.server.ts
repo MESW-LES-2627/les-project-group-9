@@ -118,11 +118,21 @@ type UserError = {field?: string[] | null; message: string; code?: string | null
 /**
  * Rating records as private Shopify metaobjects, through the Admin GraphQL API.
  *
- * Uniqueness relies on Shopify keeping metaobject handles unique per type: the
- * handle is derived from customer + order + product, records are only ever
- * created (never upserted or updated), so the first record saved under that
- * handle is the one that counts. If Shopify answers a create with a different
- * handle, the extra record is deleted and the existing one is reported.
+ * Records are only ever created with `metaobjectCreate` and an explicit,
+ * deterministic handle (never upserted or updated), and reads use that exact
+ * handle. Whether this gives one record per customer + order + product depends
+ * on how Shopify answers a create whose explicit handle already exists, which
+ * its documentation (2026-04) does not state. Responses are handled as:
+ *
+ * - record returned with the requested handle: saved (`created`);
+ * - no record (any `userErrors`, e.g. `TAKEN`, or none): the record under the
+ *   exact handle is read and reported as `exists`; if there is none, the save
+ *   failed;
+ * - record returned with a different handle: Shopify accepted a second record.
+ *   This breaks the uniqueness rule. It is logged, deleted as a best-effort
+ *   compensation (which can fail, or never run if the request dies) and the
+ *   record under the exact handle is reported. This path is NOT a uniqueness
+ *   guarantee; see docs/architecture.md → Order ratings → Storage.
  */
 export class ShopifyRatingStore implements RatingStore {
   constructor(
@@ -188,11 +198,13 @@ export class ShopifyRatingStore implements RatingStore {
       return {status: 'created', rating: toStoredRating(created, handle, key)};
     }
     if (created) {
-      // Shopify saved our record under another handle because ours was taken.
+      console.error(
+        '[ratings] uniqueness violation: metaobjectCreate stored a record under another handle',
+      );
       await this.#deleteDuplicate(created.id);
     }
 
-    // Rejected (e.g. handle taken) or renamed: the record under our handle wins.
+    // Rejected or renamed: report the record under the exact handle, if any.
     const [existing] = await this.findRatings([key]);
     if (existing) return {status: 'exists', rating: existing};
     throw new RatingStoreError('create_rejected');

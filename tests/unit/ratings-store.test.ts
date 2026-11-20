@@ -1,4 +1,4 @@
-import {describe, expect, it} from 'vitest';
+import {afterEach, describe, expect, it, vi} from 'vitest';
 import {ratingHandle} from '~/lib/ratings/rating';
 import {
   ADMIN_API_VERSION,
@@ -9,6 +9,10 @@ import {
   type RatingStore,
 } from '~/lib/ratings/rating-store.server';
 import {ADMIN_ENV, CUSTOMER_A, CUSTOMER_B, fakeAdminApi, PRODUCT_A} from './support/ratings-fakes';
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 const KEY = {customerId: CUSTOMER_A, orderId: 'gid://shopify/Order/1', productId: PRODUCT_A};
 
@@ -68,8 +72,12 @@ describe('ShopifyRatingStore HTTP contract', () => {
     }
   });
 
+  // Shopify does not document what metaobjectCreate does with an explicit
+  // handle that exists. The fake models two possibilities ('taken': rejected,
+  // 'suffix': stored under another handle). These tests check the adapter's
+  // handling of each; they do not show which one Shopify actually does.
   it.each(['taken', 'suffix'] as const)(
-    'keeps the first rating when the handle exists (Shopify %s behaviour)',
+    'keeps the first rating when the handle exists (modelled %s behaviour)',
     async (mode) => {
       const admin = fakeAdminApi({mode});
       const store = storeFor(admin);
@@ -85,8 +93,9 @@ describe('ShopifyRatingStore HTTP contract', () => {
   );
 
   it.each(['taken', 'suffix'] as const)(
-    'concurrent creates leave one immutable record (Shopify %s behaviour)',
+    'concurrent creates leave one immutable record (modelled %s behaviour)',
     async (mode) => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
       const admin = fakeAdminApi({mode});
       const store = storeFor(admin);
 
@@ -106,6 +115,35 @@ describe('ShopifyRatingStore HTTP contract', () => {
       expect(admin.records.size).toBe(1);
     },
   );
+
+  it('sends metaobjectCreate on a retry instead of reading first', async () => {
+    const admin = fakeAdminApi();
+    const store = storeFor(admin);
+    await store.createRating(KEY, 4);
+    await store.createRating(KEY, 2);
+    const creates = admin.requests.filter(({query}) => query.includes('metaobjectCreate('));
+    expect(creates).toHaveLength(2);
+    expect(admin.requests[0].query).toContain('metaobjectCreate(');
+  });
+
+  it('cannot guarantee one record if Shopify renames the handle and the clean-up fails', async () => {
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const admin = fakeAdminApi({mode: 'suffix'});
+    const store = storeFor(admin);
+    await store.createRating(KEY, 4);
+    admin.fail('http', 'metaobjectDelete');
+
+    const retry = await store.createRating(KEY, 1);
+
+    // The customer still sees the first rating...
+    expect(retry).toEqual({status: 'exists', rating: {...KEY, rating: 4}});
+    expect(await store.findRatings([KEY])).toEqual([{...KEY, rating: 4}]);
+    // ...but a second record now exists: compensation is not a guarantee.
+    expect(admin.records.size).toBe(2);
+    expect(errors).toHaveBeenCalledWith(
+      expect.stringContaining('uniqueness violation'),
+    );
+  });
 
   it('reads ratings by exact handle, many keys in chunks', async () => {
     const admin = fakeAdminApi();
