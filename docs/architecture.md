@@ -7,6 +7,7 @@ the code; anything that was not is marked **unverified**.
 - [Request and data flow](#request-and-data-flow)
 - [Routing](#routing)
 - [Shopify APIs and GraphQL](#shopify-apis-and-graphql)
+- [Product customization](#product-customization)
 - [Session and cart](#session-and-cart)
 - [Customer profile: favorites, fitting room, preferences](#customer-profile-favorites-fitting-room-preferences)
 - [Recommendation engine](#recommendation-engine)
@@ -118,12 +119,56 @@ Request
   - Embed a fragment by interpolating it into the document (`${JEWELIETTE_PRODUCT_CARD_FRAGMENT}`).
 - **Metafield parsing**: `app/lib/metafields.ts` (normalise text/list metafields),
   `app/lib/materials.ts` (material metaobjects), `app/lib/allergens.ts`,
+  `app/lib/customization.ts` (customization options, see below),
   `formatMetafieldValue()` (display list metafields as comma-separated text, and treat
   `null`/`undefined` sentinels as empty). The product page hides the Description, Details and
   Materials sections when they have no content (whitespace/`&nbsp;`-only HTML, empty lists),
   so an empty metafield never renders an empty accordion.
 - `app/lib/products.server.ts`: `loadProductsByIds()` loads product cards for a list of
   GIDs (`nodes(ids:)`), used by favorites and the fitting room.
+
+## Product customization
+
+Store admins choose which products can be customized (engraving and gem color, epic E06)
+with three product metafields. The product page shows a **Customize** panel only for
+products marked as customizable that have at least one valid option.
+
+| Metafield (namespace `custom`) | Type | Meaning |
+| --- | --- | --- |
+| `customizable` | True or false | Turns the options on for the product. |
+| `customization_gem_colors` | Single line text, **List of values** | Gem colors the shopper may choose. Shown as typed (Shopify content, translated in the admin). |
+| `engraving_max_length` | Integer (min 1, max 40) | Maximum engraving length. Empty means no engraving. |
+
+- **Admin setup:** Settings → Metafields and metaobjects → Products → Add definition. The
+  key must match the table exactly (Shopify suggests one from the name; correct it), and
+  each definition needs **Storefronts** access, or the Storefront API returns `null`.
+- **Data flow:** `PRODUCT_CUSTOMIZATION_FRAGMENT` (`app/lib/customization.ts`) reads the
+  three metafields; `PRODUCT_FRAGMENT` (`products.$handle.tsx`) and the cart check both use
+  it. The loader calls `parseProductCustomization()` and returns `customization` (or
+  `null`). `ProductForm` (keyed by product, so the choice resets on another product) holds
+  the shopper's choice and renders `ProductCustomization.tsx` above the add-to-bag button:
+  gem colors as a radio group, engraving as an input with `maxLength` and a
+  remaining-characters counter.
+- **Rules in `parseProductCustomization()`:** returns `null` unless `customizable` is
+  `true` and at least one option is valid. Gem colors are trimmed and de-duplicated by slug
+  (`value` is the slug, `label` the admin text). Engraving limits that are not positive
+  integers are ignored; larger values are capped at `ENGRAVING_LENGTH_CAP` (40).
+- **Cart line attributes:** `customizationAttributes()` turns the choice into cart line
+  attributes, keyed by `CUSTOMIZATION_ATTRIBUTE`: `Gem color` (the admin label) and
+  `Engraving` (trimmed; left out when empty). The keys are identifiers in English because
+  Shopify shows them as-is at checkout and on the order. The same piece with a different
+  customization becomes a separate cart line.
+- **Server validation:** the `cart` action passes `LinesAdd` lines to
+  `validateCartLinesCustomization()` (`app/lib/customization.server.ts`). For lines with
+  customization attributes it loads the variants' product metafields (no cache) and runs
+  `validateCustomizationAttributes()`: the product must be customizable, the gem color must
+  be allowed, and the engraving must fit the limit and contain no control characters. Any
+  failure returns 400 with an error code (`errors: [{code}]`) and leaves the cart unchanged.
+  `LinesUpdate` requests that set customization attributes are rejected, because the
+  storefront never changes a customization after it is added.
+- **Shopping bag:** `CartLineItem` lists the gem color and engraving under the product name
+  (`customizationLineDetails()`), with translated labels; the engraving is shown as typed.
+- **Not done yet:** price changes for customized pieces (US-028) and the 3D preview (US-027).
 
 ## Session and cart
 
@@ -398,6 +443,7 @@ See [testing.md](testing.md). In short:
 | Add a catalog filter | Shopify admin (Search & Discovery filters). If it needs a new filter key, extend `allowedKeys` in `readCatalogFilters()` (`app/lib/search.ts`). UI changes go in `CatalogFilters.tsx`. |
 | Add a sort option | `SORT_OPTIONS` in `app/routes/collections.$handle.tsx`. |
 | Change the try-on gate or overlay | `app/lib/try-on/catalog.ts` (supported categories, the variant's `custom.try_on_overlay` PNG, `custom.try_on_size_cm`); variant/product loading in `app/lib/variants.server.ts`; geometry in `app/lib/try-on/anchors.ts`; MediaPipe assets in `app/lib/try-on/assets.ts` (the model lives in `app/assets/models/`). |
+| Change product customization options | Metafield definitions in the Shopify admin (see [Product customization](#product-customization)); rules in `app/lib/customization.ts`; cart check in `app/lib/customization.server.ts`; UI in `components/product/ProductCustomization.tsx`, `ProductForm.tsx` and `cart/CartLineItem.tsx`. |
 | Add a customer preference | `PreferenceProfile` (`profile/types.ts`), `profile/preferences.ts` (normalise/parse), `PreferencesForm.tsx`, tests. |
 | Add a UI string / translation | Add the key to `app/lib/messages/en.ts`, `pt.ts` and `fr.ts` and use `useTranslation()` (or `translatorFor` / `translatorFromMatches`). See [i18n.md](i18n.md#adding-a-string). |
 | Add a language | Add an entry to `LOCALES` and a message object in `app/lib/i18n.ts`, then publish the language in the Shopify admin. |

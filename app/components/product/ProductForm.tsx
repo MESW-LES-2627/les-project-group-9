@@ -1,3 +1,4 @@
+import {useState} from 'react';
 import {Link, useNavigate} from 'react-router';
 import {
   type MappedProductOptions,
@@ -9,7 +10,13 @@ import {useAside} from '~/components/layout/Aside';
 import {useTranslation} from '~/lib/i18n';
 import {AddToBagGuard} from '~/components/product/AddToBagGuard';
 import {RingSizeHelp} from '~/components/product/RingSizeHelp';
+import {ProductCustomization} from '~/components/product/ProductCustomization';
 import {isColorOption, isSizeOption} from '~/lib/options';
+import {
+  customizationAttributes,
+  initialCustomizationChoice,
+  type ProductCustomization as Customization,
+} from '~/lib/customization';
 
 type Props = {
   productOptions: MappedProductOptions[];
@@ -17,6 +24,8 @@ type Props = {
   allergens?: {value: string} | null;
   /** True for products in the "Rings" category. Enables the ring size helper. */
   isRing?: boolean;
+  /** Options the admin allowed; `null` hides the customization panel. */
+  customization?: Customization | null;
 };
 
 export function ProductForm({
@@ -24,13 +33,25 @@ export function ProductForm({
   selectedVariant,
   allergens,
   isRing = false,
+  customization = null,
 }: Props) {
   const navigate = useNavigate();
   const {open} = useAside();
   const t = useTranslation();
+  const [choice, setChoice] = useState(() =>
+    initialCustomizationChoice(customization),
+  );
 
+  const attributes = customizationAttributes(customization, choice);
   const lines: OptimisticCartLineInput[] = selectedVariant
-    ? [{merchandiseId: selectedVariant.id, quantity: 1, selectedVariant}]
+    ? [
+        {
+          merchandiseId: selectedVariant.id,
+          quantity: 1,
+          selectedVariant,
+          ...(attributes.length ? {attributes} : {}),
+        },
+      ]
     : [];
 
   return (
@@ -138,6 +159,14 @@ export function ProductForm({
             </fieldset>
           );
         })}
+
+      {customization ? (
+        <ProductCustomization
+          customization={customization}
+          value={choice}
+          onChange={setChoice}
+        />
+      ) : null}
 
       <CartForm
         route="/cart"

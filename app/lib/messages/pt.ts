@@ -194,6 +194,12 @@ export const pt: Messages = {
   'product.detail.metal': 'Metal',
   'product.detail.gemstone': 'Pedra preciosa',
   'product.detail.gemColor': 'Cor da pedra',
+  'product.customize.title': 'Personalizar',
+  'product.customize.engraving': 'Gravação',
+  'product.customize.engravingRemaining': {
+    one: '{count} carácter restante',
+    other: '{count} caracteres restantes',
+  },
 
   // Front-camera try-on
   'tryOn.title': 'Experimentar {title}',
@@ -465,6 +471,19 @@ export const pt: Messages = {
   'preferences.save': 'Guardar preferências',
   'preferences.saved': 'Preferências guardadas.',
   'preferences.saveError': 'Não foi possível guardar as preferências.',
+  'profile.data.title': 'Os seus dados',
+  'profile.data.intro':
+    'Transfira uma cópia das suas preferências ou elimine-as do seu perfil.',
+  'profile.data.download': 'Transferir as minhas preferências',
+  'profile.data.delete': 'Eliminar as minhas preferências',
+  'profile.data.deleteConfirm':
+    'Isto elimina as suas preferências guardadas. Continuar?',
+  'profile.data.confirm': 'Confirmar eliminação',
+  'profile.data.cancel': 'Cancelar',
+  'profile.data.deleting': 'A eliminar…',
+  'profile.data.deleted': 'As suas preferências foram eliminadas.',
+  'profile.data.deleteError':
+    'Não foi possível eliminar as suas preferências.',
   'ring.title': 'Tamanhos de anel',
   'ring.intro':
     'Guarde o seu tamanho de anel (escala dos EUA) para cada dedo. Os anéis vão mostrar os tamanhos guardados.',

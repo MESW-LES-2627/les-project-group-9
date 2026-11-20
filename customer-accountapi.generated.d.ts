@@ -494,6 +494,28 @@ export type CustomerFavoritesSetMutation = {
   }>;
 };
 
+export type CustomerMetafieldsDeleteMutationVariables =
+  CustomerAccountAPI.Exact<{
+    metafields:
+      | Array<CustomerAccountAPI.MetafieldIdentifierInput>
+      | CustomerAccountAPI.MetafieldIdentifierInput;
+  }>;
+
+export type CustomerMetafieldsDeleteMutation = {
+  metafieldsDelete?: CustomerAccountAPI.Maybe<{
+    deletedMetafields?: CustomerAccountAPI.Maybe<
+      Array<
+        CustomerAccountAPI.Maybe<
+          Pick<CustomerAccountAPI.MetafieldIdentifier, 'key' | 'namespace'>
+        >
+      >
+    >;
+    userErrors: Array<
+      Pick<CustomerAccountAPI.MetafieldsDeleteUserError, 'message'>
+    >;
+  }>;
+};
+
 export type CustomerProfileQueryVariables = CustomerAccountAPI.Exact<{
   [key: string]: never;
 }>;
@@ -573,6 +595,10 @@ interface GeneratedMutationTypes {
   '#graphql\n  mutation CustomerFavoritesSet($metafields: [MetafieldsSetInput!]!) {\n    metafieldsSet(metafields: $metafields) {\n      metafields {\n        value\n      }\n      userErrors {\n        message\n      }\n    }\n  }\n': {
     return: CustomerFavoritesSetMutation;
     variables: CustomerFavoritesSetMutationVariables;
+  };
+  '#graphql\n  mutation CustomerMetafieldsDelete($metafields: [MetafieldIdentifierInput!]!) {\n    metafieldsDelete(metafields: $metafields) {\n      deletedMetafields {\n        key\n        namespace\n      }\n      userErrors {\n        message\n      }\n    }\n  }\n': {
+    return: CustomerMetafieldsDeleteMutation;
+    variables: CustomerMetafieldsDeleteMutationVariables;
   };
   '#graphql\n  mutation customerUpdate(\n    $customer: CustomerUpdateInput!\n    $language: LanguageCode\n  ) @inContext(language: $language) {\n    customerUpdate(input: $customer) {\n      customer {\n        firstName\n        lastName\n        emailAddress {\n          emailAddress\n        }\n        phoneNumber {\n          phoneNumber\n        }\n      }\n      userErrors {\n        code\n        field\n        message\n      }\n    }\n  }\n': {
     return: CustomerUpdateMutation;

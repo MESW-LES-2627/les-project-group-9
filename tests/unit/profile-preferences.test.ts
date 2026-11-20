@@ -4,6 +4,7 @@ import {
   normalizePreferences,
   normalizePreferencesPatch,
   parsePreferences,
+  preferencesField,
   serializePreferences,
 } from '../../app/lib/profile/preferences';
 
@@ -160,6 +161,52 @@ describe('normalizePreferencesPatch', () => {
     expect(normalizePreferencesPatch({allergies: []})).toEqual({
       allergies: [],
     });
+  });
+});
+
+describe('preferencesField', () => {
+  const profile = {
+    customerId: 'gid://shopify/Customer/1',
+    favorites: [],
+    fittingRoom: [],
+    preferences: {
+      allergies: ['nickel', 'zinc'],
+      skin: {tone: 'medium', undertone: 'warm'},
+      ringSizes: {'left-ring': '6'},
+      preferredColors: ['gold'],
+      preferredMaterials: ['gold-plated'],
+    },
+  };
+
+  function stored(change: Parameters<typeof preferencesField.nextValue>[1]) {
+    return parsePreferences(preferencesField.nextValue(profile, change));
+  }
+
+  it('replaces the stored value when a preference changes', () => {
+    expect(stored({allergies: ['cobalt']}).allergies).toEqual(['cobalt']);
+    expect(stored({preferredColors: ['silver']}).preferredColors).toEqual([
+      'silver',
+    ]);
+    expect(stored({ringSizes: {'right-ring': '7'}}).ringSizes).toEqual({
+      'right-ring': '7',
+    });
+  });
+
+  it('drops a preference that is deleted', () => {
+    expect(stored({allergies: []}).allergies).toEqual([]);
+    expect(stored({preferredMaterials: []}).preferredMaterials).toEqual([]);
+    expect(stored({skin: {}}).skin).toEqual({});
+  });
+
+  it('keeps the preferences the change does not touch', () => {
+    const preferences = stored({allergies: []});
+
+    expect(preferences.skin).toEqual({
+      tone: 'medium',
+      undertone: 'warm',
+    });
+    expect(preferences.preferredColors).toEqual(['gold']);
+    expect(preferences.ringSizes).toEqual({'left-ring': '6'});
   });
 });
 
