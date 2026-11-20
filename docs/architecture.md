@@ -10,7 +10,9 @@ the code; anything that was not is marked **unverified**.
 - [Product customization](#product-customization)
 - [Order ratings (US-058)](#order-ratings-us-058)
 - [Session and cart](#session-and-cart)
+- [Customer authentication](#customer-authentication)
 - [Customer profile: favorites, fitting room, preferences](#customer-profile-favorites-fitting-room-preferences)
+- [Front-camera try-on](#front-camera-try-on)
 - [Recommendation engine](#recommendation-engine)
 - [Search and filters](#search-and-filters)
 - [Internationalisation](#internationalisation)
@@ -92,7 +94,7 @@ Request
 | Customer | `account` (layout), `account._index`, `account.profile`, `account.addresses`, `account.orders._index`, `account.orders.$id`, `account.$`, `account_.login`, `account_.authorize`, `account_.logout` |
 | Personal | `favorites`, `fitting-room` |
 | Language | `locale` (POST only: sets the language cookie and redirects back) |
-| JSON API | `api.profile`, `api.profile.favorites`, `api.profile.fitting-room`, `api.profile.preferences`, `api.recommendations`, `api.order-ratings` (POST only, US-058) |
+| JSON API | `api.profile`, `api.profile.favorites`, `api.profile.fitting-room`, `api.profile.preferences`, `api.profile.preferences.export` (GET, JSON download, US-071), `api.recommendations`, `api.order-ratings` (POST only, US-058) |
 | Content | `pages.$handle`, `policies._index`, `policies.$handle`, `blogs._index`, `blogs.$blogHandle._index`, `blogs.$blogHandle.$articleHandle` |
 | SEO | `[robots.txt]`, `[sitemap.xml]`, `sitemap.$type.$page[.xml]` |
 | Fallback | `$` (404) |
@@ -189,6 +191,28 @@ products marked as customizable that have at least one valid option.
 - The cart UI renders in two layouts (`CartMain layout="aside" | "page"`): the drawer in
   `PageLayout` and the `/cart` page. Optimistic updates use `useOptimisticCart`.
 
+## Customer authentication
+
+Customers sign in with **Shopify Customer Accounts** through Hydrogen's `customerAccount`
+client; the storefront has no password, identity store or account linking of its own.
+
+- `account_.login.tsx` calls `customerAccount.login()`, which redirects to Shopify's hosted
+  login page. It forwards the optional `acr_values`, `login_hint`, `login_hint_mode` and
+  `locale` query parameters and the storefront country.
+- `account_.authorize.tsx` completes the OAuth callback; the tokens are kept server-side in
+  the cookie session (see [Session and cart](#session-and-cart)).
+- `account_.logout.tsx`: POST calls `customerAccount.logout()`; GET redirects home.
+- `account.profile`, `account.addresses` and the `account.$` catch-all call
+  `customerAccount.handleAuthStatus()` (redirect to login when signed out); the `account` layout
+  and order routes go straight to `customerAccount.query()` with the session's token. The `api.*`
+  profile and rating endpoints check `isLoggedIn()` and answer 401 instead.
+- Which sign-in methods Shopify shows is configured in the Shopify admin, not in code; the
+  store's current settings were not checked for this document. **Sign in with Google (US-078, #175) is planned and not implemented.** The
+  story asks for Shopify Customer Accounts' supported Google sign-in, configured by an
+  authorized administrator (Google Cloud OAuth client plus Shopify settings), keeping the
+  email-code option and adding no separate identity system. Whether any storefront change
+  is needed beyond configuration has not been verified.
+
 ## Customer profile: favorites, fitting room, preferences
 
 These features are available to logged-in customers only. They are stored as JSON customer
@@ -251,6 +275,9 @@ metafields (namespace `custom`) through the Customer Account API.
   set on the phone.
 - **Allergens**: `useAllergenMatches()` compares product allergens with the customer's
   allergies. `AllergenBadge` and `AddToBagGuard` (a confirm dialog before adding) use it.
+  The comparison only uses the product's `custom.allergens` metafield as entered in
+  Shopify: a product without that data shows no warning, so the absence of a warning is not
+  evidence that a piece is free of an allergen.
 - **Ring sizes**: `RingSizeForm` (account) and `RingSizeHelp` (product page, ring products
   only; `profile/ringCategory.ts`).
 
@@ -378,6 +405,11 @@ surface placement: the piece is drawn on a live selfie face.
 - `recommendation/traits.ts` turns products into `ProductTraits`.
   `recommendation/signals.ts` derives weighted signals from favorites and preferences.
   `recommendation/weights.ts` holds the trait weights.
+  Skin tone and undertone: products have no skin-tone trait (`skinTones` is always empty),
+  so the stored **skin tone has no effect** on suggestions (`hasRecommendationPreferences()`
+  ignores it). The **undertone** is matched against a heuristic derived from the product's
+  metal/colour values (`gold` → warm, `silver` → cool, `undertonesFromMetal()` in
+  `traits.ts`). Try-on does not read either value.
 - `recommendation/signal-source.ts` (Strategy pattern): the `SignalSource` interface
   (`collect()` returns signals) and its implementations `FavoritesSignalSource` and
   `PreferencesSignalSource`, which wrap the functions in `signals.ts`. A new kind of signal
@@ -745,8 +777,9 @@ See [testing.md](testing.md). In short:
 - `tests/unit`: Vitest in node, for `app/lib` and API route loaders/actions.
 - `tests/components`: Vitest in jsdom with Testing Library.
 - `tests/e2e`: Playwright on desktop Chromium against `npm run preview`.
-- CI (`.github/workflows/test.yml`): the `test` job runs lint, typecheck and unit/component
-  tests; the `e2e` job runs against mock.shop.
+- CI (`.github/workflows/test.yml`): the `test` job runs lint, typecheck and
+  `npm run test:coverage` (unit/component tests with coverage thresholds); the `e2e` job runs
+  against mock.shop.
 
 ## Generated types
 
@@ -794,11 +827,14 @@ has been decided.
 | 6 | ~~Dates use fixed locales; prices always formatted as en-US (Hydrogen `<Money>` without a `ShopifyProvider`).~~ Resolved in US-047: `formatDate()` and the shared `Money` use the active locale. | `blogs.*.tsx`, `account.orders.*`, `components/shared/Money.tsx` | US-047 |
 | 7 | The root font size is 14px, so inputs styled `text-base` render at 14px. iOS Safari zooms on focus for inputs below 16px; this zoom was not tested on a device (**unverified**). | `app/styles/tailwind.css` | US-048 (another team member) |
 | 8 | Touch targets below 44px. Header favorites and fitting-room links are `h-10 w-10`. Because spacing is `rem`-based and the root is 14px, the codebase-wide `size-11`/`min-h-11` targets compute to 38.5px, and `h-10` to 35px (calculated from the CSS, not measured in a browser). | `components/layout/Header.tsx`, `app/styles/tailwind.css` | US-048 (another team member). The new language selector uses explicit 44px targets (US-046). |
-| 9 | Playwright has only a desktop Chromium project. Phone-sized viewports are set per test in `footer.spec.ts` (375px) and, for the header and language selector only, `header.spec.ts` and `language.spec.ts` (US-046). Other flows are not tested on a phone-sized screen. | `playwright.config.ts`, `tests/e2e/` | US-048 (another team member) |
+| 9 | Playwright has only a desktop Chromium project. Phone-sized viewports are set per test in `footer.spec.ts` (375px), `header.spec.ts` and `language.spec.ts` (US-046), `language-layout.spec.ts` (US-047), and per `describe` block in `fitting-room.spec.ts` and `try-on.spec.ts`. Cart, account and other flows are not tested on a phone-sized screen. | `playwright.config.ts`, `tests/e2e/` | US-048 (another team member) |
 | 10 | ~~The fitting room's virtual try-on panel is still a placeholder.~~ Resolved in US-017/US-021: the panel is a look builder; the selected pieces open one camera/QR session, the desktop QR carries their variant ids, and pieces without a model are marked "No 3D" (`app/lib/try-on/`, `app/components/try-on/`, `components/fitting-room/`). | `app/lib/try-on/`, `components/fitting-room/` | US-021 |
-| 11 | `api.profile.tsx` redefines `NO_STORE`, identical to the one exported by `lib/profile/operation.server.ts`. | source | Proposed cleanup |
+| 11 | `api.profile.tsx` and `api.profile.preferences.export.tsx` redefine `NO_STORE`, identical to the one exported by `lib/profile/operation.server.ts`. | source | Proposed cleanup |
 | 12 | Comments in `app/lib/context.ts` and `react-router.config.ts` mention React Router 7.9.x; the installed version is 7.16.0. | source, `package.json` | Proposed cleanup |
 | 13 | CI (`test.yml`) does not run `npm run build`. The Oxygen workflow deploys on every push to any branch. | `.github/workflows/` | Information |
-| 14 | `PUBLIC_CHECKOUT_DOMAIN` is read by `root.tsx` and `entry.server.tsx` but is not listed in `.env.example`. | grep `env.` | Proposed cleanup |
+| 14 | ~~`PUBLIC_CHECKOUT_DOMAIN` is read by `root.tsx` and `entry.server.tsx` but is not listed in `.env.example`.~~ Resolved: `.env.example` lists it. | `.env.example` | — |
 | 15 | The home loader finds the `home-content` menu items by title ("Hero", "Featured", "Story"). Menu titles are translatable content, so translating them in Shopify would hide those home sections in other languages. | `app/routes/_index.tsx` (`findCollection`) | Proposed follow-up (match by tags); documented in i18n.md |
 | 16 | `FooterMenu` calls `open('search')` but does not get `open` from `useAside()`, so it most likely resolves to the browser's `window.open` (not verified in a browser). | `components/layout/Footer.tsx` | Proposed fix |
+| 17 | The fallback header menu maps **Trending** to `/` (the home page). Open as BUG-001 (#99); a dedicated Trending page is US-076 (#173), not implemented. | `FALLBACK_HEADER_MENU` in `components/layout/Header.tsx` | BUG-001 / US-076 |
+| 18 | In CI the try-on gate test in `try-on.spec.ts` is skipped (it reads `PUBLIC_STORE_DOMAIN` from the Playwright process, but CI only writes it to `.env`), and the uploaded `playwright-report` artifact is probably empty (CI reporter is `github`). | `.github/workflows/test.yml`, `playwright.config.ts`, `tests/e2e/try-on.spec.ts` | Proposed fix (workflow change) |
+| 19 | `PUBLIC_CUSTOMER_ACCOUNT_API_URL` is listed in `.env.example` but neither the app nor Hydrogen 2026.4.7's runtime reads it (only Hydrogen's `Env` type declares it; the client uses `SHOP_ID`). | grep in `app/` and `node_modules/@shopify/hydrogen/dist` | Information |
