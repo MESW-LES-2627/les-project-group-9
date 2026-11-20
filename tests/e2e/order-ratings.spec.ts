@@ -1,4 +1,5 @@
-import {expect, test, type APIResponse} from '@playwright/test';
+import {expect, test} from '@playwright/test';
+import {postJson} from './support/api';
 
 // US-058. The rating form lives on the signed-in order page, which needs a
 // real Shopify customer login, so these tests cover the rating endpoint as an
@@ -14,35 +15,12 @@ const body = {
   customerId: 'gid://shopify/Customer/1',
 };
 
-type Result = {
-  status: number;
-  json: unknown;
-  headers: ReturnType<APIResponse['headers']>;
-};
-
-// These POSTs are rejected before their body is read. The local MiniOxygen
-// preview server then resets the next request on that keep-alive connection
-// (ECONNRESET; curl shows the same), and a `Connection: close` request header
-// did not stop Playwright from reusing it. Each POST therefore gets its own
-// request context, so no connection is shared.
-async function postRating(
-  playwright: Parameters<Parameters<typeof test>[2]>[0]['playwright'],
+const postRating = (
+  playwright: Parameters<typeof postJson>[0],
   baseURL: string | undefined,
   data: unknown,
-  headers: Record<string, string> = {},
-): Promise<Result> {
-  const context = await playwright.request.newContext({baseURL});
-  try {
-    const response = await context.post('/api/order-ratings', {data, headers});
-    return {
-      status: response.status(),
-      json: await response.json(),
-      headers: response.headers(),
-    };
-  } finally {
-    await context.dispose();
-  }
-}
+  headers?: Record<string, string>,
+) => postJson(playwright, baseURL, '/api/order-ratings', data, headers);
 
 test.describe('rating endpoint', () => {
   test('only accepts POST', async ({request}) => {

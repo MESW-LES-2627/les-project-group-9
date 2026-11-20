@@ -18,6 +18,11 @@ import {AllergenBadge} from '~/components/product/AllergenBadge';
 import {FavoriteButton} from '~/components/product/FavoriteButton';
 import {FittingRoomButton} from '~/components/product/FittingRoomButton';
 import {TryOnSection} from '~/components/product/TryOnSection';
+import {
+  ProductReviews,
+  ProductReviewsLoading,
+} from '~/components/product/ProductReviews';
+import {loadProductReviews} from '~/lib/ratings/product-reviews.server';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 import {
   JEWELIETTE_MATERIAL_METAFIELD_FRAGMENT,
@@ -56,10 +61,18 @@ export async function loader(args: Route.LoaderArgs) {
     .then((result) => result.productRecommendations ?? [])
     .catch(() => []);
 
+  // Not awaited: the page renders while public reviews load (US-060).
+  const reviews = loadProductReviews({
+    env: args.context.env,
+    productId: product.id,
+    withCache: args.context.withCache,
+  });
+
   return {
     product,
     customization: parseProductCustomization(product),
     recommendations,
+    reviews,
     isMobile: isMobileRequest(args.request),
   };
 }
@@ -82,7 +95,7 @@ async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
 }
 
 export default function Product() {
-  const {product, customization, recommendations, isMobile} =
+  const {product, customization, recommendations, reviews, isMobile} =
     useLoaderData<typeof loader>();
   const t = useTranslation();
 
@@ -290,6 +303,12 @@ export default function Product() {
           </div>
         </div>
       </div>
+
+      <Suspense fallback={<ProductReviewsLoading />}>
+        <Await resolve={reviews}>
+          {(view) => <ProductReviews view={view} />}
+        </Await>
+      </Suspense>
 
       <Suspense fallback={null}>
         <Await resolve={recommendations}>

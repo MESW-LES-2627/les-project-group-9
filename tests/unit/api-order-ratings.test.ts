@@ -1,5 +1,4 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
-import type {ActionFunctionArgs} from 'react-router';
 import {action, loader as ratingLoader} from '~/routes/api.order-ratings';
 import {headers as orderHeaders, loader as orderLoader} from '~/routes/account.orders.$id';
 import {
@@ -17,11 +16,17 @@ import {
   PRODUCT_A,
   PRODUCT_B,
   PRODUCT_C,
-  type FakeCustomerAccountOptions,
   type OrderFixture,
 } from './support/ratings-fakes';
+import {
+  callAction,
+  contextFor,
+  jsonRequest,
+  ORIGIN,
+  type JsonRequestInit,
+  type RouteContext,
+} from './support/ratings-route';
 
-const ORIGIN = 'http://localhost';
 const ENDPOINT = `${ORIGIN}/api/order-ratings`;
 const ORDER_1 = 'gid://shopify/Order/101';
 const ORDER_2 = 'gid://shopify/Order/102';
@@ -37,46 +42,12 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function contextFor(
-  options: Partial<FakeCustomerAccountOptions> & {orders: OrderFixture[]},
-  env: Record<string, string> = ADMIN_ENV,
-) {
-  const fake = fakeCustomerAccount({customerId: CUSTOMER_A, ...options});
-  return {
-    fake,
-    context: {customerAccount: fake.customerAccount, env} as unknown as ActionFunctionArgs['context'],
-  };
-}
-
-function ratingRequest(
-  body: unknown,
-  {
-    method = 'POST',
-    headers = {Origin: ORIGIN},
-  }: {method?: string; headers?: Record<string, string>} = {},
-) {
-  return new Request(ENDPOINT, {
-    method,
-    headers: {'Content-Type': 'application/json', ...headers},
-    body: method === 'GET' ? undefined : typeof body === 'string' ? body : JSON.stringify(body),
-  });
-}
-
 async function submit(
-  context: ActionFunctionArgs['context'],
+  context: RouteContext,
   body: unknown,
-  init?: Parameters<typeof ratingRequest>[1],
+  init?: JsonRequestInit,
 ) {
-  const result = (await action({
-    request: ratingRequest(body, init),
-    context,
-    params: {},
-  } as ActionFunctionArgs)) as unknown as {data: Record<string, unknown>; init: ResponseInit | null};
-  return {
-    status: result.init?.status ?? 200,
-    body: result.data,
-    headers: new Headers(result.init?.headers),
-  };
+  return callAction(action, jsonRequest(ENDPOINT, body, init), context);
 }
 
 const rate = (orderId: string, productId: string, rating: unknown) => ({orderId, productId, rating});
@@ -188,20 +159,14 @@ describe('POST /api/order-ratings', () => {
     // The worker sees http:// while the page (and its Origin header) is https://,
     // as with the Hydrogen dev tunnel.
     const {context} = contextFor({orders: [deliveredOrder(ORDER_1, CUSTOMER_A, [PRODUCT_A])]});
-    const result = (await action({
-      request: new Request('http://shop.example/api/order-ratings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Origin: 'https://shop.example',
-          'Sec-Fetch-Site': 'same-origin',
-        },
-        body: JSON.stringify(rate(ORDER_1, PRODUCT_A, 4)),
+    const result = await callAction(
+      action,
+      jsonRequest('http://shop.example/api/order-ratings', rate(ORDER_1, PRODUCT_A, 4), {
+        headers: {Origin: 'https://shop.example', 'Sec-Fetch-Site': 'same-origin'},
       }),
       context,
-      params: {},
-    } as ActionFunctionArgs)) as unknown as {init: ResponseInit | null};
-    expect(result.init?.status).toBe(201);
+    );
+    expect(result.status).toBe(201);
   });
 
   it('accepts Sec-Fetch-Site same-origin when Origin is absent', async () => {
@@ -463,7 +428,7 @@ describe('POST /api/order-ratings', () => {
 });
 
 describe('order page loader', () => {
-  async function loadPage(context: ActionFunctionArgs['context'], orderId = ORDER_1) {
+  async function loadPage(context: RouteContext, orderId = ORDER_1) {
     const result = (await orderLoader({
       request: new Request(`${ORIGIN}/account/orders/x`),
       context,

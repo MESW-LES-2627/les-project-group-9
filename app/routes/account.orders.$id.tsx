@@ -19,8 +19,10 @@ import {
   OrderRatingsLoading,
   RATING_ENDPOINT,
 } from '~/components/account/OrderRatings';
+import {COMMENT_ENDPOINT} from '~/components/account/RatingComment';
 import {NO_STORE} from '~/lib/profile/operation.server';
 import {createRatingStore} from '~/lib/ratings/rating-store.server';
+import {createCommentStore} from '~/lib/ratings/comment-store.server';
 import {
   loadOrderRatings,
   type OrderRatingsView,
@@ -45,8 +47,8 @@ export const meta: Route.MetaFunction = ({data, matches}) => {
 export const headers: Route.HeadersFunction = () => NO_STORE;
 
 /**
- * A rating submission does not change the order, and the form already shows
- * the saved (or existing) value from the endpoint's answer. Reloading here
+ * A rating or comment submission does not change the order, and the form
+ * already shows the saved (or existing) value from the endpoint's answer. Reloading here
  * would only repeat the Shopify reads and drop the confirmation message, and
  * React Router would do it after a 201 but not after a 409. Every other
  * action, navigation and reload keeps the default behaviour.
@@ -56,7 +58,12 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({
   formAction,
   defaultShouldRevalidate,
 }) => {
-  if (formMethod === 'POST' && formAction === RATING_ENDPOINT) return false;
+  if (
+    formMethod === 'POST' &&
+    (formAction === RATING_ENDPOINT || formAction === COMMENT_ENDPOINT)
+  ) {
+    return false;
+  }
   return defaultShouldRevalidate;
 };
 
@@ -117,6 +124,7 @@ export async function loader({params, context}: Route.LoaderArgs) {
   const ratings: Promise<OrderRatingsView> = loadOrderRatings({
     customerAccount,
     store: createRatingStore(context.env),
+    commentStore: createCommentStore(context.env),
     orderId: order.id,
   }).catch((error: unknown) => {
     console.error(

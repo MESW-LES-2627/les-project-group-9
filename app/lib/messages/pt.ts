@@ -429,6 +429,46 @@ export const pt: Messages = {
     'A sua sessão terminou. Inicie sessão novamente para avaliar esta peça.',
   'rating.error.save':
     'Não foi possível guardar a sua avaliação. Tente novamente.',
+  'comment.add': 'Adicionar comentário',
+  'comment.edit': 'Editar comentário',
+  'comment.cancel': 'Cancelar',
+  'comment.label': 'O seu comentário sobre {product}',
+  'comment.help':
+    'Até {max} caracteres. Os comentários aparecem na página da peça depois de a nossa equipa os rever.',
+  'comment.editNote':
+    'Ao editar, o seu comentário volta a ser revisto e fica oculto até ser aprovado novamente.',
+  'comment.counter': {
+    one: '{count} de {max} caracteres',
+    other: '{count} de {max} caracteres',
+  },
+  'comment.submit': 'Enviar comentário',
+  'comment.submitting': 'A enviar o seu comentário…',
+  'comment.yours': 'O seu comentário',
+  'comment.saved': 'Obrigado. O seu comentário foi enviado para revisão.',
+  'comment.status.in_review': 'Em revisão',
+  'comment.status.published': 'Publicado',
+  'comment.error.empty': 'Escreva um comentário antes de o enviar.',
+  'comment.error.tooLong':
+    'O seu comentário é demasiado longo. Reduza-o para {max} caracteres ou menos.',
+  'comment.error.notRated': 'Avalie esta peça antes de adicionar um comentário.',
+  'comment.error.signIn':
+    'A sua sessão terminou. Inicie sessão novamente para guardar o seu comentário.',
+  'comment.error.save':
+    'Não foi possível guardar o seu comentário. Tente novamente.',
+  'reviews.heading': 'Avaliações',
+  'reviews.loading': 'A carregar as avaliações…',
+  'reviews.average': '{average} de 5',
+  'reviews.count': {one: '{count} avaliação', other: '{count} avaliações'},
+  'reviews.commentsHeading': 'O que dizem os clientes',
+  'reviews.commentRating': 'Avaliado com {value} de 5',
+  'reviews.verifiedBuyer': 'Comprador verificado',
+  'reviews.noComments': 'Ainda não há comentários escritos.',
+  'reviews.empty':
+    'Ainda não há avaliações. Comprou esta peça? Avalie-a nas suas encomendas depois de ser entregue.',
+  'reviews.emptyLink': 'Ver as minhas encomendas',
+  'reviews.unavailable': 'As avaliações não estão disponíveis de momento.',
+  'reviews.error':
+    'Não foi possível carregar as avaliações. Tente novamente mais tarde.',
   'order.financial.AUTHORIZED': 'Autorizado',
   'order.financial.EXPIRED': 'Expirado',
   'order.financial.PAID': 'Pago',

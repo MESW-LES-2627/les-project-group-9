@@ -27,8 +27,8 @@ function harness(initial: Record<string, number> = {}) {
     orderId: ORDER,
     delivered: true,
     products: [
-      {productId: RING, title: 'Aurora ring', image: null, rating: persisted.get(RING) ?? null},
-      {productId: NECKLACE, title: 'Luna necklace', image: null, rating: persisted.get(NECKLACE) ?? null},
+      {productId: RING, title: 'Aurora ring', image: null, rating: persisted.get(RING) ?? null, comment: null},
+      {productId: NECKLACE, title: 'Luna necklace', image: null, rating: persisted.get(NECKLACE) ?? null, comment: null},
     ],
   });
 

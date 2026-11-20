@@ -1,20 +1,25 @@
-import {createHydrogenContext} from '@shopify/hydrogen';
+import {createHydrogenContext, createWithCache} from '@shopify/hydrogen';
 import {AppSession} from '~/lib/session';
 import {CART_QUERY_FRAGMENT} from '~/lib/fragments';
 import type {CartApiQueryFragment} from 'storefrontapi.generated';
 import {getLocaleFromRequest} from '~/lib/i18n';
 
-// Define the additional context object
-const additionalContext = {
-  // Additional context for custom properties, CMS clients, 3P SDKs, etc.
-  // These will be available as both context.propertyName and context.get(propertyContext)
-  // Example of complex objects that could be added:
-  // cms: await createCMSClient(env),
-  // reviews: await createReviewsClient(env),
-} as const;
+/**
+ * Request-scoped additions to the Hydrogen context, available as
+ * `context.<name>` in loaders and actions.
+ * - `withCache`: the worker cache for non-Storefront data, such as the public
+ *   product reviews read from the Admin API (US-060).
+ */
+function createAdditionalContext(
+  request: Request,
+  cache: Cache,
+  waitUntil: ExecutionContext['waitUntil'],
+) {
+  return {withCache: createWithCache({cache, waitUntil, request})};
+}
 
 // Automatically augment HydrogenAdditionalContext with the additional context type
-type AdditionalContextType = typeof additionalContext;
+type AdditionalContextType = ReturnType<typeof createAdditionalContext>;
 
 declare global {
   interface HydrogenAdditionalContext extends AdditionalContextType {}
@@ -59,7 +64,7 @@ export async function createHydrogenRouterContext(
         queryFragment: CART_QUERY_FRAGMENT,
       },
     },
-    additionalContext,
+    createAdditionalContext(request, cache, waitUntil),
   );
 
   return hydrogenContext;

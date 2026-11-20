@@ -3,7 +3,8 @@
 // strings carry no `#graphql` tag and their response shapes are typed and
 // validated by hand in app/lib/ratings/rating-store.server.ts.
 //
-// Only create, read-by-handle and delete-of-a-just-created-duplicate are used.
+// Only create, read-by-handle, delete-of-a-just-created-duplicate and the
+// per-product star listing (US-060) are used.
 // `metaobjectUpsert` and `metaobjectUpdate` are deliberately absent: a saved
 // rating is immutable.
 
@@ -44,6 +45,31 @@ export const ADMIN_RATING_DELETE_MUTATION = `
         field
         message
         code
+      }
+    }
+  }
+`;
+
+/**
+ * Requires `read_metaobjects`. Every rating of one product, for the public
+ * average (US-060). Only the product and star fields are selected: customer
+ * and order IDs never leave Shopify on this path. `$query` filters on
+ * `fields.product_id`, which must be marked filterable in the definition.
+ */
+export const ADMIN_PRODUCT_RATINGS_QUERY = `
+  query ProductRatings($type: String!, $query: String!, $after: String) {
+    metaobjects(type: $type, query: $query, first: 250, after: $after) {
+      nodes {
+        productId: field(key: "product_id") {
+          value
+        }
+        rating: field(key: "rating") {
+          value
+        }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
       }
     }
   }
