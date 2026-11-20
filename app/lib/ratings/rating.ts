@@ -120,12 +120,24 @@ export type RatingKey = {
  * the record's fields store the IDs and the hash of known IDs can be recomputed.
  */
 export async function ratingHandle(key: RatingKey): Promise<string> {
+  return `rating-${await keyDigest(key)}`;
+}
+
+/**
+ * Handle of the comment that belongs to a rating (US-059): the same digest as
+ * {@link ratingHandle}, so there is at most one comment per rating.
+ */
+export async function commentHandle(key: RatingKey): Promise<string> {
+  return `comment-${await keyDigest(key)}`;
+}
+
+// Changing this input orphans every saved rating: tests pin known handles.
+async function keyDigest(key: RatingKey): Promise<string> {
   const input = new TextEncoder().encode(
     `${key.customerId}|${key.orderId}|${key.productId}`,
   );
   const digest = await crypto.subtle.digest('SHA-256', input);
-  const hex = [...new Uint8Array(digest)]
+  return [...new Uint8Array(digest)]
     .map((byte) => byte.toString(16).padStart(2, '0'))
     .join('');
-  return `rating-${hex}`;
 }

@@ -55,8 +55,10 @@ app/lib/                   Domain logic and utilities (pure where possible)
   recommendation/                     Recommendation engine (pure) + candidate loader
   try-on/                             Front-camera try-on: catalog gate, geometry, device detection
   search.ts                           Filter parsing shared by collections and search
-  ratings/                            Order ratings (US-058): delivery rule, validation,
-                                      eligibility loader, Admin API rating store
+  ratings/                            Order ratings, comments and product reviews
+                                      (US-058 to US-060): delivery rule, validation,
+                                      eligibility loader, shared Admin API client,
+                                      rating and comment stores, public reviews loader
   request-origin.server.ts            Same-origin check for cookie-authenticated writes
 app/graphql/customer-account/  Customer Account API documents
 app/graphql/admin/         Admin API documents (no codegen; server-only)

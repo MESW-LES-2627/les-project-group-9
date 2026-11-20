@@ -104,10 +104,13 @@ Request
 - **Storefront API**: products, collections, menus, search, pages, policies, blogs, cart.
   Documents are `#graphql` template strings next to the loader that uses them (in the route
   file or an `app/lib/*.ts` module).
-- **Admin API** (US-058 ratings only): server-side `fetch` in
-  `app/lib/ratings/rating-store.server.ts`, documents in `app/graphql/admin/` (no codegen
-  project, so they carry no `#graphql` tag and responses are checked by hand). Needs
-  `PRIVATE_ADMIN_API_CLIENT_ID`/`PRIVATE_ADMIN_API_CLIENT_SECRET` or `PRIVATE_ADMIN_API_TOKEN`.
+- **Admin API** (ratings, comments and public reviews only, US-058 to US-060): one
+  server-side client, `app/lib/ratings/admin-client.server.ts` (configuration, tokens,
+  timeout, Workers-safe `fetch`, code-only logs), used by `rating-store.server.ts`,
+  `comment-store.server.ts` and `product-reviews.server.ts`. Documents live in
+  `app/graphql/admin/` (no codegen project, so they carry no `#graphql` tag and responses are
+  checked by hand). Needs `PRIVATE_ADMIN_API_CLIENT_ID`/`PRIVATE_ADMIN_API_CLIENT_SECRET` or
+  `PRIVATE_ADMIN_API_TOKEN`.
 - **Customer Account API**: documents live in `app/graphql/customer-account/`. They are
   a separate codegen project (see `.graphqlrc.ts`). Account routes call
   `customerAccount.handleAuthStatus()` (or use the `account` layout loader) before querying.
@@ -498,9 +501,12 @@ repository; the decision below is the reference.
   product ID; several units or variants of a product give one rating). The same product in
   another delivered order can be rated again for that order. Lines without a product ID
   (deleted products, custom items) cannot be rated.
-- **Out of scope (later stories):** comments (US-059), showing ratings or averages to other
-  shoppers (US-060), sorting/filtering (US-061), moderation (US-062), store feedback
-  (US-063). No `reviews.rating`/`reviews.rating_count` metafields are written.
+- **Later stories:** comments (US-059) and showing ratings, averages and comments to other
+  shoppers (US-060) are described in
+  [Rating comments and product reviews](#rating-comments-and-product-reviews-us-059-us-060).
+  Still out of scope: sorting/filtering (US-061), a moderation screen in the app (US-062;
+  comments are reviewed in the Shopify admin for now), store feedback (US-063). No
+  `reviews.rating`/`reviews.rating_count` metafields are written.
 
 ### Delivery predicate
 
@@ -771,6 +777,120 @@ credentials unset) and decide on the alternative above.
 7. **Privacy:** the Storefront API cannot read `product_rating` (Storefronts access off);
    page and API responses carry `Cache-Control: no-store`.
 
+## Rating comments and product reviews (US-059, US-060)
+
+A shopper who has rated a product of a delivered order can write a comment about it on the
+order page (US-059). The comment is saved as a **draft** and appears on the product page only
+after the team publishes it in the Shopify admin. The product page shows the average and the
+number of **all** verified ratings, plus the published comments (US-060).
+
+### Decisions (2026-11-20)
+
+- **Who can comment:** only the signed-in customer, on their own rating. The endpoint loads
+  the order again with the customer's session (ownership), checks that the product is in it
+  and that a rating is saved for that customer, order and product. Delivery is not checked
+  again: a saved rating already required it.
+- **One comment per rating, editable.** Unlike the stars, the comment can be changed. Every
+  save, new or edited, goes back to review (draft), so an edited comment is hidden from the
+  product page until it is published again.
+- **Validation:** after trimming, normalising line breaks and removing control characters,
+  the comment must not be empty and must have at most **1000 characters** (Unicode code
+  points, so an emoji counts as one). The client checks the same rule
+  (`lib/ratings/comment.ts`) so the shopper gets the message at once; the server decides.
+- **Review:** Shopify's *active/draft status* on the `product_review_comment` definition.
+  Draft = in review, active = published. The team publishes or hides comments in the Shopify
+  admin (Content → Metaobjects). There is no moderation screen in the app (US-062).
+- **Product page:** average (one decimal) and count of every verified rating of the product,
+  with or without a comment. Comments: only published ones, newest first, at most 20, each
+  with its stars, text, "Verified buyer" and the date of its last change. No names, customer
+  or order IDs are shown or sent to the browser. Without ratings, the page invites the first
+  review and links to `/account/orders`.
+
+### Flow
+
+| Step | Code |
+| --- | --- |
+| Order page: saved comment and status per rated product (read with the ratings) | `routes/account.orders.$id.tsx` → `loadOrderRatings()` → `CommentStore.findComments()` |
+| Comment form (add / edit, counter, review state) | `components/account/RatingComment.tsx`, inside `OrderRatings.tsx` |
+| Save: `POST /api/rating-comments` `{orderId, productId, comment}` (JSON) | `routes/api.rating-comments.tsx` → `submitComment()` (`lib/ratings/ratings.server.ts`) |
+| Product page: reviews as a deferred promise (the page renders first) | `routes/products.$handle.tsx` → `loadProductReviews()` (`lib/ratings/product-reviews.server.ts`) |
+| Average | `listProductRatingValues()` (`rating-store.server.ts`), `summarizeRatings()` (`reviews.ts`) |
+| Published comments | `CommentStore.listPublished()` (`comment-store.server.ts`) |
+| Reviews section | `components/product/ProductReviews.tsx` (reuses `StarRatingValue`) |
+
+`POST /api/rating-comments` checks, in this order: method (405, `Allow: POST`), same-origin
+(403 `cross_origin`, same rule as ratings), login (401), Admin configured (503
+`ratings_unavailable`), JSON and payload (400 `invalid_json`, `invalid_payload`,
+`invalid_order`, `invalid_product`, `empty_comment`, `comment_too_long`), then the order:
+not the customer's (404 `order_not_found`), product not in it (422), Shopify unavailable
+(503 `verification_unavailable`), no saved rating (409 `not_rated`). Then it upserts the
+comment as a draft: 200 `{productId, comment: {text, status: 'in_review'}}`, or 503
+`save_failed`. Every response is `Cache-Control: no-store`. The order page does not reload
+its data after a comment is saved (`shouldRevalidate`), as for ratings.
+
+The product page loader reads reviews through `context.withCache` (the worker cache, added
+in `app/lib/context.ts`) with `max-age=60, stale-while-revalidate=240`: a published comment
+or a new rating appears within about a minute (up to five while stale). Only complete
+results are cached; errors are not. On mock.shop or without Admin credentials the section
+says reviews are not available.
+
+### Storage
+
+**Comments** are `product_review_comment` metaobjects written with `metaobjectUpsert` under
+the handle `comment-` + the same SHA-256 as the rating (`commentHandle()` in `rating.ts`),
+so there is at most one comment per rating. Every upsert sends
+`capabilities.publishable.status: DRAFT`; the adapter refuses a save that Shopify reports as
+published. Reads by exact handle check that the stored IDs match the key.
+
+| Field key | Type | Value |
+| --- | --- | --- |
+| `customer_id` | Single line text | Customer GID |
+| `order_id` | Single line text | Order GID |
+| `product_id` | Single line text | Product GID (**filterable**) |
+| `rating` | Integer (min 1, max 5) | Copy of the stars (ratings never change, so the copy cannot go stale) |
+| `comment` | Multi-line text (max 1000 characters) | The comment |
+
+**Public listings** use `metaobjects(type:, query: "fields.product_id:\"<gid>\"")`. This
+filter only works on fields marked **filterable** in the definition (Admin API, since
+2025-10), so `product_id` must be filterable on both `product_rating` and
+`product_review_comment`. The ratings listing selects only `product_id` and `rating`
+(aliased `field(key:)`), never customer or order IDs. More than 20 pages of 250 ratings fail
+closed (the section shows an error) rather than show an average of part of the ratings.
+Comments are read newest first (`sortKey: "updated_at"`, at most 4 pages) and filtered to
+published ones in code.
+
+### Shopify setup for comments and reviews (manual, by a store admin)
+
+In addition to the [ratings setup](#shopify-setup-manual-by-a-store-admin):
+
+1. **`product_rating`:** edit the definition and mark `product_id` as **filterable** in the
+   admin (the `adminFilterable` capability). Without it the product page shows "We couldn't
+   load the reviews right now".
+2. **New definition `product_review_comment`** (Settings → Custom data → Metaobjects):
+   - name `Product review comment`, type **`product_review_comment`**, the fields in the
+     table above with exactly those keys, all required; `rating` min 1 max 5; `comment`
+     maximum 1000 characters; `product_id` **filterable**;
+   - **Active-draft status on** (this is the review state);
+   - Admin API access `PUBLIC_READ_WRITE`, **Storefronts access off** (`NONE`): the record
+     holds the customer ID;
+   - translations and web pages off.
+3. The app keeps the scopes `read_metaobjects` and `write_metaobjects`; nothing else.
+4. **Reviewing:** Content → Metaobjects → Product review comment. Set an entry to *Active*
+   to publish it, back to *Draft* to hide it. A customer edit sets it to draft again.
+
+### Staging verification for comments and reviews (manual)
+
+1. Do the setup above.
+2. Signed in, on a delivered order with a saved rating: add a comment. The page shows it with
+   "In review"; after a reload it is still there. An empty or 1001-character comment shows a
+   message and is not saved.
+3. The product page still shows no comment. In the admin, set the entry to Active; within a
+   minute or so the product page shows it with the stars, "Verified buyer" and the date, and
+   the average and count include every rating of the product.
+4. Edit the comment on the order page: it shows "In review" again and disappears from the
+   product page (after the cache expires) until it is published again.
+5. A product without ratings shows the invitation and the link to the orders page.
+
 ## Testing
 
 See [testing.md](testing.md). In short:
@@ -803,6 +923,7 @@ See [testing.md](testing.md). In short:
 | Change the try-on gate or overlay | `app/lib/try-on/catalog.ts` (supported categories, the variant's `custom.try_on_overlay` PNG, `custom.try_on_size_cm`); variant/product loading in `app/lib/variants.server.ts`; geometry in `app/lib/try-on/anchors.ts`; MediaPipe assets in `app/lib/try-on/assets.ts` (the model lives in `app/assets/models/`). |
 | Change product customization options | Metafield definitions in the Shopify admin (see [Product customization](#product-customization)); rules in `app/lib/customization.ts`; cart check in `app/lib/customization.server.ts`; UI in `components/product/ProductCustomization.tsx`, `ProductForm.tsx` and `cart/CartLineItem.tsx`. |
 | Change order ratings | Rules in `app/lib/ratings/` (`delivery.ts`, `rating.ts`), Shopify access in `order-eligibility.server.ts` and `rating-store.server.ts`, endpoint `routes/api.order-ratings.tsx`, UI `components/account/OrderRatings.tsx`. See [Order ratings](#order-ratings-us-058). |
+| Change rating comments or product reviews | Rules in `app/lib/ratings/comment.ts` (length, normalisation) and `reviews.ts` (average); storage in `comment-store.server.ts`; product page data in `product-reviews.server.ts`; endpoint `routes/api.rating-comments.tsx`; UI `components/account/RatingComment.tsx` and `components/product/ProductReviews.tsx`. See [Rating comments and product reviews](#rating-comments-and-product-reviews-us-059-us-060). |
 | Add a customer preference | `PreferenceProfile` (`profile/types.ts`), `profile/preferences.ts` (normalise/parse), `PreferencesForm.tsx`, tests. |
 | Add a UI string / translation | Add the key to `app/lib/messages/en.ts`, `pt.ts` and `fr.ts` and use `useTranslation()` (or `translatorFor` / `translatorFromMatches`). See [i18n.md](i18n.md#adding-a-string). |
 | Add a language | Add an entry to `LOCALES` and a message object in `app/lib/i18n.ts`, then publish the language in the Shopify admin. |

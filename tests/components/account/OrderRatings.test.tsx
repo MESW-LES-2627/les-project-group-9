@@ -9,6 +9,7 @@ import {
 } from '~/components/account/OrderRatings';
 import {LocaleContext, toAppLocale, type LocaleCode} from '~/lib/i18n';
 import type {OrderRatingsView} from '~/lib/ratings/ratings.server';
+import type {StoredComment} from '~/lib/ratings/comment-store.server';
 
 const ORDER = 'gid://shopify/Order/101';
 const RING = 'gid://shopify/Product/11';
@@ -16,13 +17,18 @@ const NECKLACE = 'gid://shopify/Product/22';
 const LANGUAGE = {en: 'EN', pt: 'PT_PT', fr: 'FR'} as const;
 
 const ready = (
-  products: Array<{productId: string; title: string; rating: number | null}>,
+  products: Array<{
+    productId: string;
+    title: string;
+    rating: number | null;
+    comment?: StoredComment | null;
+  }>,
   delivered = true,
 ): OrderRatingsView => ({
   status: 'ready',
   orderId: ORDER,
   delivered,
-  products: products.map((product) => ({...product, image: null})),
+  products: products.map((product) => ({comment: null, ...product, image: null})),
 });
 
 type ActionReply = {status: number; body: Record<string, unknown>};
@@ -83,6 +89,8 @@ describe('OrderRatings', () => {
     expect(screen.getByText('Your rating: 4 out of 5')).toBeInTheDocument();
     expect(screen.queryByRole('radio')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', {name: 'Submit rating'})).not.toBeInTheDocument();
+    // A just-saved rating can get a comment straight away (US-059).
+    expect(screen.getByRole('button', {name: 'Add a comment'})).toBeInTheDocument();
     expect(requests).toEqual([
       {body: {orderId: ORDER, productId: RING, rating: 4}, contentType: 'application/json'},
     ]);
@@ -92,7 +100,11 @@ describe('OrderRatings', () => {
     renderRatings(ready([{productId: RING, title: 'Aurora ring', rating: 2}]));
     expect(await screen.findByText('Your rating: 2 out of 5')).toBeInTheDocument();
     expect(screen.queryByRole('radio')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Submit rating'})).not.toBeInTheDocument();
+    // The only control left is the comment (US-059); the stars stay final.
+    expect(screen.getAllByRole('button').map((button) => button.textContent)).toEqual([
+      'Add a comment',
+    ]);
   });
 
   it('offers one form per unrated product', async () => {

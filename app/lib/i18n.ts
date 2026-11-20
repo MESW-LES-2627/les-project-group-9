@@ -350,6 +350,18 @@ export function translatorFromMatches(
   return createTranslator(root?.locale?.code ?? DEFAULT_LOCALE);
 }
 
+/** Formats a number in the locale ("4.3" / "4,3"), by default with one decimal. */
+export function formatNumber(
+  value: number,
+  tag: string,
+  options: Intl.NumberFormatOptions = {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  },
+): string {
+  return new Intl.NumberFormat(tag, options).format(value);
+}
+
 /** Joins items as a localized list: "A, B and C" / "A, B e C" / "A, B et C". */
 export function formatList(items: string[], tag: string): string {
   return new Intl.ListFormat(tag, {style: 'long', type: 'conjunction'}).format(

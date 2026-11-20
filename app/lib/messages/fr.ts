@@ -438,6 +438,46 @@ export const fr: Messages = {
     'Votre session a expiré. Reconnectez-vous pour noter cette pièce.',
   'rating.error.save':
     "Impossible d'enregistrer votre note. Veuillez réessayer.",
+  'comment.add': 'Ajouter un commentaire',
+  'comment.edit': 'Modifier le commentaire',
+  'comment.cancel': 'Annuler',
+  'comment.label': 'Votre commentaire sur {product}',
+  'comment.help':
+    'Jusqu’à {max} caractères. Les commentaires apparaissent sur la page de la pièce après vérification par notre équipe.',
+  'comment.editNote':
+    'Toute modification renvoie votre commentaire en vérification. Il reste masqué jusqu’à sa nouvelle approbation.',
+  'comment.counter': {
+    one: '{count} caractère sur {max}',
+    other: '{count} caractères sur {max}',
+  },
+  'comment.submit': 'Envoyer le commentaire',
+  'comment.submitting': 'Envoi de votre commentaire…',
+  'comment.yours': 'Votre commentaire',
+  'comment.saved': 'Merci. Votre commentaire a été envoyé en vérification.',
+  'comment.status.in_review': 'En cours de vérification',
+  'comment.status.published': 'Publié',
+  'comment.error.empty': 'Rédigez un commentaire avant de l’envoyer.',
+  'comment.error.tooLong':
+    'Votre commentaire est trop long. Réduisez-le à {max} caractères maximum.',
+  'comment.error.notRated': 'Notez cette pièce avant d’ajouter un commentaire.',
+  'comment.error.signIn':
+    'Votre session a expiré. Reconnectez-vous pour enregistrer votre commentaire.',
+  'comment.error.save':
+    "Impossible d'enregistrer votre commentaire. Veuillez réessayer.",
+  'reviews.heading': 'Avis',
+  'reviews.loading': 'Chargement des avis…',
+  'reviews.average': '{average} sur 5',
+  'reviews.count': {one: '{count} avis', other: '{count} avis'},
+  'reviews.commentsHeading': 'Ce qu’en pensent nos clients',
+  'reviews.commentRating': 'Noté {value} sur 5',
+  'reviews.verifiedBuyer': 'Acheteur vérifié',
+  'reviews.noComments': 'Aucun commentaire écrit pour le moment.',
+  'reviews.empty':
+    'Aucun avis pour le moment. Vous avez acheté cette pièce ? Notez-la depuis vos commandes une fois livrée.',
+  'reviews.emptyLink': 'Voir mes commandes',
+  'reviews.unavailable': 'Les avis ne sont pas disponibles pour le moment.',
+  'reviews.error':
+    'Impossible de charger les avis pour le moment. Veuillez réessayer plus tard.',
   'order.financial.AUTHORIZED': 'Autorisé',
   'order.financial.EXPIRED': 'Expiré',
   'order.financial.PAID': 'Payé',

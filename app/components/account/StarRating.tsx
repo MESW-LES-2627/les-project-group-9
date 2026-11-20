@@ -52,8 +52,12 @@ export function StarRatingInput({
   );
 }
 
-/** A saved rating, shown read-only as stars plus text. */
-export function StarRatingValue({value}: {value: number}) {
+/**
+ * Read-only stars plus a visible text that says the same thing (the stars are
+ * hidden from screen readers). `value` is the number of filled stars; `label`
+ * defaults to the customer's own rating ("Your rating: 4 out of 5").
+ */
+export function StarRatingValue({value, label}: {value: number; label?: string}) {
   const t = useTranslation();
   return (
     <p className="flex flex-wrap items-center gap-2 text-sm text-ink">
@@ -62,7 +66,7 @@ export function StarRatingValue({value}: {value: number}) {
           <StarIcon key={star} filled={star <= value} />
         ))}
       </span>
-      <span>{t('rating.yours', {value})}</span>
+      <span>{label ?? t('rating.yours', {value})}</span>
     </p>
   );
 }

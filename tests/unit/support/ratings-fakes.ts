@@ -226,13 +226,29 @@ type StoredMetaobject = {
   handle: string;
   type: string;
   fields: Array<{key: string; value: string}>;
+  updatedAt: string;
+  /** Publishable status (comments only): DRAFT until published. */
+  capabilities?: {publishable: {status: 'DRAFT' | 'ACTIVE'}};
 };
 
-/** Fake Admin GraphQL endpoint for rating metaobjects. */
-export function fakeAdminApi({mode = 'taken'}: {mode?: 'taken' | 'suffix'} = {}) {
+/**
+ * Fake Admin GraphQL endpoint for rating and comment metaobjects. Comments
+ * (US-059) are upserted by handle with a publishable status; `publish()`
+ * stands in for the team approving one in the Shopify admin.
+ */
+export function fakeAdminApi({
+  mode = 'taken',
+  listPageSize = 250,
+}: {
+  mode?: 'taken' | 'suffix';
+  /** Page size of `metaobjects` listings (smaller to exercise pagination). */
+  listPageSize?: number;
+} = {}) {
   const records = new Map<string, StoredMetaobject>();
   const requests: Array<{url: string; headers: Headers; query: string; variables: Record<string, unknown>}> = [];
   let nextId = 1;
+  let clock = Date.UTC(2026, 10, 1);
+  const tick = () => new Date((clock += 60_000)).toISOString();
   let failure: 'http' | 'graphql' | 'network' | null = null;
   let failOnly: string | null = null;
   const validTokens = new Set([ADMIN_ENV.PRIVATE_ADMIN_API_TOKEN]);
@@ -301,12 +317,42 @@ export function fakeAdminApi({mode = 'taken'}: {mode?: 'taken' | 'suffix'} = {})
       return json({data: {metaobjectCreate: {metaobject: created, userErrors: []}}});
     }
 
+    if (body.query.includes('metaobjectUpsert')) {
+      const {type, handle} = body.variables.handle as {type: string; handle: string};
+      const input = body.variables.metaobject as {
+        fields: Array<{key: string; value: string}>;
+        capabilities?: {publishable?: {status?: 'DRAFT' | 'ACTIVE'}};
+      };
+      const existing = records.get(handle);
+      const record: StoredMetaobject = {
+        id: existing?.id ?? `gid://shopify/Metaobject/${nextId++}`,
+        handle,
+        type,
+        fields: input.fields,
+        updatedAt: tick(),
+        capabilities: {
+          publishable: {
+            status:
+              input.capabilities?.publishable?.status ??
+              existing?.capabilities?.publishable.status ??
+              'DRAFT',
+          },
+        },
+      };
+      records.set(handle, record);
+      return json({data: {metaobjectUpsert: {metaobject: record, userErrors: []}}});
+    }
+
     if (body.query.includes('metaobjectDelete')) {
       const id = body.variables.id;
       for (const [handle, record] of records) {
         if (record.id === id) records.delete(handle);
       }
       return json({data: {metaobjectDelete: {deletedId: id, userErrors: []}}});
+    }
+
+    if (body.query.includes('metaobjects(')) {
+      return json({data: {metaobjects: list(body.query, body.variables)}});
     }
 
     if (body.query.includes('metaobjectByHandle')) {
@@ -323,9 +369,48 @@ export function fakeAdminApi({mode = 'taken'}: {mode?: 'taken' | 'suffix'} = {})
   };
 
   function save(input: {type: string; handle: string; fields: Array<{key: string; value: string}>}) {
-    const record = {id: `gid://shopify/Metaobject/${nextId++}`, ...input};
+    const record = {id: `gid://shopify/Metaobject/${nextId++}`, updatedAt: tick(), ...input};
     records.set(record.handle, record);
     return {id: record.id, handle: record.handle, fields: record.fields};
+  }
+
+  /**
+   * `metaobjects(type, query)` with the one filter the app uses,
+   * `fields.product_id:"<gid>"`, newest first, cursor paginated.
+   */
+  function list(query: string, variables: Record<string, unknown>) {
+    const filter = /^fields\.product_id:"([^"]+)"$/.exec(String(variables.query));
+    if (!filter) throw new Error(`Unsupported metaobjects query ${String(variables.query)}`);
+    const matching = [...records.values()]
+      .filter((record) => record.type === variables.type)
+      .filter((record) => record.fields.some((f) => f.key === 'product_id' && f.value === filter[1]))
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    const start = typeof variables.after === 'string' ? Number(variables.after.slice(1)) + 1 : 0;
+    const page = matching.slice(start, start + listPageSize);
+    const end = start + page.length;
+    // The ratings listing selects aliased fields only, like the real document.
+    const aliased = query.includes('ProductRatings');
+    return {
+      nodes: page.map((record) => {
+        if (!aliased) return record;
+        const value = (key: string) => {
+          const field = record.fields.find((f) => f.key === key);
+          return field ? {value: field.value} : null;
+        };
+        return {productId: value('product_id'), rating: value('rating')};
+      }),
+      pageInfo: {hasNextPage: end < matching.length, endCursor: page.length ? `c${end - 1}` : null},
+    };
+  }
+
+  function plain(type: string) {
+    return [...records.values()]
+      .filter((record) => record.type === type)
+      .map((record) => {
+        const fields = Object.fromEntries(record.fields.map((f) => [f.key, f.value]));
+        const status = record.capabilities?.publishable.status;
+        return {handle: record.handle, ...fields, ...(status ? {status} : {})};
+      });
   }
 
   return {
@@ -344,10 +429,18 @@ export function fakeAdminApi({mode = 'taken'}: {mode?: 'taken' | 'suffix'} = {})
     },
     /** Saved ratings as plain values, for assertions. */
     ratings() {
-      return [...records.values()].map((record) => {
-        const fields = Object.fromEntries(record.fields.map((f) => [f.key, f.value]));
-        return {handle: record.handle, ...fields};
-      });
+      return plain('product_rating');
+    },
+    /** Saved comments as plain values, with their review status. */
+    comments() {
+      return plain('product_review_comment');
+    },
+    /** The team publishes (approves) the comment under `handle`. */
+    publish(handle: string) {
+      const record = records.get(handle);
+      if (!record?.capabilities) throw new Error(`No comment ${handle}`);
+      record.capabilities = {publishable: {status: 'ACTIVE'}};
+      record.updatedAt = tick();
     },
   };
 }

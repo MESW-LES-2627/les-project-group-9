@@ -37,3 +37,12 @@ export const accountOrderDetail =
   '[&_h3]:mb-3 [&_h3]:mt-8 [&_h3]:font-display [&_h3]:text-xl ' +
   '[&_address]:text-sm [&_address]:not-italic [&_address]:leading-7 [&_address]:text-primary ' +
   '[&_a]:underline [&_a]:underline-offset-4';
+/**
+ * `accountButton` / `accountSecondaryButton` with a real 44px minimum height:
+ * with the 14px root font, `min-h-11` is only 38.5px (docs/responsive.md).
+ */
+export const accountTouchButton = accountButton.replace('min-h-11', 'min-h-[44px]');
+export const accountTouchSecondaryButton = accountSecondaryButton.replace(
+  'min-h-11',
+  'min-h-[44px]',
+);

@@ -2,6 +2,7 @@ import {useId, useState, type FormEvent} from 'react';
 import {useFetcher} from 'react-router';
 import {Image} from '@shopify/hydrogen';
 import {StarRatingInput, StarRatingValue} from './StarRating';
+import {RatingComment} from './RatingComment';
 import {accountButton} from '~/lib/account-ui';
 import {useTranslation, type MessageKey} from '~/lib/i18n';
 import type {
@@ -71,7 +72,15 @@ function OrderRatingsBody({view}: {view: OrderRatingsView}) {
             <ProductSummary product={product} />
             <div className="min-w-0 flex-1">
               {product.rating !== null ? (
-                <StarRatingValue value={product.rating} />
+                <>
+                  <StarRatingValue value={product.rating} />
+                  <RatingComment
+                    orderId={view.orderId}
+                    productId={product.productId}
+                    productTitle={product.title}
+                    comment={product.comment}
+                  />
+                </>
               ) : canRate ? (
                 <ProductRatingForm orderId={view.orderId} product={product} />
               ) : null}
@@ -137,6 +146,12 @@ export function ProductRatingForm({
         <p role="status" className="text-sm text-primary">
           {t('rating.saved')}
         </p>
+        <RatingComment
+          orderId={orderId}
+          productId={product.productId}
+          productTitle={product.title}
+          comment={null}
+        />
       </div>
     );
   }
