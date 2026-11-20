@@ -14,7 +14,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "codegen": "shopify hydrogen codegen && react-router typegen",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:staging:ratings": "vitest run --config vitest.staging.config.ts"
   },
   "prettier": "@shopify/prettier-config",
   "dependencies": {
