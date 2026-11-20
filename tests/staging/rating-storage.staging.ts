@@ -38,7 +38,9 @@ const writesConfirmed =
 
 const PROBE_CUSTOMER = 'gid://shopify/Customer/0';
 const PROBE_ORDER = 'gid://shopify/Order/0';
-const RUN = Date.now();
+// Unique per run, so this run only ever deletes its own probe records.
+const RUN = `${Date.now()}${Math.floor(Math.random() * 1e6)}`;
+const PROBE_PRODUCTS = [`gid://shopify/Product/${RUN}1`, `gid://shopify/Product/${RUN}2`];
 
 type Node = {id: string; handle: string; fields: Array<{key: string; value: string | null}>};
 
@@ -112,16 +114,25 @@ function rawCreate(handle: string, key: RatingKey, rating: number) {
 
 describe.skipIf(!writesConfirmed)('live storage uniqueness (writes synthetic probe records)', () => {
   afterAll(async () => {
-    // Delete only the synthetic probe entries (customer and order `/0`).
-    const probes = await recordsMatching({customer_id: PROBE_CUSTOMER, order_id: PROBE_ORDER});
-    for (const probe of probes) {
-      await admin(ADMIN_RATING_DELETE_MUTATION, {id: probe.id});
+    // Delete only this run's synthetic entries (customer and order `/0`, and a
+    // product ID unique to this run), never another run's probes.
+    let deleted = 0;
+    for (const productId of PROBE_PRODUCTS) {
+      const probes = await recordsMatching({
+        customer_id: PROBE_CUSTOMER,
+        order_id: PROBE_ORDER,
+        product_id: productId,
+      });
+      for (const probe of probes) {
+        await admin(ADMIN_RATING_DELETE_MUTATION, {id: probe.id});
+        deleted += 1;
+      }
     }
-    console.warn(`[staging] deleted ${probes.length} probe record(s)`);
+    console.warn(`[staging] deleted ${deleted} probe record(s) of run ${RUN}`);
   });
 
   it('1. a direct create with an existing explicit handle does not add a record', async () => {
-    const key = {customerId: PROBE_CUSTOMER, orderId: PROBE_ORDER, productId: `gid://shopify/Product/${RUN}1`};
+    const key = {customerId: PROBE_CUSTOMER, orderId: PROBE_ORDER, productId: PROBE_PRODUCTS[0]};
     const handle = `rating-probe-${RUN}`;
 
     const first = await rawCreate(handle, key, 1);
@@ -144,11 +155,15 @@ describe.skipIf(!writesConfirmed)('live storage uniqueness (writes synthetic pro
     const violations = vi.spyOn(console, 'error');
     const store = createRatingStore(env);
     if (!store) throw new Error('Admin API is not configured');
-    const key = {customerId: PROBE_CUSTOMER, orderId: PROBE_ORDER, productId: `gid://shopify/Product/${RUN}2`};
+    const key = {customerId: PROBE_CUSTOMER, orderId: PROBE_ORDER, productId: PROBE_PRODUCTS[1]};
 
     const results = await Promise.allSettled([1, 2, 3, 4, 5].map((value) => store.createRating(key, value)));
     console.warn('[staging] concurrent results', JSON.stringify(results));
 
+    // A rejected create (network, HTTP or GraphQL error) leaves Shopify's answer
+    // unknown: the run is inconclusive, never a pass on partial evidence.
+    const rejected = results.filter((result) => result.status === 'rejected');
+    expect(rejected, `inconclusive: ${rejected.length} of 5 creates failed`).toHaveLength(0);
     const fulfilled = results.flatMap((result) => (result.status === 'fulfilled' ? [result.value] : []));
     const created = fulfilled.filter((result) => result.status === 'created');
     expect(created).toHaveLength(1);
@@ -176,7 +191,8 @@ describe.skipIf(!config || inspect?.length !== 3)('inspect a storefront rating (
   it('has exactly one record for the customer, order and product', async () => {
     const [customerId, orderId, productId] = inspect ?? [];
     const records = await recordsMatching({customer_id: customerId, order_id: orderId, product_id: productId});
-    console.warn('[staging] records', JSON.stringify(records));
+    // Counts only: these records hold real customer and order IDs.
+    console.warn(`[staging] records for the key: ${records.length}`);
     expect(records).toHaveLength(1);
     expect(records[0].handle).toBe(await ratingHandle({customerId, orderId, productId}));
   });

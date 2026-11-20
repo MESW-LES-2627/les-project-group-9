@@ -684,9 +684,14 @@ npm run test:staging:ratings
 ```
 
 `tests/staging/rating-storage.staging.ts` only writes `product_rating` entries with synthetic
-IDs (`gid://shopify/Customer/0`, `gid://shopify/Order/0`), deletes exactly those entries at
-the end and prints Shopify's raw answers. Without `RATINGS_STAGING_CONFIRM_WRITES` equal to
-the domain, the write checks are skipped.
+IDs (`gid://shopify/Customer/0`, `gid://shopify/Order/0`, and product IDs unique to the run),
+deletes only that run's entries at the end (never another run's probes) and prints Shopify's
+raw answers for those synthetic records. A create that fails with a network, HTTP or GraphQL
+error makes the run **inconclusive** (it fails rather than passing on partial evidence). The
+read-only inspect mode prints counts only, never the records' customer or order IDs. Without
+`RATINGS_STAGING_CONFIRM_WRITES` equal to the domain, the write checks are skipped. A passing
+run is an observation of Shopify's behaviour on that store and API version on that day, not a
+documented guarantee.
 1. **Direct explicit-handle collision:** two raw `metaobjectCreate` calls with the same handle
    (values 1, then 5). Passes only if the second is rejected (no record, with `userErrors`)
    and exactly one entry, with value 1, exists for that probe.
