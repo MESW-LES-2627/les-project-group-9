@@ -12,15 +12,16 @@ function renderButton(active: boolean, onClick = vi.fn()) {
 }
 
 describe('ProductActionButton', () => {
-  it('shows the selected state with the ink pill', () => {
+  it('shows the selected state with the primary pill', () => {
     renderButton(true);
 
     const button = screen.getByRole('button', {name: 'Action'});
 
     expect(button).toHaveAttribute('aria-pressed', 'true');
     expect(button).toHaveAttribute('data-active', 'true');
-    expect(button.className).toContain('bg-ink');
+    expect(button.className).toContain('bg-primary');
     expect(button.className).toContain('text-paper');
+    expect(button.className).toContain('hover:bg-bark');
   });
 
   it('shows the idle state with the paper pill', () => {

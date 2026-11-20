@@ -16,6 +16,16 @@ describe('parseProductAllergens', () => {
     expect(parseProductAllergens('not json')).toEqual([]);
     expect(parseProductAllergens('{"nickel": true}')).toEqual([]);
   });
+
+  it('maps translated metafield values back to their code', () => {
+    expect(parseProductAllergens('["Zinco"]')).toEqual(['zinc']);
+    expect(parseProductAllergens('["Níquel", "Cobalto"]')).toEqual([
+      'nickel',
+      'cobalt',
+    ]);
+    expect(parseProductAllergens('["Zinc", "zinco"]')).toEqual(['zinc']);
+    expect(parseProductAllergens('["latex"]')).toEqual([]);
+  });
 });
 
 describe('matchingAllergens', () => {

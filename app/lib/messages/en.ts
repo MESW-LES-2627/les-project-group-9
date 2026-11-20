@@ -190,6 +190,8 @@ export const en = {
   'product.fittingRoomRemove': 'Remove {title} from fitting room',
   'product.fittingRoomAdd': 'Add {title} to fitting room',
   'product.fittingRoomLogin': 'Log in to add {title} to fitting room',
+  'product.tryOn': 'Try on',
+  'product.tryOnTitle': 'See it on you',
   'product.breadcrumb': 'Breadcrumb',
   'product.description': 'Description',
   'product.details': 'Details',
@@ -208,6 +210,45 @@ export const en = {
     one: '{count} character left',
     other: '{count} characters left',
   },
+
+  // Front-camera try-on
+  'tryOn.title': 'Try on {title}',
+  'tryOn.loading': 'Loading try-on…',
+  'tryOn.preparing': 'Preparing try-on…',
+  'tryOn.starting': 'Starting your camera…',
+  'tryOn.noFace': 'Move your face into the frame.',
+  'tryOn.denied': 'Camera access is off. Upload a photo instead.',
+  'tryOn.unavailable':
+    'This device can’t start the camera. Upload a photo instead.',
+  'tryOn.unsupported':
+    'This browser can’t open the camera. Open the page in Safari or Chrome.',
+  'tryOn.failed': 'Something went wrong. Please try again.',
+  'tryOn.errorDetail': 'Details: {detail}',
+  'tryOn.retry': 'Try again',
+  'tryOn.startPrompt': 'Tap below to open your camera and try {title} on.',
+  'tryOn.startCamera': 'Open camera',
+  'tryOn.upload': 'Upload a photo',
+  'tryOn.uploadHint': 'Choose a front-facing photo to see the piece on you.',
+  'tryOn.uploadError': 'Use a JPG, PNG or HEIC image under 12 MB.',
+  'tryOn.adjustHint':
+    'Drag the photo to move the piece, or use the buttons to resize it.',
+  'tryOn.smaller': 'Smaller',
+  'tryOn.larger': 'Larger',
+  'tryOn.reset': 'Reset position',
+  'tryOn.photoNoFace':
+    'We couldn’t find a face in that photo. Try another one.',
+  'tryOn.replacePhoto': 'Choose another photo',
+  'tryOn.opaque': 'Try-on isn’t available for this piece yet.',
+  'tryOn.qrTitle': 'Try it on your phone',
+  'tryOn.qrHelp':
+    'Scan this code with your phone camera to open the try-on view.',
+  'tryOn.openLink': 'Open the try-on link',
+  'tryOn.privacy': 'Your camera and photos stay on this device.',
+  'tryOn.preview': 'Preview with {title} on you',
+  'tryOn.lookTitle': 'Try on your look',
+  'tryOn.lookPrompt': 'Tap below to open your camera and try your look on.',
+  'tryOn.lookPreview': 'Preview of your look on you',
+  'tryOn.lookUnavailable': 'Try-on isn’t available for this look yet.',
 
   // Allergens and the allergy warning
   'allergen.nickel': 'Nickel',
@@ -308,13 +349,14 @@ export const en = {
   'fittingRoom.tryOn': 'Virtual try-on',
   'fittingRoom.tryOnTitle': 'See it on you',
   'fittingRoom.tryOnText':
-    'Choose the pieces you want to try together. The virtual fitting experience is coming soon.',
+    'Select the pieces you want to see together, then open the look.',
+  'fittingRoom.tryOnLook': 'Try on the look',
+  'fittingRoom.no3d': 'No 3D',
   'fittingRoom.readyToTry': {
     one: '{count} piece ready to try',
     other: '{count} pieces ready to try',
   },
-  'fittingRoom.selectHint':
-    'Select at least one piece on the left to build your look.',
+  'fittingRoom.selectHint': 'Select at least one piece to build your look.',
   'fittingRoom.error.unauthorized': 'Unauthorized',
   'fittingRoom.error.invalid': 'Invalid product',
   'fittingRoom.error.soldOut': 'This piece is sold out',

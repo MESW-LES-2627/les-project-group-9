@@ -14,7 +14,7 @@ vi.mock('~/lib/fitting-room', () => ({
 
 import {FittingRoomButton} from '../../app/components/product/FittingRoomButton';
 
-const PRODUCT_ID = 'gid://shopify/Product/1';
+const VARIANT_ID = 'gid://shopify/Product/1';
 
 beforeEach(() => {
   mocks.has.mockReset();
@@ -32,7 +32,7 @@ describe('FittingRoomButton', () => {
     const user = userEvent.setup();
     mocks.has.mockReturnValue(false);
 
-    render(<FittingRoomButton productId={PRODUCT_ID} title="Solstice Ring" />);
+    render(<FittingRoomButton variantId={VARIANT_ID} title="Solstice Ring" />);
 
     const button = screen.getByRole('button', {
       name: 'Add Solstice Ring to fitting room',
@@ -43,13 +43,25 @@ describe('FittingRoomButton', () => {
 
     await user.click(button);
 
-    expect(mocks.toggle).toHaveBeenCalledWith(PRODUCT_ID);
+    expect(mocks.toggle).toHaveBeenCalledWith(VARIANT_ID);
+  });
+
+  it('is not offered for pieces that cannot be tried on', () => {
+    render(
+      <FittingRoomButton
+        canTryOn={false}
+        variantId={VARIANT_ID}
+        title="Solstice Ring"
+      />,
+    );
+
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
   it('reflects a piece that is already in the fitting room', () => {
     mocks.has.mockReturnValue(true);
 
-    render(<FittingRoomButton productId={PRODUCT_ID} title="Solstice Ring" />);
+    render(<FittingRoomButton variantId={VARIANT_ID} title="Solstice Ring" />);
 
     expect(
       screen.getByRole('button', {

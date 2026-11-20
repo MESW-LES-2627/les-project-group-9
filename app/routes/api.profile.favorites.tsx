@@ -1,6 +1,7 @@
 import {data} from 'react-router';
 import type {Route} from './+types/api.profile.favorites';
 import {updateCustomerFavorites} from '~/lib/profile/customer.server';
+import {isProductGid} from '~/lib/profile/list-schema';
 import {NO_STORE, readListOperation} from '~/lib/profile/operation.server';
 
 export async function action({request, context}: Route.ActionArgs) {
@@ -8,6 +9,7 @@ export async function action({request, context}: Route.ActionArgs) {
     request,
     context,
     'No favorite changes',
+    isProductGid,
   );
 
   if ('error' in result) {

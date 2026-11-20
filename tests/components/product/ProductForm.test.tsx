@@ -319,6 +319,22 @@ describe('ring size helper', () => {
     expect(screen.getByRole('button', {name: 'Measurement Guide'})).toBeInTheDocument();
   });
 
+  it('shows the helper when Shopify localizes the Size option name', () => {
+    const localizedOptions = [
+      {...sizeOptions[0], name: 'Tamanho'},
+    ] as MappedProductOptions[];
+
+    render(
+      <ProductForm
+        productOptions={localizedOptions}
+        selectedVariant={selectedVariant}
+        isRing
+      />,
+    );
+
+    expect(screen.getByRole('button', {name: 'Measurement Guide'})).toBeInTheDocument();
+  });
+
   it('hides the helper on products that are not rings', () => {
     render(
       <ProductForm

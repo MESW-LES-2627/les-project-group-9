@@ -4,14 +4,71 @@ import {loader} from '../../app/routes/api.profile';
 type LoaderArgs = Parameters<typeof loader>[0];
 
 const CUSTOMER_ID = 'gid://shopify/Customer/1';
+const CLEAR = 'gid://shopify/ProductVariant/1';
+const STEEL = 'gid://shopify/ProductVariant/2';
+const MISCLASSIFIED = 'gid://shopify/ProductVariant/3';
+const LEGACY_PRODUCT = 'gid://shopify/Product/1';
+
+const NECKLACES = {id: 'gid://shopify/TaxonomyCategory/aa-6-8', name: 'Necklaces'};
+const BRACELETS = {id: 'gid://shopify/TaxonomyCategory/aa-6-3', name: 'Bracelets'};
+
+function variantNode(id: string, portuguese = false) {
+  const capable = id === CLEAR;
+  const misclassified = id === MISCLASSIFIED;
+  const hasOverlay = capable || misclassified;
+  const name = (category: 'necklaces' | 'bracelets') =>
+    !portuguese
+      ? category === 'necklaces'
+        ? 'Necklaces'
+        : 'Bracelets'
+      : category === 'necklaces'
+        ? 'Colares'
+        : 'Pulseiras';
+
+  return {
+    __typename: 'ProductVariant',
+    id,
+    title: 'Piece',
+    availableForSale: true,
+    selectedOptions: [{name: 'Color', value: 'Gold'}],
+    price: {amount: '1.0', currencyCode: 'EUR'},
+    compareAtPrice: null,
+    product: {
+      id: 'gid://shopify/Product/9',
+      title: 'Piece',
+      handle: 'piece',
+      productType: '',
+      category: capable
+        ? {...NECKLACES, name: name('necklaces')}
+        : {...BRACELETS, name: name('bracelets')},
+      featuredImage: null,
+      priceRange: {
+        minVariantPrice: {amount: '1.0', currencyCode: 'EUR'},
+        maxVariantPrice: {amount: '1.0', currencyCode: 'EUR'},
+      },
+    },
+    tryOnOverlay: hasOverlay
+      ? {reference: {image: {url: 'https://cdn.example/piece.png'}}}
+      : null,
+    tryOnSize: null,
+  };
+}
 
 function contextWith({
   loggedIn = true,
   fail = false,
+  fittingRoom = '[]',
+  storefrontFails = false,
+  portuguese = false,
 }: {
   loggedIn?: boolean;
   fail?: boolean;
+  fittingRoom?: string;
+  storefrontFails?: boolean;
+  portuguese?: boolean;
 } = {}) {
+  const writes: string[] = [];
+
   const query = vi.fn(async () => {
     if (fail) throw new Error('Profile query failed');
 
@@ -20,7 +77,7 @@ function contextWith({
         customer: {
           id: CUSTOMER_ID,
           favorites: {value: '[]'},
-          fittingRoom: {value: '[]'},
+          fittingRoom: {value: fittingRoom},
           preferences: {value: '{"skin":{"tone":"medium"}}'},
         },
       },
@@ -31,10 +88,33 @@ function contextWith({
     customerAccount: {
       isLoggedIn: async () => loggedIn,
       query,
+      mutate: async (
+        _mutation: string,
+        options: {variables: {metafields: Array<{value: string}>}},
+      ) => {
+        const {value} = options.variables.metafields[0];
+        writes.push(value);
+
+        return {
+          data: {
+            metafieldsSet: {metafields: [{value}], userErrors: []},
+          },
+        };
+      },
+    },
+    storefront: {
+      query: async (
+        _query: string,
+        options: {variables: {ids: string[]}},
+      ) => {
+        if (storefrontFails) throw new Error('Storefront unavailable');
+
+        return {nodes: options.variables.ids.map((id) => variantNode(id, portuguese))};
+      },
     },
   } as unknown as LoaderArgs['context'];
 
-  return {context, query};
+  return {context, query, writes};
 }
 
 function callLoader(context: LoaderArgs['context']) {
@@ -78,5 +158,64 @@ describe('GET /api/profile', () => {
 
     expect(result.init?.status).toBe(500);
     expect(result.data).toEqual({error: 'Could not load profile'});
+  });
+
+  it('prunes variants that can no longer be tried on', async () => {
+    const {context, writes} = contextWith({
+      fittingRoom: JSON.stringify([CLEAR, STEEL]),
+    });
+
+    const result = await callLoader(context);
+
+    expect(result.data).toMatchObject({fittingRoom: [CLEAR]});
+    expect(writes).toHaveLength(1);
+    expect(JSON.parse(writes[0])).toEqual([CLEAR]);
+  });
+
+  it('keeps a try-on piece when its category name is localized', async () => {
+    const {context, writes} = contextWith({
+      fittingRoom: JSON.stringify([CLEAR]),
+      portuguese: true,
+    });
+
+    const result = await callLoader(context);
+
+    expect(result.data).toMatchObject({fittingRoom: [CLEAR]});
+    expect(writes).toHaveLength(0);
+  });
+
+  it('skips the prune when a piece has an overlay but no supported category', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const {context, writes} = contextWith({
+      fittingRoom: JSON.stringify([CLEAR, MISCLASSIFIED]),
+    });
+
+    const result = await callLoader(context);
+
+    expect(result.data).toMatchObject({fittingRoom: [CLEAR, MISCLASSIFIED]});
+    expect(writes).toHaveLength(0);
+  });
+
+  it('drops legacy product GIDs from the stored list', async () => {
+    const {context} = contextWith({
+      fittingRoom: JSON.stringify([LEGACY_PRODUCT, CLEAR]),
+    });
+
+    const result = await callLoader(context);
+
+    expect(result.data).toMatchObject({fittingRoom: [CLEAR]});
+  });
+
+  it('keeps the list when the catalog lookup fails', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const {context, writes} = contextWith({
+      fittingRoom: JSON.stringify([STEEL]),
+      storefrontFails: true,
+    });
+
+    const result = await callLoader(context);
+
+    expect(result.data).toMatchObject({fittingRoom: [STEEL]});
+    expect(writes).toHaveLength(0);
   });
 });

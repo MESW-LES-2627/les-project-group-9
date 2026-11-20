@@ -1,6 +1,7 @@
 import {data} from 'react-router';
 import type {Route} from './+types/api.profile';
 import {readCustomerProfile} from '~/lib/profile/customer.server';
+import {pruneFittingRoom} from '~/lib/profile/fitting-room-gate.server';
 
 const NO_STORE = {
   'Cache-Control': 'no-store',
@@ -19,12 +20,13 @@ export async function loader({context}: Route.LoaderArgs) {
 
   try {
     const profile = await readCustomerProfile(context);
+    const fittingRoom = await pruneFittingRoom(context, profile.fittingRoom);
 
     return data(
       {
         loggedIn: true,
         favorites: profile.favorites,
-        fittingRoom: profile.fittingRoom,
+        fittingRoom,
         preferences: profile.preferences,
       },
       {headers: NO_STORE},

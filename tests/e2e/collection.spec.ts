@@ -52,12 +52,16 @@ test('browse from home to a collection and then to a product', async ({
 }) => {
   await page.goto('/');
 
-  await page
+  const viewAll = page
     .getByRole('link', {name: 'View all pieces'})
-    .filter({visible: true})
-    .click();
+    .filter({visible: true});
+
+  await viewAll.click();
 
   await expect(page).toHaveURL(/\/collections\/.+/);
+  // The URL changes before React Router swaps the page; wait for the home CTA
+  // to go away so product links are read from the collection, not the home.
+  await expect(viewAll).toBeHidden();
   await expect(page.getByRole('heading', {level: 1})).toBeVisible();
 
   await openFirstProduct(page);

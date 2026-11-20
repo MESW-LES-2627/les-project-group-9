@@ -1,8 +1,11 @@
-const RING_CATEGORY_NAME = 'rings';
+import {matchesCategory, type ProductCategory} from '~/lib/taxonomy';
 
-/** True when the product's category is "Rings" (case-insensitive). */
+/**
+ * True when the product's category is Rings. Matched by taxonomy id so it also
+ * works when Shopify returns the localized category name (`Anéis`, `Bagues`).
+ */
 export function isRingProduct(product: {
-  category?: {name: string} | null;
+  category?: ProductCategory | null;
 }): boolean {
-  return product.category?.name?.trim().toLowerCase() === RING_CATEGORY_NAME;
+  return matchesCategory(product.category, 'rings');
 }
