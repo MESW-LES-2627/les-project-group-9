@@ -9,9 +9,13 @@ const CUSTOMER_ID = 'gid://shopify/Customer/1';
 function contextWith({
   loggedIn = true,
   stored = null,
+  customerId = CUSTOMER_ID,
+  deleteReply,
 }: {
   loggedIn?: boolean;
   stored?: Record<string, unknown> | null;
+  customerId?: string | null;
+  deleteReply?: unknown;
 } = {}) {
   const calls: Array<{
     metafields: Array<{
@@ -31,11 +35,13 @@ function contextWith({
       isLoggedIn: async () => loggedIn,
       query: async () => ({
         data: {
-          customer: {
-            id: CUSTOMER_ID,
-            favorites: {value: '[]'},
-            preferences: stored ? {value: JSON.stringify(stored)} : null,
-          },
+          customer: customerId
+            ? {
+                id: customerId,
+                favorites: {value: '[]'},
+                preferences: stored ? {value: JSON.stringify(stored)} : null,
+              }
+            : null,
         },
       }),
       mutate: async (
