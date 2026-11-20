@@ -392,9 +392,14 @@ not fully delivered (403 `not_delivered`), Shopify unavailable (503
 
 **Same-origin check** (`lib/request-origin.server.ts`): when the browser sends
 `Sec-Fetch-Site` (set by the browser, not by page scripts), only `same-origin` is accepted;
-`same-site`, `cross-site` and `none` are rejected. Without it (older browsers) the `Origin`
-header must equal the request's own origin. With neither header the request is rejected, so
-only non-browser clients are affected. `Sec-Fetch-Site` is checked first because the worker
+`same-site`, `cross-site` and `none` are rejected. If `Origin` is sent as well, its host must
+be the host the worker sees; a foreign or opaque (`null`) `Origin` next to `same-origin` is
+treated as forged and rejected (a browser reporting `same-origin` always sends its own
+origin). The scheme is not compared in that case: a real scheme difference is a different
+origin, which the browser would not report as `same-origin`. Without `Sec-Fetch-Site` (older
+browsers) the `Origin` header must equal the request's own origin exactly. With neither
+header the request is rejected, so only non-browser clients are affected. No proxy headers
+(`X-Forwarded-*`) are trusted and no CORS is granted. `Sec-Fetch-Site` is checked first because the worker
 can see a different URL than the browser: behind the Hydrogen dev tunnel (and any proxy that
 terminates TLS) the worker sees `http://…` while the page's `Origin` is `https://…`, and an
 `Origin`-only comparison rejected genuine submissions (found in the first real browser test).

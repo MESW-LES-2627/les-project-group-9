@@ -159,6 +159,31 @@ describe('POST /api/order-ratings', () => {
     expect(fake.calls).toHaveLength(0);
   });
 
+  // Policy: Sec-Fetch-Site decides, and an Origin sent with it must name the
+  // same host. A browser that reports same-origin always sends its own origin,
+  // so a foreign or opaque Origin means forged or contradictory headers.
+  it.each([
+    ['a foreign Origin', 'https://attacker.example'],
+    ['a foreign Origin on the same scheme and port', 'http://attacker.example'],
+    ['an opaque "null" Origin', 'null'],
+  ])('rejects Sec-Fetch-Site same-origin with %s', async (_name, origin) => {
+    const {context, fake} = contextFor({orders: [deliveredOrder(ORDER_1, CUSTOMER_A, [PRODUCT_A])]});
+    const response = await submit(context, rate(ORDER_1, PRODUCT_A, 5), {
+      headers: {'Sec-Fetch-Site': 'same-origin', Origin: origin},
+    });
+    expect(response).toMatchObject({status: 403, body: {error: 'cross_origin'}});
+    expect(fake.calls).toHaveLength(0);
+    expect(admin.requests).toHaveLength(0);
+  });
+
+  it('accepts Sec-Fetch-Site same-origin with the matching Origin', async () => {
+    const {context} = contextFor({orders: [deliveredOrder(ORDER_1, CUSTOMER_A, [PRODUCT_A])]});
+    const response = await submit(context, rate(ORDER_1, PRODUCT_A, 5), {
+      headers: {'Sec-Fetch-Site': 'same-origin', Origin: ORIGIN},
+    });
+    expect(response.status).toBe(201);
+  });
+
   it('accepts a same-origin browser request behind a TLS-terminating proxy', async () => {
     // The worker sees http:// while the page (and its Origin header) is https://,
     // as with the Hydrogen dev tunnel.
