@@ -9,9 +9,14 @@ const CUSTOMER_ID = 'gid://shopify/Customer/1';
 function contextWith({
   loggedIn = true,
   stored = null,
+  customerId = CUSTOMER_ID,
+  deleteReply,
 }: {
   loggedIn?: boolean;
   stored?: Record<string, unknown> | null;
+  customerId?: string | null;
+  /** Replaces Shopify's reply to `metafieldsDelete`. */
+  deleteReply?: unknown;
 } = {}) {
   const calls: Array<{
     metafields: Array<{
@@ -31,11 +36,13 @@ function contextWith({
       isLoggedIn: async () => loggedIn,
       query: async () => ({
         data: {
-          customer: {
-            id: CUSTOMER_ID,
-            favorites: {value: '[]'},
-            preferences: stored ? {value: JSON.stringify(stored)} : null,
-          },
+          customer: customerId
+            ? {
+                id: customerId,
+                favorites: {value: '[]'},
+                preferences: stored ? {value: JSON.stringify(stored)} : null,
+              }
+            : null,
         },
       }),
       mutate: async (
@@ -44,6 +51,8 @@ function contextWith({
       ) => {
         if (mutation.includes('metafieldsDelete')) {
           deleteCalls.push(options.variables);
+
+          if (deleteReply !== undefined) return deleteReply;
 
           return {
             data: {
@@ -149,11 +158,50 @@ describe('POST /api/profile/preferences', () => {
 
 describe('DELETE /api/profile/preferences', () => {
   it('rejects guests', async () => {
-    const {context} = contextWith({loggedIn: false});
+    const {context, deleteCalls} = contextWith({loggedIn: false});
     const result = await callAction(context, undefined, 'DELETE');
 
     expect(result.init?.status).toBe(401);
     expect(result.data).toEqual({error: 'Unauthorized'});
+    expect(deleteCalls).toHaveLength(0);
+  });
+
+  it.each([
+    [
+      'Shopify reports a user error',
+      {
+        deleteReply: {
+          data: {
+            metafieldsDelete: {
+              deletedMetafields: [],
+              userErrors: [{message: 'Metafield is locked'}],
+            },
+          },
+        },
+      },
+    ],
+    [
+      'the mutation returns GraphQL errors',
+      {deleteReply: {errors: [{message: 'Throttled'}]}},
+    ],
+  ])('fails without clearing anything when %s', async (_case, options) => {
+    const {context, deleteCalls} = contextWith(options);
+    const result = await callAction(context, undefined, 'DELETE');
+
+    expect(result.init?.status).toBeGreaterThanOrEqual(400);
+    expect(result.init?.headers).toMatchObject({'Cache-Control': 'no-store'});
+    expect(result.data).toHaveProperty('error');
+    expect(result.data).not.toHaveProperty('preferences');
+    expect(deleteCalls).toHaveLength(1);
+  });
+
+  it('fails without calling Shopify when the customer is missing', async () => {
+    const {context, deleteCalls} = contextWith({customerId: null});
+    const result = await callAction(context, undefined, 'DELETE');
+
+    expect(result.init?.status).toBeGreaterThanOrEqual(400);
+    expect(result.data).not.toHaveProperty('preferences');
+    expect(deleteCalls).toHaveLength(0);
   });
 
   it('rejects other methods', async () => {

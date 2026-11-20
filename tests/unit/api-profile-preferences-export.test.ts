@@ -1,4 +1,4 @@
-import {describe, expect, it, vi} from 'vitest';
+import {afterEach, describe, expect, it, vi} from 'vitest';
 import {loader} from '../../app/routes/api.profile.preferences.export';
 
 type LoaderArgs = Parameters<typeof loader>[0];
@@ -43,14 +43,31 @@ function callLoader(context: LoaderArgs['context']) {
   } as LoaderArgs);
 }
 
+type DataResult = {init?: {status?: number; headers?: Record<string, string>}};
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 describe('GET /api/profile/preferences/export', () => {
   it('rejects guests', async () => {
     const result = await callLoader(contextWith({loggedIn: false}));
 
     expect(result).not.toBeInstanceOf(Response);
-    expect(
-      (result as {init?: {status?: number}}).init?.status,
-    ).toBe(401);
+    expect((result as DataResult).init?.status).toBe(401);
+    expect((result as DataResult).init?.headers).toMatchObject({
+      'Cache-Control': 'no-store',
+    });
+  });
+
+  it('downloads the defaults when nothing is saved', async () => {
+    const result = await callLoader(contextWith({preferences: null}));
+
+    expect(result).toBeInstanceOf(Response);
+    expect(await (result as Response).json()).toEqual({
+      allergies: [],
+      skin: {},
+    });
   });
 
   it('downloads the stored preferences as JSON', async () => {
@@ -91,8 +108,9 @@ describe('GET /api/profile/preferences/export', () => {
     );
 
     expect(result).not.toBeInstanceOf(Response);
-    expect(
-      (result as {init?: {status?: number}}).init?.status,
-    ).toBe(500);
+    expect((result as DataResult).init?.status).toBe(500);
+    expect((result as DataResult).init?.headers).toMatchObject({
+      'Cache-Control': 'no-store',
+    });
   });
 });

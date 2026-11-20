@@ -67,6 +67,42 @@ describe('PreferencesData', () => {
       ).toBeInTheDocument();
     });
     expect(clearPreferences).toHaveBeenCalledTimes(1);
+    expect(
+      screen.queryByRole('button', {name: 'Confirm delete'}),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('This removes your saved preferences. Continue?'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('blocks a second delete while the first is in progress', async () => {
+    const user = userEvent.setup();
+    let finish: () => void = () => {};
+    clearPreferences.mockReturnValue(
+      new Promise<void>((resolve) => {
+        finish = resolve;
+      }),
+    );
+    render(<PreferencesData />);
+
+    await user.click(
+      screen.getByRole('button', {name: 'Delete my preferences'}),
+    );
+    await user.click(screen.getByRole('button', {name: 'Confirm delete'}));
+
+    const pending = screen.getByRole('button', {name: 'Deleting…'});
+    expect(pending).toBeDisabled();
+
+    await user.click(pending);
+    expect(clearPreferences).toHaveBeenCalledTimes(1);
+
+    finish();
+    expect(
+      await screen.findByText('Your preferences were deleted.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', {name: 'Delete my preferences'}),
+    ).toBeEnabled();
   });
 
   it('shows an error when deletion fails', async () => {
