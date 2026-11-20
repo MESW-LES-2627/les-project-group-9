@@ -78,6 +78,8 @@ The technology choices and their suitability for the course requirements must be
 ## 3. Future Change Scenario
 ### Add a new Trending Page
 
+> **Clarification (iteration 2):** this scenario is the iteration 1 analysis and is kept as written. The backlog story for the page, US-076 ([#173](https://github.com/MESW-LES-2627/les-project-group-9/issues/173)), now defines Trending for the MVP as an **editorial selection managed in Shopify** (with its default order set in the admin), not best-selling or newest products; behavioural tracking and automatic popularity scoring are out of its scope. The decision below to keep Trending separate from the recommendation engine still applies. Not implemented yet.
+
 As analyzed for jewerly store, the plans is to introduce a dedicated Trending Page where customers can explore the most produts, the news, and most recent/popular products in Jeweliette.
 
 The page will be on the nav bar and will display the best-selling products (from Shopify), allowing customer to discover popular items without relying on personalized recommendations.

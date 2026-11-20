@@ -1,16 +1,30 @@
 # Jeweliette
 
-Jeweliette is a headless e-commerce storefront for a fashion-jewelry brand. It is built with
+Jeweliette is a headless e-commerce storefront for a fashion jewelry and accessories brand
+(earrings, rings, bracelets, necklaces, pendants, charms and watches). It is built with
 [Shopify Hydrogen](https://shopify.dev/docs/storefronts/headless/hydrogen) and deployed to
-Shopify Oxygen. Besides the usual catalog, search, cart and customer account, it offers:
+Shopify Oxygen. Besides the usual catalog, search, cart and customer account, the current
+code offers:
 
 - **Favorites** and a **fitting room** saved to the customer's account
 - A **preference profile**: allergies, skin tone and undertone, ring sizes, preferred
-  materials, colours and gemstones
-- **Personalised recommendations** based on favorites and preferences
-- **Allergen warnings** before adding a piece to the bag, and a ring-size guide
+  materials, colours and gemstones; it can be edited, exported and deleted. Skin tone is
+  stored but does not yet change suggestions or try-on
+- **Personalised suggestions** based on favorites and preferences
+- **Allergen warnings** before adding a piece to the bag, when the product's allergen data
+  entered in Shopify matches the shopper's allergies (a warning aid, not a safety guarantee),
+  and a ring-size guide
+- **Front-camera try-on** for earrings and necklaces that have a try-on overlay, on a phone
+  (desktop shows a QR code), including a multi-piece look from the fitting room
+- **Restricted customization** on products the merchant enables: a gem colour from an
+  allowed list and an engraving up to a set length
+- **Order ratings** (US-058): 1–5 stars per product of a fully delivered order, stored
+  privately; they are not shown publicly yet
 - **English (US), Portuguese (Portugal) and French**: language selection and a fully
   translated interface; catalog content is translated in Shopify ([docs/i18n.md](docs/i18n.md))
+
+Planned work and its status are tracked in the iteration documents
+([docs/iterations/](docs/iterations/)) and GitHub issues, not here.
 
 ## Tech stack
 
@@ -41,7 +55,7 @@ npm run dev             # http://localhost:3000
 | `PUBLIC_STOREFRONT_API_TOKEN`, `PRIVATE_STOREFRONT_API_TOKEN`, `PUBLIC_STOREFRONT_ID` | Storefront API access |
 | `PUBLIC_CUSTOMER_ACCOUNT_API_CLIENT_ID`, `PUBLIC_CUSTOMER_ACCOUNT_API_URL`, `SHOP_ID` | Customer Account API (login, `/account`) |
 | `PRIVATE_ADMIN_API_CLIENT_ID`, `PRIVATE_ADMIN_API_CLIENT_SECRET` or `PRIVATE_ADMIN_API_TOKEN` | Server-only Admin API access (`read_metaobjects`, `write_metaobjects`) for order ratings (US-058): a Dev Dashboard app's client credentials, or a legacy custom app's token. Optional: without them ratings show as unavailable. See [docs/architecture.md → Order ratings](docs/architecture.md#order-ratings-us-058) |
-| `PUBLIC_CHECKOUT_DOMAIN` | Checkout domain for analytics consent and the CSP. Read in `root.tsx` and `entry.server.tsx`, but missing from `.env.example` |
+| `PUBLIC_CHECKOUT_DOMAIN` | Checkout domain for analytics consent and the CSP (read in `root.tsx` and `entry.server.tsx`) |
 
 With the Shopify CLI linked to the storefront, `npx shopify hydrogen env pull` fills `.env`.
 Never commit `.env` or real tokens.
@@ -49,6 +63,12 @@ Never commit `.env` or real tokens.
 **Customer accounts locally**: the Customer Account API needs a public HTTPS domain. Follow
 steps 1–2 of
 [Shopify's guide](https://shopify.dev/docs/custom-storefronts/building-with-the-customer-account-api/hydrogen#step-1-set-up-a-public-domain-for-local-development).
+
+**Sign-in** uses Shopify Customer Accounts: `/account/login` redirects to Shopify's hosted
+login and `/account/authorize` completes it; the storefront keeps no passwords or identity
+store of its own. Sign in with Google (US-078) is planned, not implemented; it is meant to
+reuse Shopify Customer Accounts' social sign-in, configured in the Shopify admin. See
+[docs/architecture.md → Customer authentication](docs/architecture.md#customer-authentication).
 
 ## Commands
 
@@ -60,7 +80,9 @@ steps 1–2 of
 | `npm run typecheck` | Route typegen + `tsc --noEmit` |
 | `npm run lint` | ESLint |
 | `npm test` / `npm run test:watch` | Unit and component tests (Vitest) |
+| `npm run test:coverage` | Unit and component tests with coverage thresholds (what CI runs) |
 | `npm run test:e2e` | End-to-end tests (Playwright) |
+| `npm run test:staging:ratings` | Opt-in US-058 storage checks against a real staging store; never in CI (see [docs/testing.md](docs/testing.md)) |
 | `npm run codegen` | Regenerate GraphQL types (`*.generated.d.ts`) and route types |
 
 ## Project structure
@@ -71,12 +93,15 @@ app/
   root.tsx                Root loader and HTML layout
   routes/                 Pages, actions and JSON endpoints (api.*)
   components/             UI by area: account, cart, collections, fitting-room,
-                          layout, product, search, shared
-  lib/                    Domain logic: catalog fragments, profile, recommendation,
-                          search filters, i18n, session, Hydrogen context
+                          layout, product, search, shared, try-on
+  lib/                    Domain logic: catalog fragments, customization, profile,
+                          recommendation, ratings, try-on, search filters, i18n,
+                          session, Hydrogen context
   graphql/customer-account/  Customer Account API documents
+  graphql/admin/          Admin API documents (ratings, server-only)
   styles/tailwind.css     Theme tokens
 tests/unit|components|e2e
+tests/staging             Opt-in checks against a real store (not in CI)
 docs/                     Documentation (see below)
 ```
 
@@ -88,8 +113,9 @@ npx playwright install chromium   # once
 npm run test:e2e     # builds, starts preview, runs Playwright
 ```
 
-CI runs lint, typecheck, unit/component tests and E2E (against mock.shop) on every pull
-request. See [docs/testing.md](docs/testing.md).
+CI runs lint, typecheck, unit/component tests with coverage thresholds and E2E (against
+mock.shop) on every pull request and on pushes to `main`. It does not run `npm run build`.
+See [docs/testing.md](docs/testing.md).
 
 ## Contributing
 
@@ -100,11 +126,12 @@ request. See [docs/testing.md](docs/testing.md).
 - **Commits**: [Conventional Commits](https://www.conventionalcommits.org/), with the story
   or bug ID as scope where there is one: `feat(US-004): ...`, `fix(BUG-006): ...`.
 - **Before committing**: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`
-  (and `npm run codegen` if GraphQL changed).
+  (and `npm run codegen` if GraphQL changed), and `npm run test:e2e` when it can run.
 - **Pull requests**: fill in `.github/pull_request_template.md` (Summary, Task, Notes for
   reviewers). PRs need review by at least one member. See the
   [Definition of Done](docs/dod.md).
-- Every push is deployed to Oxygen by `.github/workflows/oxygen-deployment-*.yml`.
+- Every push, on any branch, is deployed to Oxygen by
+  `.github/workflows/oxygen-deployment-*.yml`; that workflow does not wait for the tests.
 
 ## Documentation
 

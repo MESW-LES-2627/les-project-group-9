@@ -14,12 +14,12 @@ Tailwind 4 defaults plus two custom breakpoints from the `@theme` block in
 | Prefix | Defined as | Width | Use in this codebase |
 | --- | --- | --- | --- |
 | *(none)* | — | 0+ | Mobile-first base styles |
-| `xs` | `27rem` (custom) | 432px | Large phones (used once) |
+| `xs` | `27rem` (custom) | 432px | Defined but currently unused |
 | `sm` | `40rem` | 640px | Small tablets / landscape phones |
 | `md` | `48rem` | 768px | Tablets |
 | `tablet` | `50rem` (custom) | 800px | Page layouts (home hero, section padding) |
 | `lg` | `64rem` | 1024px | Desktop grids |
-| `xl` | `80rem` | 1280px | Wide desktop; **site header switches from compact (menu button) to desktop navigation** |
+| `xl` | `80rem` | 1280px | Wide desktop; **site header switches from compact (menu button) to desktop navigation**; product grids add columns |
 
 The root font size is 87.5% (14px), and 93.75% at 1700px and up (`app/styles/tailwind.css`).
 `rem`-based sizes (`text-base`, `p-4`, `min-h-11`) are therefore 12.5% smaller than
@@ -115,11 +115,16 @@ Shopify menu needs a re-check.
    desktop regressions. Enable touch simulation.
 2. **Real device on the local network**: `npm run dev -- --host` exposes the dev server.
    That flag is passed through to the Shopify CLI and was not tested (**unverified**).
-   Customer-account flows need the public-domain setup described in the README.
+   Customer-account flows need the public-domain setup described in the README. The camera
+   try-on needs a secure context (HTTPS): over plain-HTTP LAN it shows the fallback, so
+   test the camera through the public HTTPS domain setup or a deployment.
 3. **Playwright**: there is no mobile project yet. `tests/e2e/footer.spec.ts` shows the
-   per-test pattern (`page.setViewportSize({width: 375, height: 812})`). `header.spec.ts`
-   and `language.spec.ts` (US-046) use it for the header and language selector only. Mobile
-   checks for the other critical flows are part of US-048.
+   per-test pattern (`page.setViewportSize({width: 375, height: 812})`), used by
+   `header.spec.ts` and `language.spec.ts` (US-046) and `language-layout.spec.ts` (US-047:
+   no sideways scroll or overflowing controls in PT and FR on the main pages and the menu
+   drawer). `fitting-room.spec.ts` and `try-on.spec.ts` use a `test.describe('phone')` block
+   with `test.use({userAgent, viewport, hasTouch})`. Mobile checks for the other critical
+   flows (cart, account, checkout hand-off) are part of US-048.
 4. **Checks per page**: no horizontal scrollbar; header, menu, search, cart drawer and footer
    usable; every button reachable by touch and keyboard; forms usable with the on-screen keyboard.
 
@@ -133,6 +138,7 @@ EN, PT and FR.
 | — | — | — | — |
 
 Known items before the audit (see [architecture.md → Known issues](architecture.md#known-issues)):
-- Inputs styled `text-base` render at 14px because of the root font size.
+- Inputs styled `text-base` render at 14px because of the root font size; the engraving
+  input (`ProductCustomization.tsx`) uses `text-sm` (about 12.25px).
 - Header favorites and fitting-room links are `h-10 w-10` (40px nominal, 35px computed).
 - `size-11`/`min-h-11`, used throughout as the "44px" target, compute to 38.5px.
