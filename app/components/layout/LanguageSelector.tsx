@@ -153,7 +153,7 @@ export function LanguageSelector({
           aria-controls={listId}
           onBlur={onBlur}
           onKeyDown={onKeyDown}
-          className="flex min-h-[44px] min-w-[44px] cursor-pointer list-none items-center gap-2 px-2 text-xs font-medium tracking-[0.12em] text-primary hover:text-ink [&::-webkit-details-marker]:hidden"
+          className="flex min-h-[44px] min-w-[44px] cursor-pointer list-none items-center gap-2 px-2 text-xs font-medium tracking-[0.12em] text-primary hover:text-bark [&::-webkit-details-marker]:hidden"
           ref={summaryRef}
         >
           <LanguageFlag flag={active.flag} />

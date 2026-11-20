@@ -98,7 +98,7 @@ export function ProductForm({
                     : `min-h-10 min-w-12 border px-4 text-xs uppercase tracking-wider transition-colors ${
                         selected
                           ? 'border-ink bg-ink text-white'
-                          : 'border-line bg-paper hover:border-ink'
+                          : 'border-line bg-paper hover:border-bark'
                       } ${available ? '' : 'text-ink/40 line-through'}`;
 
                   const style = isColor
@@ -187,7 +187,7 @@ export function ProductForm({
                     loading
                   }
                   onClick={onClick}
-                  className="flex min-h-12 w-full items-center justify-center bg-primary px-6 text-xs font-medium uppercase tracking-widest text-white transition-colors hover:bg-ink disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex min-h-12 w-full items-center justify-center bg-primary px-6 text-xs font-medium uppercase tracking-widest text-white transition-colors hover:bg-bark disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {!selectedVariant?.availableForSale
                     ? t('product.soldOut')

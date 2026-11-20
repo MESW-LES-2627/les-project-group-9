@@ -106,7 +106,7 @@ function CartEmpty() {
         to="/collections"
         onClick={close}
         prefetch="viewport"
-        className="inline-flex min-h-11 items-center bg-primary px-6 text-xs font-medium uppercase tracking-widest text-white transition-colors hover:bg-ink"
+        className="inline-flex min-h-11 items-center bg-primary px-6 text-xs font-medium uppercase tracking-widest text-white transition-colors hover:bg-bark"
       >
         {t('cart.continueShopping')}
       </Link>
