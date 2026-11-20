@@ -514,6 +514,18 @@ Automated tests use fakes for both Shopify APIs (see [testing.md](testing.md)). 
 automatically; each step writes to the shop only when someone authorized for the staging
 store chooses to run it.
 
+**Verification status (2026-11-20).**
+
+| Item | Status |
+| --- | --- |
+| Store setup | `product_rating` definition and a Dev Dashboard app (`read_metaobjects`, `write_metaobjects`, plus `read_metaobject_definitions` for the preflight) configured by the project owner; a read-only preflight confirmed the field keys and types, the 1–5 validation, Admin access `PUBLIC_READ_WRITE` and Storefront access `NONE` |
+| Oxygen environment | The missing Admin API variables were added to the branch's Oxygen environment by the project owner |
+| Buyer flow (B1, B3) | Confirmed manually by the project owner, signed in as a test customer, on the local tunnel and on the Hydrogen branch deployment: rating controls on a delivered order, successful save, rating still shown read-only after reload |
+| Found and fixed during that test | Admin API calls failed in the Workers runtime ("Illegal invocation"); genuine posts were rejected as cross-origin behind the TLS-terminating dev tunnel |
+| Not manually verified | Undelivered and split-delivery blocking (B2), several units/variants, a later order of the same product, other customers and anonymous requests (B5, B6), privacy checks (B7). These are covered by automated tests with fakes only |
+| Storage uniqueness and concurrency (A, B4) | **Pending.** Not run; requires separate authorization of the store and its test writes |
+| Signed-in Playwright coverage | Still blocked; see [testing.md](testing.md) |
+
 **A. Storage uniqueness (acceptance blocker).** From a machine with the staging credentials,
 set these in the shell (never in committed files), then run the opt-in suite:
 
