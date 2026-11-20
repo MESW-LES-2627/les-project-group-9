@@ -339,7 +339,20 @@ repository; the decision below is the reference.
 
 Not accepted as delivery: `FULFILLED` alone, a `SUCCESS` fulfillment without a shipment
 status, tracking information, estimated delivery dates, elapsed time, `PICKED_UP` (local
-pickup) and any other shipment status. Missing quantities count as zero.
+pickup) and any other shipment status. Missing quantities count as zero. Fulfillments that
+are cancelled, failed, pending or open add nothing, so a split order stays locked until
+every shipment holding one of its units is delivered. No payment, refund or return data is
+queried (`financialStatus`, `refunds`, `refundableQuantity` are not in the documents).
+
+Fields used (Customer Account API schema shipped with Hydrogen 2026.4):
+`Order.fulfillmentStatus` (`OrderFulfillmentStatus`), `Order.lineItems { id productId quantity }`,
+`Order.fulfillments { status (FulfillmentStatus) latestShipmentStatus (FulfillmentEventStatus)
+fulfillmentLineItems { quantity lineItem { id } } }`. All three connections are paged to the
+end; an error, a missing cursor or more than 20 pages fails closed as "could not verify"
+(never as "not delivered").
+
+**Local pickup is out of scope** for US-058: pickup orders cannot be rated. Supporting them
+would need an owner decision on whether `PICKED_UP` counts as delivery.
 
 Known limits of this predicate (they fail closed: the order cannot be rated):
 - Delivery is only known when the carrier or the merchant records a `DELIVERED` shipment
@@ -349,6 +362,13 @@ Known limits of this predicate (they fail closed: the order cannot be rated):
   removed before shipping, if Shopify still counts them in `quantity`) block the order.
 - A shipment status that later moves away from `DELIVERED` makes the order unratable
   again; ratings already saved stay visible.
+
+**Reading is separate from authorizing.** The order page reads saved ratings for every
+product of the order whatever its current line quantity or delivery state (e.g. after a
+return), and shows them read-only. Only products whose line has a quantity, in an order
+that passes the predicate, get a rating form or are accepted by the endpoint. Saved ratings
+are hidden only when the order itself cannot be loaded (Shopify error or page limit); the
+section then shows the verification error.
 
 ### Flow
 
@@ -397,16 +417,41 @@ the cached token.
 Nothing else is stored (no names, emails, prices or addresses). Shopify keeps its own
 creation and update times for each entry.
 
-**Uniqueness and immutability.** The handle is `rating-` + SHA-256 of
-`customerId|orderId|productId`. Shopify documents handles as unique within a metaobject
-type. The adapter only calls `metaobjectCreate` with that handle; `metaobjectUpsert` and
-`metaobjectUpdate` are never used, so a saved rating cannot be overwritten by a retry or a
-concurrent request. Shopify's documentation does not say whether a create with a taken
-handle is rejected or saved under a suffixed handle, so the adapter handles both: when the
-returned handle differs it deletes that new record (`metaobjectDelete`) and reports the
-existing one (409). Reads use `metaobjectByHandle` with the exact handle and check that the
-stored IDs match the key, so a stray record would never be shown. Which of the two Shopify
-behaviours applies must be confirmed on staging (checklist below).
+**Uniqueness and immutability: UNRESOLVED until verified on staging.**
+
+The handle is `rating-` + SHA-256 of `customerId|orderId|productId`. The adapter never calls
+`metaobjectUpsert` or `metaobjectUpdate`, so it never overwrites a record itself. Whether
+Shopify keeps **one** record per handle is the open question:
+
+| Fact | Source |
+| --- | --- |
+| Handles are "unique identifiers within a metaobject type" | Admin API reference, `metaobjectByHandle` and `metaobjectUpsert` pages (read for 2026-07) |
+| `metaobjectCreate` "generates a unique handle automatically if you don't provide one"; `MetaobjectCreateInput.handle` is "auto-generated when omitted" | 2026-04 reference (the pinned version) |
+| What `metaobjectCreate` does with an **explicitly supplied** handle that already exists (an error, and which code, or a different handle) | **Not documented** for 2026-04. `MetaobjectUserErrorCode.TAKEN` ("The input value is already taken") exists, but no page ties it to handles. Product-handle behaviour (`productCreate`) is not evidence for metaobjects. |
+| Concurrency or idempotency of `metaobjectCreate` | Not documented |
+
+What the adapter does with each answer (`rating-store.server.ts`):
+- record returned **with the requested handle**: saved (201);
+- **no record** (any `userErrors`, e.g. `TAKEN`, or none): it reads the exact handle; an
+  existing record is reported unchanged (409 `already_rated`), otherwise the save failed
+  (503);
+- record returned **with another handle**: Shopify stored a second record. The adapter logs
+  `uniqueness violation`, tries to delete that record and reports the one under the exact
+  handle. **This compensation is not a guarantee**: the delete can fail, or the worker can
+  stop before it runs, leaving two records (reads still show only the exact-handle one).
+
+Uniqueness therefore holds **only if** Shopify atomically rejects a create whose explicit
+handle exists, including under concurrency. The service does not read before creating, so
+every retry and concurrent submission really reaches `metaobjectCreate`. Staging checks A1
+and A2 below decide this. **If Shopify stores the duplicate under another handle, this
+storage does not meet the requirement.** The smallest alternative to evaluate (it needs
+approval) is `metafieldsSet` with `compareDigest`, which Shopify documents as an atomic
+compare-and-set (although "create only if absent" with a `null` digest is not stated
+explicitly), on an owner the app is allowed to write. That changes scopes and storage, so it
+is not implemented.
+
+Reads use `metaobjectByHandle` with the exact handle and check that the stored IDs match the
+key.
 
 ### Shopify setup (manual, by a store admin)
 
@@ -445,29 +490,71 @@ Nothing is created automatically.
 
 ### Staging verification
 
-The automated tests use fakes for both Shopify APIs (see [testing.md](testing.md)); they
-do not prove the live integration. On staging, after the setup above:
+Automated tests use fakes for both Shopify APIs (see [testing.md](testing.md)). They do
+**not** show how Shopify handles handle conflicts, nor a real buyer flow. Nothing below runs
+automatically; each step writes to the shop only when someone authorized for the staging
+store chooses to run it.
 
-1. **Test order:** as a test customer, place an order for two products (Shopify test
-   payment gateway / Bogus gateway in a development store). Create one fulfillment per
-   product. Mark the first fulfillment delivered (fulfillment → *Mark as delivered*, or a
-   carrier delivery event) and leave the second in transit.
-2. **Not delivered:** open the order in `/account/orders` → the section says it can be
-   rated once the whole order is delivered; no stars are shown.
-3. **Delivered buyer:** mark the second fulfillment delivered, reload → one star group per
-   product. Rate the first product (keyboard only: Tab, arrows, Enter). Expect the saved
-   message, read-only stars, and a `product_rating` entry in the admin with the expected
-   fields. Reload: still read-only.
-4. **Retry / concurrency:** from the browser console on the order page, POST the same
-   product twice with another value
-   (`fetch('/api/order-ratings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({orderId,productId,rating:1})})`)
-   → 409 with the original value, and still exactly one entry in the admin. **Note the
-   behaviour** (does the admin show any extra entry, even briefly?) to confirm the handle
-   semantics described above.
-5. **Non-buyer:** sign in as another customer and POST the first customer's `orderId` →
-   404; POST one of your own undelivered orders → 403 `not_delivered`.
-6. **Anonymous:** signed out, the POST returns 401; `/account/orders/...` sends you to log
-   in.
+**A. Storage uniqueness (acceptance blocker).** From a machine with the staging credentials,
+set these in the shell (never in committed files), then run the opt-in suite:
+
+```bash
+# PowerShell: $env:NAME = "value"
+export PUBLIC_STORE_DOMAIN=<staging-shop>.myshopify.com
+export PRIVATE_ADMIN_API_CLIENT_ID=<client id>        # or PRIVATE_ADMIN_API_TOKEN=<token>
+export PRIVATE_ADMIN_API_CLIENT_SECRET=<client secret>
+export RATINGS_STAGING_CONFIRM_WRITES=<staging-shop>.myshopify.com   # explicit authorization
+npm run test:staging:ratings
+```
+
+`tests/staging/rating-storage.staging.ts` only writes `product_rating` entries with synthetic
+IDs (`gid://shopify/Customer/0`, `gid://shopify/Order/0`), deletes exactly those entries at
+the end and prints Shopify's raw answers. Without `RATINGS_STAGING_CONFIRM_WRITES` equal to
+the domain, the write checks are skipped.
+1. **Direct explicit-handle collision:** two raw `metaobjectCreate` calls with the same handle
+   (values 1, then 5). Passes only if the second is rejected (no record, with `userErrors`)
+   and exactly one entry, with value 1, exists for that probe.
+2. **Concurrent submissions:** five concurrent `createRating` calls through the production
+   adapter for one key,
+3. **with different values** (1 to 5). Passes only if exactly one call reports `created`,
+   every call reports that same value and the adapter never logged a `uniqueness violation`.
+4. **Final persistent state:** after a pause, a full listing finds exactly one entry for the
+   key, under the exact handle, with the winning value; a later retry with another value
+   leaves it unchanged.
+
+If A1 or A2 fails, uniqueness is **not** met: keep ratings off in production (leave the
+credentials unset) and decide on the alternative above.
+
+**B. Buyer flow (manual).**
+1. **Test order:** as a test customer, order two products (test payment gateway in a
+   development store). Create one fulfillment per product; mark the first delivered
+   (*Mark as delivered* or a carrier event); leave the second in transit.
+2. **Not delivered:** the order page says it can be rated once the whole order is
+   delivered; no stars.
+3. **Delivered buyer:** mark the second delivered and reload: one star group per product.
+   Rate the first product with the keyboard only (Tab, arrows, Enter): saved message and
+   read-only stars. Reload: still read-only, no control to change it.
+4. **Endpoint concurrency on a real rating:** on the same order page, for the **second,
+   still unrated** product, run in the browser console (the order GID is the base64-decoded
+   URL segment; the product GID is in the admin):
+
+   ```js
+   const orderId = 'gid://shopify/Order/<id>', productId = 'gid://shopify/Product/<id>';
+   const results = await Promise.all([1, 2, 3, 4, 5].map((rating) =>
+     fetch('/api/order-ratings', {method: 'POST', headers: {'Content-Type': 'application/json'},
+       body: JSON.stringify({orderId, productId, rating})})
+       .then(async (r) => [r.status, await r.json()])));
+   console.table(results);
+   ```
+
+   Expect one 201 and four 409, all with the same `rating`. Then count the records,
+   read-only: with the credentials above, **without** `RATINGS_STAGING_CONFIRM_WRITES`, set
+   `RATINGS_STAGING_INSPECT='<customer gid>|<order gid>|<product gid>'` and run
+   `npm run test:staging:ratings`: exactly one record, under the exact handle. Running the
+   console snippet again gives five 409 with the same value.
+5. **Non-buyer:** signed in as another customer, POST the first customer's `orderId`: 404.
+   Your own undelivered order: 403 `not_delivered`.
+6. **Anonymous:** signed out, the POST returns 401; `/account/orders/...` redirects to login.
 7. **Privacy:** the Storefront API cannot read `product_rating` (Storefronts access off);
    page and API responses carry `Cache-Control: no-store`.
 

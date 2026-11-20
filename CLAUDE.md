@@ -25,6 +25,7 @@ to Oxygen. This file holds the standing rules for every session. Details live in
 | `npm test` | Vitest: unit (node) and component (jsdom) projects |
 | `npm run test:e2e` | Playwright, desktop Chromium, against `npm run preview` |
 | `npm run codegen` | Regenerate GraphQL and route types |
+| `npm run test:staging:ratings` | Opt-in US-058 storage checks against a real staging store (never in CI; writes only with `RATINGS_STAGING_CONFIRM_WRITES`) |
 
 ## Verification before every commit
 
