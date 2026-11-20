@@ -352,6 +352,15 @@ export function fakeAdminApi({mode = 'taken'}: {mode?: 'taken' | 'suffix'} = {})
   };
 }
 
+export function workersStrictFetch(inner: typeof fetch): typeof fetch {
+  return function (this: unknown, input: RequestInfo | URL, init?: RequestInit) {
+    if (this !== undefined && this !== globalThis) {
+      throw new TypeError('Illegal invocation: function called with incorrect `this` reference');
+    }
+    return inner(input, init);
+  } as typeof fetch;
+}
+
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,

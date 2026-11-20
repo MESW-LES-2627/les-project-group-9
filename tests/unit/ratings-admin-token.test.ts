@@ -5,7 +5,13 @@ import {
   type AccessTokenCache,
 } from '~/lib/ratings/admin-token.server';
 import {createRatingStore, readAdminConfig} from '~/lib/ratings/rating-store.server';
-import {CLIENT_ENV, CUSTOMER_A, fakeAdminApi, PRODUCT_A} from './support/ratings-fakes';
+import {
+  CLIENT_ENV,
+  CUSTOMER_A,
+  fakeAdminApi,
+  PRODUCT_A,
+  workersStrictFetch,
+} from './support/ratings-fakes';
 
 const DOMAIN = CLIENT_ENV.PUBLIC_STORE_DOMAIN;
 const CREDENTIALS = {
@@ -67,13 +73,7 @@ describe('Admin API credentials', () => {
 
   it('exchanges the token with a Workers-compatible fetch call', async () => {
     const admin = fakeAdminApi();
-    const workersFetch = function (this: unknown, input: RequestInfo | URL, init?: RequestInit) {
-      if (this !== undefined && this !== globalThis) {
-        throw new TypeError('Illegal invocation: function called with incorrect `this` reference');
-      }
-      return admin.fetch(input, init);
-    } as typeof fetch;
-    const store = createRatingStore(CLIENT_ENV, workersFetch, new Map());
+    const store = createRatingStore(CLIENT_ENV, workersStrictFetch(admin.fetch), new Map());
 
     expect(await store?.findRatings([KEY])).toEqual([null]);
     expect(admin.tokenExchanges).toHaveLength(1);
