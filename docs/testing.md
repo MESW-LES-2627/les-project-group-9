@@ -53,7 +53,7 @@ Component tests cover:
 | `layout` | `LanguageSelector` dropdown (closed trigger with the localized current language in EN/PT/FR, EN/PT/FR options with flags, names, `lang` and `aria-current`, posting path, query and hash, arrow keys/Home/End/Escape with focus return, keyboard choice, outside click and focus-out closing, inline layout) |
 | `i18n` | `LocalizedComponents`: `ProductItem` and `FittingRoomView` in EN, PT and FR (labels, plurals, try-on placeholder, price format) with untranslated catalog content. `LocalizedCartAndSearch`: `CartMain` (empty bag), `CartSummary` (labels, applied codes, subtotal format) and `SearchResultsPredictive` (section headings, price format, no-results quotes) in EN, PT and FR |
 | `product` | `AddToCartButton`, `AllergenBadge`, `FavoriteButton`, `ProductBadge`, `ProductForm`, `ProductGallery`, `ProductItem`, `ProductPrice`, `RecommendedProducts`, `RingSizeHelp`, swatch gallery |
-| `search` | `SearchForm`, `SearchResultsPredictive` |
+| `search` | `SearchForm`, `SearchFormPredictive` (refetches when a stale response lands last), `SearchResultsPredictive` |
 | `shared` | `ConfirmDialog` |
 
 `AddToCartButton` is tested but not currently used by the app (see [architecture.md → Known issues](architecture.md#known-issues)).
@@ -97,6 +97,7 @@ npx playwright test --ui                     # step through tests in a browser
 | `home.spec.ts` | Home loads; hero banner opens a collection; every featured product opens; the header logo goes back home |
 | `collection.spec.ts` | `/collections` opens a collection; a collection opens a product; home → collection → product |
 | `swatch.spec.ts` | Selecting a product option updates the selected variant |
+| `customization.spec.ts` | A product marked as customizable shows its Customize panel: the first allowed gem colour is selected and the engraving stops at its maximum length. Adding it with an engraving and a gem colour shows both on the bag line. Skips when no product in the store is customizable (mock.shop has none) |
 | `cart.spec.ts` | Empty cart; adding a product updates the cart count; change a line's quantity and remove it |
 | `search.spec.ts` | Empty search; no results; searching from the search page and from the header |
 | `favorites.spec.ts` | Logged-out shoppers are sent to log in from the favorites page, product page and product cards |

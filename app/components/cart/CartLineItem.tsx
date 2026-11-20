@@ -5,7 +5,11 @@ import {useVariantUrl} from '~/lib/variants';
 import {Link} from 'react-router';
 import {ProductPrice} from '~/components/product/ProductPrice';
 import {useAside} from '~/components/layout/Aside';
-import {useTranslation} from '~/lib/i18n';
+import {useTranslation, type MessageKey} from '~/lib/i18n';
+import {
+  customizationLineDetails,
+  type CustomizationField,
+} from '~/lib/customization';
 import type {CartApiQueryFragment} from 'storefrontapi.generated';
 
 export type CartLine = OptimisticCartLine<CartApiQueryFragment>;
@@ -56,7 +60,7 @@ export function CartLineItem({
               onClick={() => {
                 if (layout === 'aside') close();
               }}
-              className="font-display text-lg leading-tight text-ink hover:text-primary"
+              className="font-display text-lg leading-tight text-ink hover:text-bark"
             >
               {product.title}
             </Link>
@@ -78,6 +82,8 @@ export function CartLineItem({
               ))}
             </ul>
           ) : null}
+
+          <CartLineCustomization attributes={line.attributes} />
 
           <CartLineQuantity line={line} />
         </div>
@@ -104,6 +110,35 @@ export function CartLineItem({
         </div>
       ) : null}
     </li>
+  );
+}
+
+const CUSTOMIZATION_LABEL_KEYS = {
+  gemColor: 'product.detail.gemColor',
+  engraving: 'product.customize.engraving',
+} as const satisfies Record<CustomizationField, MessageKey>;
+
+/** The shopper's gem color and engraving; the engraving keeps the case it was typed in. */
+function CartLineCustomization({
+  attributes,
+}: {
+  attributes?: CartLine['attributes'] | null;
+}) {
+  const t = useTranslation();
+  const details = customizationLineDetails(attributes);
+  if (!details.length) return null;
+
+  return (
+    <dl className="mt-2 space-y-1 text-xs">
+      {details.map(({field, value}) => (
+        <div key={field} className="flex flex-wrap gap-x-1">
+          <dt className="uppercase tracking-wider text-primary">
+            {t(CUSTOMIZATION_LABEL_KEYS[field])}
+          </dt>
+          <dd className="break-words text-ink">{value}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 
@@ -177,7 +212,7 @@ function CartLineRemoveButton({
       <button
         disabled={disabled}
         type="submit"
-        className="min-h-11 text-xs uppercase tracking-widest text-primary underline underline-offset-4 transition-colors hover:text-ink disabled:opacity-40"
+        className="min-h-11 text-xs uppercase tracking-widest text-primary underline underline-offset-4 transition-colors hover:text-bark disabled:opacity-40"
       >
         {t('common.remove')}
       </button>

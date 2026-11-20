@@ -8,6 +8,25 @@ export default defineConfig({
     },
   },
   test: {
+    coverage: {
+      provider: 'v8',
+      include: ['app/**/*.{ts,tsx}'],
+      exclude: [
+        'app/entry.client.tsx',
+        'app/entry.server.tsx',
+        'app/routes.ts',
+        'app/**/*.d.ts',
+        'app/graphql/**',
+      ],
+      reporter: ['text', 'json-summary', 'json'],
+      reportOnFailure: true,
+      thresholds: {
+        statements: 45,
+        branches: 40,
+        functions: 45,
+        lines: 45,
+      },
+    },
     projects: [
       {
         extends: true,
