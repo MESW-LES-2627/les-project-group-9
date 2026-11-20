@@ -236,6 +236,18 @@ describe('ShopifyRatingStore HTTP contract', () => {
     await expect(store?.createRating(KEY, 5)).rejects.toThrow('create_rejected');
   });
 
+  it('logs userError codes and fields without messages or values', async () => {
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const admin = fakeAdminApi();
+    await storeFor(admin).createRating(KEY, 4);
+    await storeFor(admin).createRating(KEY, 2);
+
+    const logged = errors.mock.calls.map((call) => call.join(' ')).join(' | ');
+    expect(logged).toContain('[ratings] metaobjectCreate userErrors: TAKEN@metaobject.handle');
+    expect(logged).not.toContain('Handle is taken');
+    expect(logged).not.toContain(CUSTOMER_A);
+  });
+
   it('rejects out-of-range values before calling Shopify', async () => {
     const admin = fakeAdminApi();
     await expect(storeFor(admin).createRating(KEY, 6)).rejects.toBeInstanceOf(RatingStoreError);

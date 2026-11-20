@@ -194,6 +194,16 @@ export class ShopifyRatingStore implements RatingStore {
     });
 
     const created = data.metaobjectCreate?.metaobject ?? null;
+    const userErrors = data.metaobjectCreate?.userErrors ?? [];
+    if (userErrors.length) {
+      // Codes and field paths only: messages can echo submitted values.
+      console.error(
+        '[ratings] metaobjectCreate userErrors:',
+        userErrors
+          .map((error) => `${error.code ?? 'NO_CODE'}@${(error.field ?? []).join('.')}`)
+          .join(', '),
+      );
+    }
     if (created?.handle === handle) {
       return {status: 'created', rating: toStoredRating(created, handle, key)};
     }
@@ -264,9 +274,15 @@ export class ShopifyRatingStore implements RatingStore {
 
     const body = (await response.json().catch(() => null)) as {
       data?: T | null;
-      errors?: unknown[];
+      errors?: Array<{extensions?: {code?: unknown}}>;
     } | null;
     if (!body || body.errors?.length || !body.data) {
+      console.error(
+        '[ratings] Admin API GraphQL errors:',
+        (body?.errors ?? [])
+          .map((error) => String(error.extensions?.code ?? 'NO_CODE'))
+          .join(', ') || 'no data',
+      );
       throw new RatingStoreError('graphql');
     }
     return body.data;
