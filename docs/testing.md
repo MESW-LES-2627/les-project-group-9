@@ -130,7 +130,7 @@ Customer account routes (`/account/*`) are not covered, because they need Shopif
 - The browser language is pinned to `en-US` in `playwright.config.ts` (`use.locale`), because the storefront negotiates its language from `Accept-Language`. To test Portuguese, use `test.use({locale: 'pt-PT'})` or switch with the selector, as `language.spec.ts` does.
 - Find elements by role, label or text (`getByRole`, `getByText`), not by CSS classes.
 - Do not depend on store data: never assert product names or prices. Pick products at runtime (for example the first link in `/collections/all`) and assert structure and behaviour, such as the cart count going up.
-- A POST that the server rejects before reading its body (e.g. 401/403 from an `api.*` route) can make the local MiniOxygen preview reset the next request on the same keep-alive connection (`ECONNRESET`). Send `Connection: close` on such requests, as `order-ratings.spec.ts` does; do not relax the assertions.
+- A POST that the server rejects before reading its body (e.g. 401/403 from an `api.*` route) can make the local MiniOxygen preview reset the next request on the same keep-alive connection (`ECONNRESET`). A `Connection: close` request header is not enough (Playwright may still reuse the connection); send each such POST from its own `playwright.request.newContext()`, as `order-ratings.spec.ts` does. Do not relax the assertions.
 - Wait for server actions when the UI updates optimistically, for example the cart `POST` before leaving the page.
 
 ## Static checks
