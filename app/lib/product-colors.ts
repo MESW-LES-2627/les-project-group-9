@@ -1,6 +1,5 @@
 import {normalizeValue, parseTextMetafield} from './metafields';
-
-const COLOR_OPTION_TOKENS = new Set(['color', 'colour', 'cor', 'couleur']);
+import {isColorOption} from './options';
 
 type ProductWithColors = {
   metal?: {value?: string | null} | null;
@@ -9,12 +8,6 @@ type ProductWithColors = {
     optionValues: Array<{name: string}>;
   }> | null;
 };
-
-function isColorOption(name: string): boolean {
-  return normalizeValue(name)
-    .split('-')
-    .some((token) => COLOR_OPTION_TOKENS.has(token));
-}
 
 /**
  * The colour tokens for a product. `custom.metal` wins when the admin sets it;

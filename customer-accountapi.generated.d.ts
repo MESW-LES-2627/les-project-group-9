@@ -390,6 +390,86 @@ export type OrderQuery = {
   >;
 };
 
+export type OrderRatingLinesQueryVariables = CustomerAccountAPI.Exact<{
+  orderId: CustomerAccountAPI.Scalars['ID']['input'];
+  after?: CustomerAccountAPI.InputMaybe<
+    CustomerAccountAPI.Scalars['String']['input']
+  >;
+  language?: CustomerAccountAPI.InputMaybe<CustomerAccountAPI.LanguageCode>;
+}>;
+
+export type OrderRatingLinesQuery = {
+  customer: Pick<CustomerAccountAPI.Customer, 'id'>;
+  order?: CustomerAccountAPI.Maybe<
+    Pick<CustomerAccountAPI.Order, 'id' | 'fulfillmentStatus'> & {
+      lineItems: {
+        nodes: Array<
+          Pick<
+            CustomerAccountAPI.LineItem,
+            'id' | 'productId' | 'quantity' | 'title'
+          > & {
+            image?: CustomerAccountAPI.Maybe<
+              Pick<
+                CustomerAccountAPI.Image,
+                'url' | 'altText' | 'width' | 'height'
+              >
+            >;
+          }
+        >;
+        pageInfo: Pick<
+          CustomerAccountAPI.PageInfo,
+          'hasNextPage' | 'endCursor'
+        >;
+      };
+    }
+  >;
+};
+
+export type OrderRatingFulfillmentsQueryVariables = CustomerAccountAPI.Exact<{
+  orderId: CustomerAccountAPI.Scalars['ID']['input'];
+  first: CustomerAccountAPI.Scalars['Int']['input'];
+  after?: CustomerAccountAPI.InputMaybe<
+    CustomerAccountAPI.Scalars['String']['input']
+  >;
+  itemsAfter?: CustomerAccountAPI.InputMaybe<
+    CustomerAccountAPI.Scalars['String']['input']
+  >;
+  language?: CustomerAccountAPI.InputMaybe<CustomerAccountAPI.LanguageCode>;
+}>;
+
+export type OrderRatingFulfillmentsQuery = {
+  order?: CustomerAccountAPI.Maybe<
+    Pick<CustomerAccountAPI.Order, 'id'> & {
+      fulfillments: {
+        edges: Array<
+          Pick<CustomerAccountAPI.FulfillmentEdge, 'cursor'> & {
+            node: Pick<
+              CustomerAccountAPI.Fulfillment,
+              'id' | 'status' | 'latestShipmentStatus'
+            > & {
+              fulfillmentLineItems: {
+                nodes: Array<
+                  Pick<CustomerAccountAPI.FulfillmentLineItem, 'quantity'> & {
+                    lineItem: Pick<CustomerAccountAPI.LineItem, 'id'>;
+                  }
+                >;
+                pageInfo: Pick<
+                  CustomerAccountAPI.PageInfo,
+                  'hasNextPage' | 'endCursor'
+                >;
+              };
+            };
+          }
+        >;
+        pageInfo: Pick<
+          CustomerAccountAPI.PageInfo,
+          'hasNextPage' | 'endCursor'
+        >;
+      };
+    }
+  >;
+};
+
 export type OrderItemFragment = Pick<
   CustomerAccountAPI.Order,
   | 'financialStatus'
@@ -494,6 +574,28 @@ export type CustomerFavoritesSetMutation = {
   }>;
 };
 
+export type CustomerMetafieldsDeleteMutationVariables =
+  CustomerAccountAPI.Exact<{
+    metafields:
+      | Array<CustomerAccountAPI.MetafieldIdentifierInput>
+      | CustomerAccountAPI.MetafieldIdentifierInput;
+  }>;
+
+export type CustomerMetafieldsDeleteMutation = {
+  metafieldsDelete?: CustomerAccountAPI.Maybe<{
+    deletedMetafields?: CustomerAccountAPI.Maybe<
+      Array<
+        CustomerAccountAPI.Maybe<
+          Pick<CustomerAccountAPI.MetafieldIdentifier, 'key' | 'namespace'>
+        >
+      >
+    >;
+    userErrors: Array<
+      Pick<CustomerAccountAPI.MetafieldsDeleteUserError, 'message'>
+    >;
+  }>;
+};
+
 export type CustomerProfileQueryVariables = CustomerAccountAPI.Exact<{
   [key: string]: never;
 }>;
@@ -547,6 +649,14 @@ interface GeneratedQueryTypes {
     return: OrderQuery;
     variables: OrderQueryVariables;
   };
+  '#graphql\n  query OrderRatingLines(\n    $orderId: ID!\n    $after: String\n    $language: LanguageCode\n  ) @inContext(language: $language) {\n    customer {\n      id\n    }\n    order(id: $orderId) {\n      id\n      fulfillmentStatus\n      lineItems(first: 100, after: $after) {\n        nodes {\n          id\n          productId\n          quantity\n          title\n          image {\n            url\n            altText\n            width\n            height\n          }\n        }\n        pageInfo {\n          hasNextPage\n          endCursor\n        }\n      }\n    }\n  }\n': {
+    return: OrderRatingLinesQuery;
+    variables: OrderRatingLinesQueryVariables;
+  };
+  '#graphql\n  query OrderRatingFulfillments(\n    $orderId: ID!\n    $first: Int!\n    $after: String\n    $itemsAfter: String\n    $language: LanguageCode\n  ) @inContext(language: $language) {\n    order(id: $orderId) {\n      id\n      fulfillments(first: $first, after: $after) {\n        edges {\n          cursor\n          node {\n            id\n            status\n            latestShipmentStatus\n            fulfillmentLineItems(first: 100, after: $itemsAfter) {\n              nodes {\n                quantity\n                lineItem {\n                  id\n                }\n              }\n              pageInfo {\n                hasNextPage\n                endCursor\n              }\n            }\n          }\n        }\n        pageInfo {\n          hasNextPage\n          endCursor\n        }\n      }\n    }\n  }\n': {
+    return: OrderRatingFulfillmentsQuery;
+    variables: OrderRatingFulfillmentsQueryVariables;
+  };
   '#graphql\n  #graphql\n  fragment CustomerOrders on Customer {\n    orders(\n      sortKey: PROCESSED_AT,\n      reverse: true,\n      first: $first,\n      last: $last,\n      before: $startCursor,\n      after: $endCursor,\n      query: $query\n    ) {\n      nodes {\n        ...OrderItem\n      }\n      pageInfo {\n        hasPreviousPage\n        hasNextPage\n        endCursor\n        startCursor\n      }\n    }\n  }\n  #graphql\n  fragment OrderItem on Order {\n    totalPrice {\n      amount\n      currencyCode\n    }\n    financialStatus\n    fulfillmentStatus\n    fulfillments(first: 1) {\n      nodes {\n        status\n      }\n    }\n    id\n    number\n    confirmationNumber\n    processedAt\n  }\n\n\n  query CustomerOrders(\n    $endCursor: String\n    $first: Int\n    $last: Int\n    $startCursor: String\n    $query: String\n    $language: LanguageCode\n  ) @inContext(language: $language) {\n    customer {\n      ...CustomerOrders\n    }\n  }\n': {
     return: CustomerOrdersQuery;
     variables: CustomerOrdersQueryVariables;
@@ -573,6 +683,10 @@ interface GeneratedMutationTypes {
   '#graphql\n  mutation CustomerFavoritesSet($metafields: [MetafieldsSetInput!]!) {\n    metafieldsSet(metafields: $metafields) {\n      metafields {\n        value\n      }\n      userErrors {\n        message\n      }\n    }\n  }\n': {
     return: CustomerFavoritesSetMutation;
     variables: CustomerFavoritesSetMutationVariables;
+  };
+  '#graphql\n  mutation CustomerMetafieldsDelete($metafields: [MetafieldIdentifierInput!]!) {\n    metafieldsDelete(metafields: $metafields) {\n      deletedMetafields {\n        key\n        namespace\n      }\n      userErrors {\n        message\n      }\n    }\n  }\n': {
+    return: CustomerMetafieldsDeleteMutation;
+    variables: CustomerMetafieldsDeleteMutationVariables;
   };
   '#graphql\n  mutation customerUpdate(\n    $customer: CustomerUpdateInput!\n    $language: LanguageCode\n  ) @inContext(language: $language) {\n    customerUpdate(input: $customer) {\n      customer {\n        firstName\n        lastName\n        emailAddress {\n          emailAddress\n        }\n        phoneNumber {\n          phoneNumber\n        }\n      }\n      userErrors {\n        code\n        field\n        message\n      }\n    }\n  }\n': {
     return: CustomerUpdateMutation;

@@ -180,6 +180,8 @@ export const pt: Messages = {
   'product.fittingRoomAdd': 'Adicionar {title} ao provador',
   'product.fittingRoomLogin':
     'Inicie sessão para adicionar {title} ao provador',
+  'product.tryOn': 'Experimentar',
+  'product.tryOnTitle': 'Veja em si',
   'product.breadcrumb': 'Caminho de navegação',
   'product.description': 'Descrição',
   'product.details': 'Detalhes',
@@ -192,6 +194,54 @@ export const pt: Messages = {
   'product.detail.metal': 'Metal',
   'product.detail.gemstone': 'Pedra preciosa',
   'product.detail.gemColor': 'Cor da pedra',
+  'product.customize.title': 'Personalizar',
+  'product.customize.engraving': 'Gravação',
+  'product.customize.engravingRemaining': {
+    one: '{count} carácter restante',
+    other: '{count} caracteres restantes',
+  },
+
+  // Front-camera try-on
+  'tryOn.title': 'Experimentar {title}',
+  'tryOn.loading': 'A carregar a prova virtual…',
+  'tryOn.preparing': 'A preparar a prova virtual…',
+  'tryOn.starting': 'A iniciar a câmara…',
+  'tryOn.noFace': 'Coloque o rosto dentro do enquadramento.',
+  'tryOn.denied': 'O acesso à câmara está desativado. Carregue uma fotografia.',
+  'tryOn.unavailable':
+    'Este dispositivo não consegue iniciar a câmara. Carregue uma fotografia.',
+  'tryOn.unsupported':
+    'Este navegador não consegue abrir a câmara. Abra a página no Safari ou no Chrome.',
+  'tryOn.failed': 'Algo correu mal. Tente novamente.',
+  'tryOn.errorDetail': 'Detalhes: {detail}',
+  'tryOn.retry': 'Tentar novamente',
+  'tryOn.startPrompt':
+    'Toque abaixo para abrir a câmara e experimentar {title}.',
+  'tryOn.startCamera': 'Abrir a câmara',
+  'tryOn.upload': 'Carregar fotografia',
+  'tryOn.uploadHint': 'Escolha uma fotografia de frente para ver a peça em si.',
+  'tryOn.uploadError': 'Use uma imagem JPG, PNG ou HEIC com menos de 12 MB.',
+  'tryOn.adjustHint':
+    'Arraste a fotografia para mover a peça ou use os botões para redimensioná-la.',
+  'tryOn.smaller': 'Mais pequena',
+  'tryOn.larger': 'Maior',
+  'tryOn.reset': 'Repor posição',
+  'tryOn.photoNoFace':
+    'Não encontrámos um rosto nessa fotografia. Tente outra.',
+  'tryOn.replacePhoto': 'Escolher outra fotografia',
+  'tryOn.opaque': 'A prova virtual ainda não está disponível para esta peça.',
+  'tryOn.qrTitle': 'Experimente no telemóvel',
+  'tryOn.qrHelp':
+    'Digitalize este código com a câmara do telemóvel para abrir a prova virtual.',
+  'tryOn.openLink': 'Abrir a ligação da prova virtual',
+  'tryOn.privacy': 'A câmara e as fotografias ficam neste dispositivo.',
+  'tryOn.preview': 'Pré-visualização com {title} em si',
+  'tryOn.lookTitle': 'Experimente o seu visual',
+  'tryOn.lookPrompt':
+    'Toque abaixo para abrir a câmara e experimentar o seu visual.',
+  'tryOn.lookPreview': 'Pré-visualização do seu visual em si',
+  'tryOn.lookUnavailable':
+    'A prova virtual ainda não está disponível para este visual.',
 
   // Allergens and the allergy warning
   'allergen.nickel': 'Níquel',
@@ -295,13 +345,15 @@ export const pt: Messages = {
   'fittingRoom.tryOn': 'Prova virtual',
   'fittingRoom.tryOnTitle': 'Veja como lhe fica',
   'fittingRoom.tryOnText':
-    'Escolha as peças que quer experimentar em conjunto. A prova virtual estará disponível em breve.',
+    'Selecione as peças que quer ver juntas e abra o visual.',
+  'fittingRoom.tryOnLook': 'Experimentar o visual',
+  'fittingRoom.no3d': 'Sem 3D',
   'fittingRoom.readyToTry': {
     one: '{count} peça pronta a experimentar',
     other: '{count} peças prontas a experimentar',
   },
   'fittingRoom.selectHint':
-    'Selecione pelo menos uma peça à esquerda para criar o seu visual.',
+    'Selecione pelo menos uma peça para criar o seu visual.',
   'fittingRoom.error.unauthorized': 'Não autorizado',
   'fittingRoom.error.invalid': 'Produto inválido',
   'fittingRoom.error.soldOut': 'Esta peça está esgotada',
@@ -353,6 +405,30 @@ export const pt: Messages = {
   'order.status': 'Estado',
   'order.statusNone': 'Indisponível',
   'order.viewStatus': 'Ver estado da encomenda',
+  'rating.heading': 'Avalie as suas peças',
+  'rating.intro':
+    'Dê a cada peça desta encomenda uma classificação de 1 a 5 estrelas.',
+  'rating.final': 'Depois de enviada, a avaliação não pode ser alterada.',
+  'rating.loading': 'A verificar se esta encomenda pode ser avaliada…',
+  'rating.notDelivered':
+    'Pode avaliar as peças desta encomenda quando a encomenda completa tiver sido entregue.',
+  'rating.noProducts': 'Esta encomenda não tem peças que possam ser avaliadas.',
+  'rating.unavailable': 'As avaliações não estão disponíveis de momento.',
+  'rating.verificationError':
+    'Não foi possível verificar a entrega desta encomenda neste momento. Tente novamente mais tarde.',
+  'rating.loadError':
+    'Não foi possível carregar as suas avaliações neste momento. Tente novamente mais tarde.',
+  'rating.legend': 'A sua avaliação de {product}',
+  'rating.star': {one: '{count} estrela', other: '{count} estrelas'},
+  'rating.submit': 'Enviar avaliação',
+  'rating.submitting': 'A guardar a sua avaliação…',
+  'rating.yours': 'A sua avaliação: {value} de 5',
+  'rating.saved': 'Obrigado. A sua avaliação foi guardada.',
+  'rating.error.alreadyRated': 'Já avaliou esta peça.',
+  'rating.error.signIn':
+    'A sua sessão terminou. Inicie sessão novamente para avaliar esta peça.',
+  'rating.error.save':
+    'Não foi possível guardar a sua avaliação. Tente novamente.',
   'order.financial.AUTHORIZED': 'Autorizado',
   'order.financial.EXPIRED': 'Expirado',
   'order.financial.PAID': 'Pago',
@@ -424,6 +500,19 @@ export const pt: Messages = {
   'preferences.save': 'Guardar preferências',
   'preferences.saved': 'Preferências guardadas.',
   'preferences.saveError': 'Não foi possível guardar as preferências.',
+  'profile.data.title': 'Os seus dados',
+  'profile.data.intro':
+    'Transfira uma cópia das suas preferências ou elimine-as do seu perfil.',
+  'profile.data.download': 'Transferir as minhas preferências',
+  'profile.data.delete': 'Eliminar as minhas preferências',
+  'profile.data.deleteConfirm':
+    'Isto elimina as suas preferências guardadas. Continuar?',
+  'profile.data.confirm': 'Confirmar eliminação',
+  'profile.data.cancel': 'Cancelar',
+  'profile.data.deleting': 'A eliminar…',
+  'profile.data.deleted': 'As suas preferências foram eliminadas.',
+  'profile.data.deleteError':
+    'Não foi possível eliminar as suas preferências.',
   'ring.title': 'Tamanhos de anel',
   'ring.intro':
     'Guarde o seu tamanho de anel (escala dos EUA) para cada dedo. Os anéis vão mostrar os tamanhos guardados.',

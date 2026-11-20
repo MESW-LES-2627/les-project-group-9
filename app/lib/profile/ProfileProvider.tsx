@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import {
+  deletePreferences,
   fetchProfile,
   postFavoriteOperation,
   postFittingRoomOperation,
@@ -16,6 +17,7 @@ import {
   ProfileRequestError,
 } from './client';
 import {isProductGid} from './schema';
+import {isVariantGid} from './list-schema';
 import type {
   ListOperation,
   PreferenceProfile,
@@ -33,15 +35,26 @@ type ProfileState = {
 
 type ProfileContextValue = ProfileState & {
   syncing: boolean;
+  preferencesVersion: number;
   hasFavorite: (id: string) => boolean;
   toggleFavorite: (id: string) => void;
   hasFittingRoomItem: (id: string) => boolean;
   toggleFittingRoom: (id: string) => void;
   setFittingRoom: (ids: string[]) => void;
   savePreferences: (preferences: PreferenceProfile) => Promise<void>;
+  clearPreferences: () => Promise<void>;
 };
 
 type ListKey = 'favorites' | 'fittingRoom';
+
+/**
+ * Which GID each list stores: favorites are products, the fitting room holds
+ * variants (one entry per colourway).
+ */
+const LIST_VALIDATORS: Record<ListKey, (value: unknown) => value is string> = {
+  favorites: isProductGid,
+  fittingRoom: isVariantGid,
+};
 
 const INITIAL_STATE: ProfileState = {
   status: 'loading',
@@ -66,6 +79,7 @@ function withList(
 
 export function ProfileProvider({children}: {children: ReactNode}) {
   const [state, setState] = useState<ProfileState>(INITIAL_STATE);
+  const [preferencesVersion, setPreferencesVersion] = useState(0);
   const stateRef = useRef(state);
 
   const commit = useCallback((next: ProfileState) => {
@@ -106,7 +120,7 @@ export function ProfileProvider({children}: {children: ReactNode}) {
       id: string,
       post: (operation: ListOperation) => Promise<unknown>,
     ) => {
-      if (!isProductGid(id)) return;
+      if (!LIST_VALIDATORS[key](id)) return;
 
       const current = stateRef.current;
       if (!current.isLoggedIn) return;
@@ -200,6 +214,39 @@ export function ProfileProvider({children}: {children: ReactNode}) {
     [commit, loadProfile],
   );
 
+  const clearPreferences = useCallback(async () => {
+    const current = stateRef.current;
+    if (!current.isLoggedIn) return;
+
+    commit({
+      ...current,
+      pendingWrites: current.pendingWrites + 1,
+    });
+
+    try {
+      const cleared = await deletePreferences();
+      const latest = stateRef.current;
+      commit({
+        ...latest,
+        preferences: cleared.preferences,
+        pendingWrites: Math.max(0, latest.pendingWrites - 1),
+      });
+      setPreferencesVersion((version) => version + 1);
+    } catch (error) {
+      if (error instanceof ProfileRequestError && error.status === 401) {
+        await loadProfile();
+      } else {
+        const latest = stateRef.current;
+        commit({
+          ...latest,
+          pendingWrites: Math.max(0, latest.pendingWrites - 1),
+        });
+      }
+
+      throw error;
+    }
+  }, [commit, loadProfile]);
+
   const hasFavorite = useCallback(
     (id: string) => state.favorites.includes(id),
     [state.favorites],
@@ -214,21 +261,25 @@ export function ProfileProvider({children}: {children: ReactNode}) {
     () => ({
       ...state,
       syncing: state.pendingWrites > 0,
+      preferencesVersion,
       hasFavorite,
       toggleFavorite,
       hasFittingRoomItem,
       toggleFittingRoom,
       setFittingRoom,
       savePreferences,
+      clearPreferences,
     }),
     [
       state,
+      preferencesVersion,
       hasFavorite,
       toggleFavorite,
       hasFittingRoomItem,
       toggleFittingRoom,
       setFittingRoom,
       savePreferences,
+      clearPreferences,
     ],
   );
 

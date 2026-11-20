@@ -1,6 +1,15 @@
 import {useLocation} from 'react-router';
 import type {SelectedOption} from '@shopify/hydrogen/storefront-api-types';
 import {useMemo} from 'react';
+import {isVariantGid} from './profile/list-schema';
+
+/** Reads a comma-separated `ids` query parameter of variant GIDs. */
+export function parseVariantIds(
+  raw: string | null | undefined,
+  max = 50,
+): string[] {
+  return (raw ?? '').split(',').filter(isVariantGid).slice(0, max);
+}
 
 export function useVariantUrl(
   handle: string,

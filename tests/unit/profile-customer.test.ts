@@ -20,6 +20,8 @@ import type {PreferenceProfile} from '../../app/lib/profile/types';
 const CUSTOMER_ID = 'gid://shopify/Customer/1';
 const A = 'gid://shopify/Product/1';
 const B = 'gid://shopify/Product/2';
+const VA = 'gid://shopify/ProductVariant/1';
+const VB = 'gid://shopify/ProductVariant/2';
 
 type Context = Parameters<typeof updateCustomerFavorites>[0];
 
@@ -97,11 +99,11 @@ describe('customer favorites', () => {
 
 describe('customer fitting room', () => {
   it('writes the next fitting room', async () => {
-    const {context, calls} = contextWith({fittingRoom: [A]});
+    const {context, calls} = contextWith({fittingRoom: [VA]});
 
-    const result = await updateCustomerFittingRoom(context, {add: [B]});
+    const result = await updateCustomerFittingRoom(context, {add: [VB]});
 
-    expect(result).toEqual([B, A]);
+    expect(result).toEqual([VB, VA]);
     expect(calls).toHaveLength(1);
     expect(calls[0].metafields[0]).toMatchObject({
       ownerId: CUSTOMER_ID,
@@ -109,7 +111,7 @@ describe('customer fitting room', () => {
       key: 'fitting_room',
       type: 'json',
     });
-    expect(parseFittingRoom(calls[0].metafields[0].value)).toEqual([B, A]);
+    expect(parseFittingRoom(calls[0].metafields[0].value)).toEqual([VB, VA]);
   });
 });
 

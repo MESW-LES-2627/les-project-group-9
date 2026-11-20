@@ -4,7 +4,7 @@ import {
   type FormProps,
   type Fetcher,
 } from 'react-router';
-import React, {useRef, useEffect} from 'react';
+import React, {useCallback, useRef, useEffect} from 'react';
 import type {PredictiveSearchReturn} from '~/lib/search';
 import {useAside} from '~/components/layout/Aside';
 
@@ -53,12 +53,20 @@ export function SearchFormPredictive({
     aside.close();
   }
 
+  const {data, state, submit} = fetcher;
+
+  const fetchTerm = useCallback(
+    (term: string) =>
+      void submit(
+        {q: term, limit: 5, predictive: true},
+        {method: 'GET', action: SEARCH_ENDPOINT},
+      ),
+    [submit],
+  );
+
   /** Fetch search results based on the input value */
   function fetchResults(event: React.ChangeEvent<HTMLInputElement>) {
-    void fetcher.submit(
-      {q: event.target.value || '', limit: 5, predictive: true},
-      {method: 'GET', action: SEARCH_ENDPOINT},
-    );
+    fetchTerm(event.target.value || '');
   }
 
   // ensure the passed input has a type of search, because SearchResults
@@ -66,6 +74,17 @@ export function SearchFormPredictive({
   useEffect(() => {
     inputRef?.current?.setAttribute('type', 'search');
   }, []);
+
+  const checkedData = useRef<typeof data>(undefined);
+
+  useEffect(() => {
+    if (state !== 'idle' || !data || checkedData.current === data) return;
+    checkedData.current = data;
+
+    const value = inputRef.current?.value.trim() ?? '';
+
+    if (data.term !== value) fetchTerm(value);
+  }, [state, data, fetchTerm]);
 
 
   const previousAsideType = useRef(aside.type);

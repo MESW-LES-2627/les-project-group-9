@@ -80,3 +80,16 @@ export function postPreferences(
     },
   );
 }
+
+export function deletePreferences(): Promise<{
+  preferences: PreferenceProfile;
+}> {
+  return request<{preferences: PreferenceProfile}>(
+    '/api/profile/preferences',
+    {
+      method: 'DELETE',
+      cache: 'no-store',
+      headers: {Accept: 'application/json'},
+    },
+  );
+}

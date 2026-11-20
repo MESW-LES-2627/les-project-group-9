@@ -12,6 +12,10 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Required to post the coverage comment on pull requests
+      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,7 +36,14 @@ jobs:
         run: npm run typecheck
 
       - name: Test
-        run: npm test
+        id: test
+        run: npm run test:coverage
+
+      - name: Report coverage
+        # Also runs when tests fail (coverage is still written thanks to
+        # reportOnFailure), but not when lint/typecheck already failed.
+        if: always() && steps.test.outcome != 'skipped'
+        uses: davelosert/vitest-coverage-report-action@v2
 
   e2e:
     # Pinned rather than ubuntu-latest: Playwright's --with-deps installs apt

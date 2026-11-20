@@ -17,6 +17,7 @@ import {ProductItem} from '~/components/product/ProductItem';
 import {AllergenBadge} from '~/components/product/AllergenBadge';
 import {FavoriteButton} from '~/components/product/FavoriteButton';
 import {FittingRoomButton} from '~/components/product/FittingRoomButton';
+import {TryOnSection} from '~/components/product/TryOnSection';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 import {
   JEWELIETTE_MATERIAL_METAFIELD_FRAGMENT,
@@ -24,8 +25,15 @@ import {
   formatMetafieldValue,
 } from '~/lib/jeweliette-catalog';
 import {materialsForColor, parseProductMaterials} from '~/lib/materials';
+import {hasHtmlContent} from '~/lib/html';
 import {isColorOption} from '~/lib/options';
 import {isRingProduct} from '~/lib/profile/ringCategory';
+import {
+  PRODUCT_CUSTOMIZATION_FRAGMENT,
+  parseProductCustomization,
+} from '~/lib/customization';
+import {resolveTryOn} from '~/lib/try-on/catalog';
+import {isMobileRequest} from '~/lib/try-on/device';
 
 export const meta: Route.MetaFunction = ({data, matches}) => [
   {
@@ -48,7 +56,12 @@ export async function loader(args: Route.LoaderArgs) {
     .then((result) => result.productRecommendations ?? [])
     .catch(() => []);
 
-  return {product, recommendations};
+  return {
+    product,
+    customization: parseProductCustomization(product),
+    recommendations,
+    isMobile: isMobileRequest(args.request),
+  };
 }
 
 async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
@@ -69,7 +82,8 @@ async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
 }
 
 export default function Product() {
-  const {product, recommendations} = useLoaderData<typeof loader>();
+  const {product, customization, recommendations, isMobile} =
+    useLoaderData<typeof loader>();
   const t = useTranslation();
 
   const selectedVariant = useOptimisticVariant(
@@ -78,6 +92,9 @@ export default function Product() {
   );
 
   useSelectedOptionInUrlParam(selectedVariant.selectedOptions);
+
+  // Try-on is per variant: only the selected colour may have an overlay.
+  const tryOn = resolveTryOn(product, selectedVariant);
 
   const productOptions = getProductOptions({
     ...product,
@@ -110,13 +127,15 @@ export default function Product() {
     }))
     .filter((item) => item.value !== '');
 
+  const hasDescription = hasHtmlContent(product.descriptionHtml);
+
   return (
     <div className="mx-auto max-w-[1280px] px-[4vw] pb-20 pt-6">
       <nav
         aria-label={t('product.breadcrumb')}
         className="mb-6 flex flex-wrap gap-2 text-[11px] uppercase tracking-widest text-primary"
       >
-        <Link to="/" className="hover:text-ink">
+        <Link to="/" className="hover:text-bark">
           {t('nav.home')}
         </Link>
         {collection ? (
@@ -124,7 +143,7 @@ export default function Product() {
             <span aria-hidden="true">/</span>
             <Link
               to={`/collections/${collection.handle}`}
-              className="hover:text-ink"
+              className="hover:text-bark"
             >
               {collection.title}
             </Link>
@@ -143,7 +162,10 @@ export default function Product() {
           title={product.title}
         />
 
-        <div className="lg:sticky lg:top-24 lg:self-start">
+        <div
+          className="lg:sticky lg:top-24 lg:self-start"
+          data-selected-variant-id={selectedVariant?.id}
+        >
           <AllergenBadge allergens={product.allergens} className="mb-3" />
 
           <div className="mt-3 flex items-start justify-between gap-4">
@@ -152,7 +174,11 @@ export default function Product() {
             </h1>
             <div className="flex items-center gap-2">
               <FavoriteButton productId={product.id} title={product.title} />
-              <FittingRoomButton productId={product.id} title={product.title} />
+              <FittingRoomButton
+                canTryOn={tryOn !== null}
+                title={product.title}
+                variantId={selectedVariant.id}
+              />
             </div>
           </div>
 
@@ -164,30 +190,43 @@ export default function Product() {
           </div>
 
           <div className="mt-8">
+            {/* Keyed by product so the customization choice resets on another product. */}
             <ProductForm
+              key={product.id}
               allergens={product.allergens}
               productOptions={productOptions}
               selectedVariant={selectedVariant}
               isRing={isRingProduct(product)}
+              customization={customization}
             />
           </div>
 
+          {tryOn ? (
+            <TryOnSection
+              isMobile={isMobile}
+              piece={tryOn}
+              title={product.title}
+            />
+          ) : null}
+
           <div className="mt-10 divide-y divide-line border-y border-line text-sm">
-            <details open className="group py-4">
-              <summary className="flex cursor-pointer list-none items-center justify-between text-[11px] uppercase tracking-widest [&::-webkit-details-marker]:hidden">
-                {t('product.description')}
-                <span aria-hidden="true" className="group-open:hidden">
-                  +
-                </span>
-                <span aria-hidden="true" className="hidden group-open:inline">
-                  −
-                </span>
-              </summary>
-              <div
-                className="prose-sm mt-4 leading-7 text-primary [&_p]:mb-3"
-                dangerouslySetInnerHTML={{__html: product.descriptionHtml}}
-              />
-            </details>
+            {hasDescription ? (
+              <details open className="group py-4">
+                <summary className="flex cursor-pointer list-none items-center justify-between text-[11px] uppercase tracking-widest [&::-webkit-details-marker]:hidden">
+                  {t('product.description')}
+                  <span aria-hidden="true" className="group-open:hidden">
+                    +
+                  </span>
+                  <span aria-hidden="true" className="hidden group-open:inline">
+                    −
+                  </span>
+                </summary>
+                <div
+                  className="prose-sm mt-4 leading-7 text-primary [&_p]:mb-3"
+                  dangerouslySetInnerHTML={{__html: product.descriptionHtml}}
+                />
+              </details>
+            ) : null}
 
             {productDetails.length > 0 ? (
               <details className="group py-4">
@@ -302,6 +341,13 @@ const PRODUCT_VARIANT_FRAGMENT = `#graphql
     sku
     title
     unitPrice { amount currencyCode }
+    tryOnOverlay: metafield(namespace: "custom", key: "try_on_overlay") {
+      reference {
+        ... on MediaImage { image { url } }
+        ... on GenericFile { url }
+      }
+    }
+    tryOnSize: metafield(namespace: "custom", key: "try_on_size_cm") { value }
   }
 ` as const;
 
@@ -326,6 +372,7 @@ const PRODUCT_FRAGMENT = `#graphql
     gemstone: metafield(namespace: "custom", key: "gemstone") { value }
     gemColor: metafield(namespace: "custom", key: "gem_color") { value }
     allergens: metafield(namespace: "custom", key: "allergens") { value }
+    ...ProductCustomizationFields
     images(first: 10) { nodes { id url altText width height } }
     collections(first: 1) { nodes { title handle } }
     category { id name }
@@ -345,6 +392,7 @@ const PRODUCT_FRAGMENT = `#graphql
   }
   ${PRODUCT_VARIANT_FRAGMENT}
   ${JEWELIETTE_MATERIAL_METAFIELD_FRAGMENT}
+  ${PRODUCT_CUSTOMIZATION_FRAGMENT}
 ` as const;
 
 const PRODUCT_QUERY = `#graphql

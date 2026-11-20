@@ -1,4 +1,10 @@
-import {redirect, useLoaderData} from 'react-router';
+import {Suspense} from 'react';
+import {
+  Await,
+  redirect,
+  useLoaderData,
+  type ShouldRevalidateFunction,
+} from 'react-router';
 import type {Route} from './+types/account.orders.$id';
 import {Image} from '@shopify/hydrogen';
 import {Money} from '~/components/shared/Money';
@@ -8,6 +14,17 @@ import type {
 } from 'customer-accountapi.generated';
 import {CUSTOMER_ORDER_QUERY} from '~/graphql/customer-account/CustomerOrderQuery';
 import {accountOrderDetail} from '~/lib/account-ui';
+import {
+  OrderRatings,
+  OrderRatingsLoading,
+  RATING_ENDPOINT,
+} from '~/components/account/OrderRatings';
+import {NO_STORE} from '~/lib/profile/operation.server';
+import {createRatingStore} from '~/lib/ratings/rating-store.server';
+import {
+  loadOrderRatings,
+  type OrderRatingsView,
+} from '~/lib/ratings/ratings.server';
 import {
   formatDate,
   translatorFromMatches,
@@ -22,6 +39,25 @@ export const meta: Route.MetaFunction = ({data, matches}) => {
       title: `${t('order.title', {name: data?.order?.name ?? ''})} | Jeweliette`,
     },
   ];
+};
+
+/** Order details and ratings are specific to the signed-in customer. */
+export const headers: Route.HeadersFunction = () => NO_STORE;
+
+/**
+ * A rating submission does not change the order, and the form already shows
+ * the saved (or existing) value from the endpoint's answer. Reloading here
+ * would only repeat the Shopify reads and drop the confirmation message, and
+ * React Router would do it after a 201 but not after a 409. Every other
+ * action, navigation and reload keeps the default behaviour.
+ */
+export const shouldRevalidate: ShouldRevalidateFunction = ({
+  formMethod,
+  formAction,
+  defaultShouldRevalidate,
+}) => {
+  if (formMethod === 'POST' && formAction === RATING_ENDPOINT) return false;
+  return defaultShouldRevalidate;
 };
 
 export async function loader({params, context}: Route.LoaderArgs) {
@@ -77,12 +113,26 @@ export async function loader({params, context}: Route.LoaderArgs) {
         ).percentage
       : null;
 
+  // Not awaited: the order renders while delivery and saved ratings load.
+  const ratings: Promise<OrderRatingsView> = loadOrderRatings({
+    customerAccount,
+    store: createRatingStore(context.env),
+    orderId: order.id,
+  }).catch((error: unknown) => {
+    console.error(
+      '[ratings] unexpected error:',
+      error instanceof Error ? error.name : 'unknown',
+    );
+    return {status: 'load_error'};
+  });
+
   return {
     order,
     lineItems,
     discountValue,
     discountPercentage,
     fulfillmentStatus,
+    ratings,
   };
 }
 
@@ -93,6 +143,7 @@ export default function OrderRoute() {
     discountValue,
     discountPercentage,
     fulfillmentStatus,
+    ratings,
   } = useLoaderData<typeof loader>();
   const t = useTranslation();
   const {tag} = useLocale();
@@ -205,6 +256,11 @@ export default function OrderRoute() {
           </div>
         </div>
       </div>
+      <Suspense fallback={<OrderRatingsLoading />}>
+        <Await resolve={ratings}>
+          {(view) => <OrderRatings view={view} />}
+        </Await>
+      </Suspense>
       <br />
       <p>
         <a target="_blank" href={order.statusPageUrl} rel="noreferrer">

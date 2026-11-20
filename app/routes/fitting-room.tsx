@@ -5,9 +5,15 @@ import {translatorFor, translatorFromMatches, useTranslation} from '~/lib/i18n';
 import {FittingRoomView} from '~/components/fitting-room/FittingRoomView';
 import {useFittingRoom} from '~/lib/fitting-room';
 import {updateCustomerFittingRoom} from '~/lib/profile/customer.server';
-import {MAX_FITTING_ROOM} from '~/lib/profile/fitting-room';
-import {isProductGid} from '~/lib/profile/list-schema';
-import {loadProductsByIds, parseProductIds} from '~/lib/products.server';
+import {
+  MAX_FITTING_ROOM,
+  type FittingRoomPiece,
+} from '~/lib/profile/fitting-room';
+import {isVariantGid} from '~/lib/profile/list-schema';
+import {resolveTryOn} from '~/lib/try-on/catalog';
+import {isMobileRequest} from '~/lib/try-on/device';
+import {loadVariantsByIds} from '~/lib/variants.server';
+import {parseVariantIds} from '~/lib/variants';
 
 export const meta: Route.MetaFunction = ({matches}) => [
   {title: `${translatorFromMatches(matches)('nav.fittingRoom')} | Jeweliette`},
@@ -15,12 +21,25 @@ export const meta: Route.MetaFunction = ({matches}) => [
 ];
 
 export async function loader({request, context}: Route.LoaderArgs) {
-  const ids = parseProductIds(
+  const ids = parseVariantIds(
     new URL(request.url).searchParams.get('ids'),
     MAX_FITTING_ROOM,
   );
-  const products = await loadProductsByIds(context, ids);
-  return {products};
+  const variants = await loadVariantsByIds(context, ids);
+
+  const pieces: FittingRoomPiece[] = variants.map((variant) => ({
+    variantId: variant.id,
+    product: variant.product,
+    image: variant.image ?? variant.product.featuredImage ?? null,
+    variantTitle: variant.title,
+    price: variant.price,
+    available: variant.availableForSale,
+    tryOn: resolveTryOn(variant.product, variant),
+  }));
+  // Stale entries (overlay removed, category changed) are pruned by the
+  // profile endpoint; keeping them here lets the view mark them "No 3D".
+
+  return {pieces, isMobile: isMobileRequest(request)};
 }
 
 export async function action({request, context}: Route.ActionArgs) {
@@ -32,14 +51,13 @@ export async function action({request, context}: Route.ActionArgs) {
   }
 
   const formData = await request.formData();
-  const productId = formData.get('productId');
+  const variantId = formData.get('variantId');
 
-  if (typeof productId !== 'string' || !isProductGid(productId)) {
+  if (typeof variantId !== 'string' || !isVariantGid(variantId)) {
     return data({error: t('fittingRoom.error.invalid')}, {status: 400});
   }
 
-  const [product] = await loadProductsByIds(context, [productId]);
-  const variant = product?.selectedOrFirstAvailableVariant;
+  const [variant] = await loadVariantsByIds(context, [variantId]);
 
   if (!variant?.availableForSale) {
     return data({error: t('fittingRoom.error.soldOut')}, {status: 400});
@@ -63,7 +81,7 @@ export async function action({request, context}: Route.ActionArgs) {
 
     try {
       const fittingRoom = await updateCustomerFittingRoom(context, {
-        remove: [productId],
+        remove: [variantId],
       });
       return data({fittingRoom, cart: result.cart}, {headers});
     } catch (error) {
@@ -81,16 +99,22 @@ export async function action({request, context}: Route.ActionArgs) {
 }
 
 export default function FittingRoom() {
-  const {ids, ready, isLoggedIn, toggle: toggleFittingRoom, setIds} =
-    useFittingRoom();
+  const {
+    ids,
+    ready,
+    isLoggedIn,
+    toggle: toggleFittingRoom,
+    setIds,
+  } = useFittingRoom();
   const t = useTranslation();
   const fetcher = useFetcher<typeof loader>();
   const moveFetcher = useFetcher<typeof action>();
   const key = ids.join(',');
   const [selected, setSelected] = useState<string[]>([]);
   const handledMove = useRef<unknown>(null);
+  const handledLookLink = useRef(false);
   const movingId =
-    (moveFetcher.formData?.get('productId') as string | null) ?? null;
+    (moveFetcher.formData?.get('variantId') as string | null) ?? null;
 
   useEffect(() => {
     if (key) {
@@ -102,18 +126,32 @@ export default function FittingRoom() {
   useEffect(() => {
     const currentIds = key ? key.split(',') : [];
 
-    setSelected((current) =>
-      Array.from(
-        new Set([
-          ...current.filter((id) => currentIds.includes(id)),
-          ...currentIds,
-        ]),
-      ),
-    );
+    // Selections are explicit: drop pieces that left the room, but never
+    // select anything automatically.
+    setSelected((current) => current.filter((id) => currentIds.includes(id)));
   }, [key]);
 
-  const products = (fetcher.data?.products ?? []).filter((product) =>
-    ids.includes(product.id),
+  // A QR link carries the desktop look's variant ids: select them on the phone
+  // so the launcher can open the same pieces.
+  useEffect(() => {
+    if (handledLookLink.current || !ids.length) return;
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('tryOn') !== '1') {
+      handledLookLink.current = true;
+      return;
+    }
+
+    const linked = parseVariantIds(params.get('ids'), MAX_FITTING_ROOM).filter(
+      (id) => ids.includes(id),
+    );
+
+    if (linked.length) setSelected(linked);
+    handledLookLink.current = true;
+  }, [ids]);
+
+  const pieces = (fetcher.data?.pieces ?? []).filter((piece) =>
+    ids.includes(piece.variantId),
   );
 
   const toggleSelected = (id: string) => {
@@ -125,7 +163,7 @@ export default function FittingRoom() {
   };
 
   const moveToCart = (id: string) => {
-    void moveFetcher.submit({productId: id}, {method: 'post'});
+    void moveFetcher.submit({variantId: id}, {method: 'post'});
   };
 
   useEffect(() => {
@@ -156,6 +194,9 @@ export default function FittingRoom() {
         <h1 className="mt-3 font-display text-[clamp(2.25rem,4vw,3.5rem)] leading-none">
           {t('nav.fittingRoom')}
         </h1>
+        <p className="mt-3 max-w-[46ch] text-sm leading-7 text-primary">
+          {t('fittingRoom.tryOnText')}
+        </p>
       </header>
 
       {!ready ? (
@@ -172,20 +213,22 @@ export default function FittingRoom() {
           </p>
           <Link
             to="/account/login"
-            className="mt-6 inline-flex min-h-11 items-center bg-primary px-6 text-[11px] uppercase tracking-widest text-white hover:bg-ink"
+            className="mt-6 inline-flex min-h-11 items-center bg-primary px-6 text-[11px] uppercase tracking-widest text-white hover:bg-bark"
           >
             {t('common.logIn')}
           </Link>
         </div>
       ) : ids.length === 0 ? (
         <div className="mx-auto mt-14 max-w-md border-y border-line py-14 text-center">
-          <h2 className="font-display text-2xl">{t('fittingRoom.emptyTitle')}</h2>
+          <h2 className="font-display text-2xl">
+            {t('fittingRoom.emptyTitle')}
+          </h2>
           <p className="mt-3 text-sm text-primary">
             {t('fittingRoom.emptyText')}
           </p>
           <Link
             to="/collections/all"
-            className="mt-6 inline-flex min-h-11 items-center bg-primary px-6 text-[11px] uppercase tracking-widest text-white hover:bg-ink"
+            className="mt-6 inline-flex min-h-11 items-center bg-primary px-6 text-[11px] uppercase tracking-widest text-white hover:bg-bark"
           >
             {t('home.exploreCollection')}
           </Link>
@@ -194,7 +237,7 @@ export default function FittingRoom() {
         <div className="mx-auto mt-14 max-w-md border-y border-line py-14 text-center text-sm text-primary">
           {t('fittingRoom.loadingPieces')}
         </div>
-      ) : products.length === 0 ? (
+      ) : pieces.length === 0 ? (
         <div className="mx-auto mt-14 max-w-md border-y border-line py-14 text-center">
           <h2 className="font-display text-2xl">
             {t('fittingRoom.unavailableTitle')}
@@ -211,13 +254,20 @@ export default function FittingRoom() {
             </p>
           ) : null}
           <FittingRoomView
+            isMobile={fetcher.data.isMobile}
             movingId={movingId}
             onClear={() => setSelected([])}
             onMoveToCart={moveToCart}
             onRemove={toggleFittingRoom}
-            onSelectAll={() => setSelected(ids)}
+            onSelectAll={() =>
+              setSelected(
+                pieces
+                  .filter((piece) => piece.tryOn !== null)
+                  .map((piece) => piece.variantId),
+              )
+            }
             onToggle={toggleSelected}
-            products={products}
+            pieces={pieces}
             selectedIds={selected}
           />
         </>

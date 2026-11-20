@@ -1,5 +1,5 @@
 import type {HydrogenRouterContextProvider} from '@shopify/hydrogen';
-import {isProductGid} from './list-schema';
+import {isProductGid, type GidValidator} from './list-schema';
 import type {ListOperation} from './types';
 
 export const NO_STORE = {
@@ -14,12 +14,14 @@ export type ListOperationResult =
 
 /**
  * Shared request parsing for the profile list endpoints (favorites, fitting
- * room): method check, login check, JSON parsing and product-ID validation.
+ * room): method check, login check, JSON parsing and GID validation. The
+ * endpoint decides whether it stores product or variant GIDs.
  */
 export async function readListOperation(
   request: Request,
   context: Context,
   emptyMessage: string,
+  isValidId: GidValidator = isProductGid,
 ): Promise<ListOperationResult> {
   if (request.method !== 'POST') {
     return {error: 'Method not allowed', status: 405};
@@ -39,7 +41,7 @@ export async function readListOperation(
 
   const source = (payload ?? {}) as Record<string, unknown>;
   const validIds = (value: unknown): string[] =>
-    Array.isArray(value) ? value.filter(isProductGid).slice(0, 500) : [];
+    Array.isArray(value) ? value.filter(isValidId).slice(0, 500) : [];
 
   const operation: ListOperation = {};
   if (Array.isArray(source.add)) operation.add = validIds(source.add);

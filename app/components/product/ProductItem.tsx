@@ -100,7 +100,7 @@ export function ProductItem({product, loading = 'lazy'}: Props) {
                       type="submit"
                       disabled={fetcher.state !== 'idle' || loading}
                       onClick={onClick}
-                      className={`${buttonBase} bg-primary text-white hover:bg-ink disabled:opacity-60`}
+                      className={`${buttonBase} bg-primary text-white hover:bg-bark disabled:opacity-60`}
                     >
                       {fetcher.state !== 'idle'
                         ? t('product.adding')
@@ -131,7 +131,7 @@ export function ProductItem({product, loading = 'lazy'}: Props) {
           <Link
             to={url}
             prefetch="intent"
-            className="block truncate font-display text-base leading-tight text-ink hover:text-primary"
+            className="block truncate font-display text-base leading-tight text-ink hover:text-bark"
           >
             {product.title}
           </Link>

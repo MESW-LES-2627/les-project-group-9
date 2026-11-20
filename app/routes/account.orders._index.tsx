@@ -234,7 +234,7 @@ function OrderItem({
       <div>
         <Link
           to={href}
-          className="font-display text-xl hover:text-primary"
+          className="font-display text-xl hover:text-bark"
         >
           {t('orders.orderNumber', {number: order.number})}
         </Link>

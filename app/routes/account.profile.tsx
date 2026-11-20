@@ -10,6 +10,7 @@ import {
   useOutletContext,
 } from 'react-router';
 import type {Route} from './+types/account.profile';
+import {PreferencesData} from '~/components/account/PreferencesData';
 import {PreferencesForm} from '~/components/account/PreferencesForm';
 import {RingSizeForm} from '~/components/account/RingSizeForm';
 import {getPreferenceOptions} from '~/lib/profile/preference-options.server';
@@ -153,7 +154,7 @@ export default function AccountProfile() {
           <button
             type="submit"
             disabled={state !== 'idle'}
-            className="bg-primary px-6 py-3 text-[11px] uppercase tracking-widest text-white transition-colors hover:bg-ink disabled:opacity-60"
+            className="bg-primary px-6 py-3 text-[11px] uppercase tracking-widest text-white transition-colors hover:bg-bark disabled:opacity-60"
           >
             {state !== 'idle' ? t('profile.updating') : t('profile.update')}
           </button>
@@ -162,6 +163,7 @@ export default function AccountProfile() {
 
       <PreferencesForm options={preferenceOptions} />
       <RingSizeForm />
+      <PreferencesData />
     </div>
   );
 }

@@ -185,6 +185,8 @@ export const fr: Messages = {
   'product.fittingRoomAdd': 'Ajouter {title} à la cabine d’essayage',
   'product.fittingRoomLogin':
     'Connectez-vous pour ajouter {title} à la cabine d’essayage',
+  'product.tryOn': 'Essayer',
+  'product.tryOnTitle': 'Voyez sur vous',
   'product.breadcrumb': 'Fil d’Ariane',
   'product.description': 'Description',
   'product.details': 'Détails',
@@ -197,6 +199,56 @@ export const fr: Messages = {
   'product.detail.metal': 'Métal',
   'product.detail.gemstone': 'Pierre',
   'product.detail.gemColor': 'Couleur de la pierre',
+  'product.customize.title': 'Personnaliser',
+  'product.customize.engraving': 'Gravure',
+  'product.customize.engravingRemaining': {
+    one: '{count} caractère restant',
+    other: '{count} caractères restants',
+  },
+
+  // Front-camera try-on
+  'tryOn.title': 'Essayer {title}',
+  'tryOn.loading': 'Chargement de l’essayage…',
+  'tryOn.preparing': 'Préparation de l’essayage…',
+  'tryOn.starting': 'Ouverture de votre caméra…',
+  'tryOn.noFace': 'Placez votre visage dans le cadre.',
+  'tryOn.denied':
+    'L’accès à la caméra est désactivé. Importez une photo à la place.',
+  'tryOn.unavailable':
+    'Cet appareil ne peut pas ouvrir la caméra. Importez une photo à la place.',
+  'tryOn.unsupported':
+    'Ce navigateur ne peut pas ouvrir la caméra. Ouvrez la page dans Safari ou Chrome.',
+  'tryOn.failed': 'Une erreur est survenue. Veuillez réessayer.',
+  'tryOn.errorDetail': 'Détails\u00a0: {detail}',
+  'tryOn.retry': 'Réessayer',
+  'tryOn.startPrompt':
+    'Touchez ci-dessous pour ouvrir votre caméra et essayer {title}.',
+  'tryOn.startCamera': 'Ouvrir la caméra',
+  'tryOn.upload': 'Importer une photo',
+  'tryOn.uploadHint':
+    'Choisissez une photo de face pour voir la pièce sur vous.',
+  'tryOn.uploadError': 'Utilisez une image JPG, PNG ou HEIC de moins de 12 Mo.',
+  'tryOn.adjustHint':
+    'Faites glisser la photo pour déplacer la pièce ou utilisez les boutons pour la redimensionner.',
+  'tryOn.smaller': 'Plus petit',
+  'tryOn.larger': 'Plus grand',
+  'tryOn.reset': 'Réinitialiser la position',
+  'tryOn.photoNoFace':
+    'Aucun visage trouvé sur cette photo. Essayez-en une autre.',
+  'tryOn.replacePhoto': 'Choisir une autre photo',
+  'tryOn.opaque': 'L’essayage n’est pas encore disponible pour cette pièce.',
+  'tryOn.qrTitle': 'Essayez depuis votre téléphone',
+  'tryOn.qrHelp':
+    'Scannez ce code avec l’appareil photo de votre téléphone pour ouvrir l’essayage.',
+  'tryOn.openLink': 'Ouvrir le lien de l’essayage',
+  'tryOn.privacy': 'Votre caméra et vos photos restent sur cet appareil.',
+  'tryOn.preview': 'Aperçu avec {title} sur vous',
+  'tryOn.lookTitle': 'Essayez votre look',
+  'tryOn.lookPrompt':
+    'Touchez ci-dessous pour ouvrir votre caméra et essayer votre look.',
+  'tryOn.lookPreview': 'Aperçu de votre look sur vous',
+  'tryOn.lookUnavailable':
+    'L’essayage n’est pas encore disponible pour ce look.',
 
   // Allergens and the allergy warning
   'allergen.nickel': 'Nickel',
@@ -301,13 +353,15 @@ export const fr: Messages = {
   'fittingRoom.tryOn': 'Essayage virtuel',
   'fittingRoom.tryOnTitle': 'Voyez le rendu sur vous',
   'fittingRoom.tryOnText':
-    'Choisissez les pièces à essayer ensemble. L’essayage virtuel arrive bientôt.',
+    'Sélectionnez les pièces à voir ensemble, puis ouvrez le look.',
+  'fittingRoom.tryOnLook': 'Essayer le look',
+  'fittingRoom.no3d': 'Sans 3D',
   'fittingRoom.readyToTry': {
     one: '{count} pièce prête à essayer',
     other: '{count} pièces prêtes à essayer',
   },
   'fittingRoom.selectHint':
-    'Sélectionnez au moins une pièce à gauche pour composer votre look.',
+    'Sélectionnez au moins une pièce pour composer votre look.',
   'fittingRoom.error.unauthorized': 'Non autorisé',
   'fittingRoom.error.invalid': 'Produit invalide',
   'fittingRoom.error.soldOut': 'Cette pièce est épuisée',
@@ -360,6 +414,30 @@ export const fr: Messages = {
   'order.status': 'Statut',
   'order.statusNone': 'Non disponible',
   'order.viewStatus': 'Voir le suivi de la commande',
+  'rating.heading': 'Notez vos pièces',
+  'rating.intro':
+    'Attribuez une note de 1 à 5 étoiles à chaque pièce de cette commande.',
+  'rating.final': 'Une note ne peut plus être modifiée une fois envoyée.',
+  'rating.loading': 'Vérification de la possibilité de noter cette commande…',
+  'rating.notDelivered':
+    'Vous pourrez noter les pièces de cette commande une fois la commande entièrement livrée.',
+  'rating.noProducts': 'Cette commande ne contient aucune pièce pouvant être notée.',
+  'rating.unavailable': 'Les notes ne sont pas disponibles pour le moment.',
+  'rating.verificationError':
+    'Impossible de vérifier la livraison de cette commande pour le moment. Veuillez réessayer plus tard.',
+  'rating.loadError':
+    'Impossible de charger vos notes pour le moment. Veuillez réessayer plus tard.',
+  'rating.legend': 'Votre note pour {product}',
+  'rating.star': {one: '{count} étoile', other: '{count} étoiles'},
+  'rating.submit': 'Envoyer la note',
+  'rating.submitting': 'Enregistrement de votre note…',
+  'rating.yours': 'Votre note : {value} sur 5',
+  'rating.saved': 'Merci. Votre note a été enregistrée.',
+  'rating.error.alreadyRated': 'Vous avez déjà noté cette pièce.',
+  'rating.error.signIn':
+    'Votre session a expiré. Reconnectez-vous pour noter cette pièce.',
+  'rating.error.save':
+    "Impossible d'enregistrer votre note. Veuillez réessayer.",
   'order.financial.AUTHORIZED': 'Autorisé',
   'order.financial.EXPIRED': 'Expiré',
   'order.financial.PAID': 'Payé',
@@ -431,6 +509,18 @@ export const fr: Messages = {
   'preferences.save': 'Enregistrer les préférences',
   'preferences.saved': 'Préférences enregistrées.',
   'preferences.saveError': 'Impossible d’enregistrer les préférences.',
+  'profile.data.title': 'Vos données',
+  'profile.data.intro':
+    'Téléchargez une copie de vos préférences ou supprimez-les de votre profil.',
+  'profile.data.download': 'Télécharger mes préférences',
+  'profile.data.delete': 'Supprimer mes préférences',
+  'profile.data.deleteConfirm':
+    'Cela supprime vos préférences enregistrées. Continuer ?',
+  'profile.data.confirm': 'Confirmer la suppression',
+  'profile.data.cancel': 'Annuler',
+  'profile.data.deleting': 'Suppression…',
+  'profile.data.deleted': 'Vos préférences ont été supprimées.',
+  'profile.data.deleteError': 'Impossible de supprimer vos préférences.',
   'ring.title': 'Tailles de bague',
   'ring.intro':
     'Enregistrez votre taille de bague (taille américaine) pour chaque doigt. Les bagues afficheront vos tailles enregistrées.',

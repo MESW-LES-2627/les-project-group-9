@@ -4,6 +4,19 @@ import {translatorFromMatches, useTranslation} from '~/lib/i18n';
 import type {CartQueryDataReturn} from '@shopify/hydrogen';
 import {CartForm} from '@shopify/hydrogen';
 import {CartMain} from '~/components/cart/CartMain';
+import {
+  hasCustomizationAttributes,
+  type CustomizationError,
+} from '~/lib/customization';
+import {validateCartLinesCustomization} from '~/lib/customization.server';
+
+/** 400 for a customization the product does not allow; the cart is left unchanged. */
+function rejectCustomization(code: CustomizationError) {
+  return data(
+    {cart: null, errors: [{code}], warnings: [], analytics: {cartId: undefined}},
+    {status: 400},
+  );
+}
 
 export const meta: Route.MetaFunction = ({matches}) => {
   return [{title: `${translatorFromMatches(matches)('nav.shoppingBag')} | Jeweliette`}];
@@ -26,10 +39,19 @@ export async function action({request, context}: Route.ActionArgs) {
   let result: CartQueryDataReturn;
 
   switch (action) {
-    case CartForm.ACTIONS.LinesAdd:
-      result = await cart.addLines(inputs.lines);
+    case CartForm.ACTIONS.LinesAdd: {
+      const check = await validateCartLinesCustomization(context, inputs.lines);
+      if (!check.ok) return rejectCustomization(check.error);
+      result = await cart.addLines(check.lines);
       break;
+    }
     case CartForm.ACTIONS.LinesUpdate:
+      // The storefront never changes a line's customization after it is added.
+      if (
+        inputs.lines.some((line) => hasCustomizationAttributes(line.attributes))
+      ) {
+        return rejectCustomization('not-customizable');
+      }
       result = await cart.updateLines(inputs.lines);
       break;
     case CartForm.ACTIONS.LinesRemove:

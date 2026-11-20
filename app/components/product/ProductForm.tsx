@@ -1,3 +1,4 @@
+import {useState} from 'react';
 import {Link, useNavigate} from 'react-router';
 import {
   type MappedProductOptions,
@@ -9,7 +10,13 @@ import {useAside} from '~/components/layout/Aside';
 import {useTranslation} from '~/lib/i18n';
 import {AddToBagGuard} from '~/components/product/AddToBagGuard';
 import {RingSizeHelp} from '~/components/product/RingSizeHelp';
-import {isColorOption} from '~/lib/options';
+import {ProductCustomization} from '~/components/product/ProductCustomization';
+import {isColorOption, isSizeOption} from '~/lib/options';
+import {
+  customizationAttributes,
+  initialCustomizationChoice,
+  type ProductCustomization as Customization,
+} from '~/lib/customization';
 
 type Props = {
   productOptions: MappedProductOptions[];
@@ -17,6 +24,8 @@ type Props = {
   allergens?: {value: string} | null;
   /** True for products in the "Rings" category. Enables the ring size helper. */
   isRing?: boolean;
+  /** Options the admin allowed; `null` hides the customization panel. */
+  customization?: Customization | null;
 };
 
 export function ProductForm({
@@ -24,13 +33,25 @@ export function ProductForm({
   selectedVariant,
   allergens,
   isRing = false,
+  customization = null,
 }: Props) {
   const navigate = useNavigate();
   const {open} = useAside();
   const t = useTranslation();
+  const [choice, setChoice] = useState(() =>
+    initialCustomizationChoice(customization),
+  );
 
+  const attributes = customizationAttributes(customization, choice);
   const lines: OptimisticCartLineInput[] = selectedVariant
-    ? [{merchandiseId: selectedVariant.id, quantity: 1, selectedVariant}]
+    ? [
+        {
+          merchandiseId: selectedVariant.id,
+          quantity: 1,
+          selectedVariant,
+          ...(attributes.length ? {attributes} : {}),
+        },
+      ]
     : [];
 
   return (
@@ -77,7 +98,7 @@ export function ProductForm({
                     : `min-h-10 min-w-12 border px-4 text-xs uppercase tracking-wider transition-colors ${
                         selected
                           ? 'border-ink bg-ink text-white'
-                          : 'border-line bg-paper hover:border-ink'
+                          : 'border-line bg-paper hover:border-bark'
                       } ${available ? '' : 'text-ink/40 line-through'}`;
 
                   const style = isColor
@@ -134,10 +155,18 @@ export function ProductForm({
                 })}
               </div>
 
-              {isRing && /^size$/i.test(option.name) ? <RingSizeHelp /> : null}
+              {isRing && isSizeOption(option.name) ? <RingSizeHelp /> : null}
             </fieldset>
           );
         })}
+
+      {customization ? (
+        <ProductCustomization
+          customization={customization}
+          value={choice}
+          onChange={setChoice}
+        />
+      ) : null}
 
       <CartForm
         route="/cart"
@@ -158,7 +187,7 @@ export function ProductForm({
                     loading
                   }
                   onClick={onClick}
-                  className="flex min-h-12 w-full items-center justify-center bg-primary px-6 text-xs font-medium uppercase tracking-widest text-white transition-colors hover:bg-ink disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex min-h-12 w-full items-center justify-center bg-primary px-6 text-xs font-medium uppercase tracking-widest text-white transition-colors hover:bg-bark disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {!selectedVariant?.availableForSale
                     ? t('product.soldOut')

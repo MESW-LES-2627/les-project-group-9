@@ -40,6 +40,7 @@ npm run dev             # http://localhost:3000
 | `PUBLIC_STORE_DOMAIN` | `*.myshopify.com` domain, or `mock.shop` |
 | `PUBLIC_STOREFRONT_API_TOKEN`, `PRIVATE_STOREFRONT_API_TOKEN`, `PUBLIC_STOREFRONT_ID` | Storefront API access |
 | `PUBLIC_CUSTOMER_ACCOUNT_API_CLIENT_ID`, `PUBLIC_CUSTOMER_ACCOUNT_API_URL`, `SHOP_ID` | Customer Account API (login, `/account`) |
+| `PRIVATE_ADMIN_API_CLIENT_ID`, `PRIVATE_ADMIN_API_CLIENT_SECRET` or `PRIVATE_ADMIN_API_TOKEN` | Server-only Admin API access (`read_metaobjects`, `write_metaobjects`) for order ratings (US-058): a Dev Dashboard app's client credentials, or a legacy custom app's token. Optional: without them ratings show as unavailable. See [docs/architecture.md → Order ratings](docs/architecture.md#order-ratings-us-058) |
 | `PUBLIC_CHECKOUT_DOMAIN` | Checkout domain for analytics consent and the CSP. Read in `root.tsx` and `entry.server.tsx`, but missing from `.env.example` |
 
 With the Shopify CLI linked to the storefront, `npx shopify hydrogen env pull` fills `.env`.

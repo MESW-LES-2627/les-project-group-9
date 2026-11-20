@@ -12,7 +12,8 @@ import {useTranslation} from '~/lib/i18n';
 type RingSizes = Partial<Record<RingFinger, string>>;
 
 export function RingSizeForm() {
-  const {status, preferences, savePreferences} = useProfile();
+  const {status, preferences, preferencesVersion, savePreferences} =
+    useProfile();
   const t = useTranslation();
 
   return (
@@ -23,13 +24,14 @@ export function RingSizeForm() {
         href="https://www.ringsize.app/"
         target="_blank"
         rel="noreferrer"
-        className="mt-2 inline-block text-[11px] uppercase tracking-widest text-primary underline underline-offset-4 hover:text-ink"
+        className="mt-2 inline-block text-[11px] uppercase tracking-widest text-primary underline underline-offset-4 hover:text-bark"
       >
         {t('ring.howToMeasure')}
       </a>
 
       {status === 'ready' ? (
         <RingSizeFields
+          key={preferencesVersion}
           ringSizes={preferences?.ringSizes ?? {}}
           onSave={(ringSizes) => savePreferences({ringSizes})}
         />
@@ -119,7 +121,7 @@ export function RingSizeFields({
         <button
           type="submit"
           disabled={state === 'saving'}
-          className="bg-primary px-6 py-3 text-[11px] uppercase tracking-widest text-white transition-colors hover:bg-ink disabled:opacity-60"
+          className="bg-primary px-6 py-3 text-[11px] uppercase tracking-widest text-white transition-colors hover:bg-bark disabled:opacity-60"
         >
           {state === 'saving' ? t('common.saving') : t('ring.save')}
         </button>

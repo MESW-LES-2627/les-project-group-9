@@ -25,6 +25,7 @@ to Oxygen. This file holds the standing rules for every session. Details live in
 | `npm test` | Vitest: unit (node) and component (jsdom) projects |
 | `npm run test:e2e` | Playwright, desktop Chromium, against `npm run preview` |
 | `npm run codegen` | Regenerate GraphQL and route types |
+| `npm run test:staging:ratings` | Opt-in US-058 storage checks against a real staging store (never in CI; writes only with `RATINGS_STAGING_CONFIRM_WRITES`) |
 
 ## Verification before every commit
 
@@ -43,7 +44,7 @@ server.ts                  Oxygen worker entry: builds the Hydrogen context, han
 app/root.tsx               Root loader (header, footer, cart, login state), <html> layout, error boundary
 app/routes/                File-based routes (@react-router/fs-routes); api.* are JSON endpoints
 app/components/<group>/    UI grouped by area: account, cart, collections, fitting-room,
-                           layout, product, search, shared (+ RichText.tsx)
+                           layout, product, search, shared, try-on (+ RichText.tsx)
 app/lib/                   Domain logic and utilities (pure where possible)
   context.ts, session.ts, i18n.ts     Hydrogen context, cookie session, locale + translator
   messages/{en,pt,fr}.ts              UI dictionaries (en defines the keys)
@@ -51,9 +52,16 @@ app/lib/                   Domain logic and utilities (pure where possible)
   jeweliette-catalog.ts               Shared product fragments and catalog types
   profile/                            Favorites, fitting room, preferences (customer metafields)
   recommendation/                     Recommendation engine (pure) + candidate loader
+  try-on/                             Front-camera try-on: catalog gate, geometry, device detection
   search.ts                           Filter parsing shared by collections and search
+  ratings/                            Order ratings (US-058): delivery rule, validation,
+                                      eligibility loader, Admin API rating store
+  request-origin.server.ts            Same-origin check for cookie-authenticated writes
 app/graphql/customer-account/  Customer Account API documents
+app/graphql/admin/         Admin API documents (no codegen; server-only)
+app/assets/                logo.svg and models/face_landmarker.task (imported with `?url`)
 app/styles/tailwind.css    Tailwind 4 theme tokens (colors, fonts, breakpoints, shadows)
+public/                    Remaining static files (none required at runtime)
 tests/{unit,components,e2e}/
 docs/                      Technical and process documentation
 ```
