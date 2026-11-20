@@ -19,6 +19,22 @@ export default async function handleRequest(
       checkoutDomain: context.env.PUBLIC_CHECKOUT_DOMAIN,
       storeDomain: context.env.PUBLIC_STORE_DOMAIN,
     },
+    // The try-on compiles MediaPipe's WebAssembly in the browser.
+    // `'wasm-unsafe-eval'` is the scoped directive; `'unsafe-eval'` is the
+    // fallback for iOS Safari before 16.4, which does not know the former.
+    scriptSrc: [
+      "'self'",
+      "'wasm-unsafe-eval'",
+      "'unsafe-eval'",
+      'https://cdn.shopify.com',
+      'https://shopify.com',
+    ],
+    // Brand fonts are loaded from Google Fonts (see root.tsx). Hydrogen merges
+    // these with its defaults, so only the extra hosts are listed.
+    styleSrc: ['https://fonts.googleapis.com'],
+    fontSrc: ['https://fonts.gstatic.com', 'data:'],
+    // MediaPipe compiles its WASM in a worker on some Safari versions.
+    workerSrc: ["'self'", 'blob:'],
   });
 
   const body = await renderToReadableStream(

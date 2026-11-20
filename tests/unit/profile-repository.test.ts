@@ -9,7 +9,9 @@ import type {CustomerProfile} from '../../app/lib/profile/types';
 const CUSTOMER_ID = 'gid://shopify/Customer/1';
 const A = 'gid://shopify/Product/1';
 const B = 'gid://shopify/Product/2';
-const C = 'gid://shopify/Product/3';
+const VA = 'gid://shopify/ProductVariant/1';
+const VB = 'gid://shopify/ProductVariant/2';
+const VC = 'gid://shopify/ProductVariant/3';
 
 type Context = ConstructorParameters<typeof CustomerProfileRepository>[0];
 type Write = {
@@ -95,11 +97,11 @@ describe('ProfileField template method', () => {
 
   it('reads the fitting room, not the favorites, for the fitting room list', () => {
     const next = new FittingRoomList().nextValue(
-      profile({favorites: [A], fittingRoom: [C]}),
-      {add: [B]},
+      profile({favorites: [A], fittingRoom: [VC]}),
+      {add: [VB]},
     );
 
-    expect(JSON.parse(next)).toEqual([B, C]);
+    expect(JSON.parse(next)).toEqual([VB, VC]);
   });
 
   it('keeps preference fields that the change leaves out', () => {
@@ -129,15 +131,19 @@ describe('ProductIdList subclasses', () => {
   });
 
   it('apply the cap of their own list', () => {
-    const ids = Array.from(
+    const variants = Array.from(
+      {length: MAX_FITTING_ROOM + 1},
+      (_, index) => `gid://shopify/ProductVariant/${index + 1}`,
+    );
+    const products = Array.from(
       {length: MAX_FITTING_ROOM + 1},
       (_, index) => `gid://shopify/Product/${index + 1}`,
     );
 
-    expect(new FittingRoomList().parse(JSON.stringify(ids))).toHaveLength(
+    expect(new FittingRoomList().parse(JSON.stringify(variants))).toHaveLength(
       MAX_FITTING_ROOM,
     );
-    expect(new FavoritesList().parse(JSON.stringify(ids))).toHaveLength(
+    expect(new FavoritesList().parse(JSON.stringify(products))).toHaveLength(
       MAX_FITTING_ROOM + 1,
     );
   });

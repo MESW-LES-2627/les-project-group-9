@@ -11,7 +11,7 @@ import {useTranslation} from '~/lib/i18n';
 import {AddToBagGuard} from '~/components/product/AddToBagGuard';
 import {RingSizeHelp} from '~/components/product/RingSizeHelp';
 import {ProductCustomization} from '~/components/product/ProductCustomization';
-import {isColorOption} from '~/lib/options';
+import {isColorOption, isSizeOption} from '~/lib/options';
 import {
   customizationAttributes,
   initialCustomizationChoice,
@@ -155,7 +155,7 @@ export function ProductForm({
                 })}
               </div>
 
-              {isRing && /^size$/i.test(option.name) ? <RingSizeHelp /> : null}
+              {isRing && isSizeOption(option.name) ? <RingSizeHelp /> : null}
             </fieldset>
           );
         })}

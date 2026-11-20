@@ -17,6 +17,7 @@ import {ProductItem} from '~/components/product/ProductItem';
 import {AllergenBadge} from '~/components/product/AllergenBadge';
 import {FavoriteButton} from '~/components/product/FavoriteButton';
 import {FittingRoomButton} from '~/components/product/FittingRoomButton';
+import {TryOnSection} from '~/components/product/TryOnSection';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 import {
   JEWELIETTE_MATERIAL_METAFIELD_FRAGMENT,
@@ -24,12 +25,15 @@ import {
   formatMetafieldValue,
 } from '~/lib/jeweliette-catalog';
 import {materialsForColor, parseProductMaterials} from '~/lib/materials';
+import {hasHtmlContent} from '~/lib/html';
 import {isColorOption} from '~/lib/options';
 import {isRingProduct} from '~/lib/profile/ringCategory';
 import {
   PRODUCT_CUSTOMIZATION_FRAGMENT,
   parseProductCustomization,
 } from '~/lib/customization';
+import {resolveTryOn} from '~/lib/try-on/catalog';
+import {isMobileRequest} from '~/lib/try-on/device';
 
 export const meta: Route.MetaFunction = ({data, matches}) => [
   {
@@ -56,6 +60,7 @@ export async function loader(args: Route.LoaderArgs) {
     product,
     customization: parseProductCustomization(product),
     recommendations,
+    isMobile: isMobileRequest(args.request),
   };
 }
 
@@ -77,7 +82,7 @@ async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
 }
 
 export default function Product() {
-  const {product, customization, recommendations} =
+  const {product, customization, recommendations, isMobile} =
     useLoaderData<typeof loader>();
   const t = useTranslation();
 
@@ -87,6 +92,9 @@ export default function Product() {
   );
 
   useSelectedOptionInUrlParam(selectedVariant.selectedOptions);
+
+  // Try-on is per variant: only the selected colour may have an overlay.
+  const tryOn = resolveTryOn(product, selectedVariant);
 
   const productOptions = getProductOptions({
     ...product,
@@ -118,6 +126,8 @@ export default function Product() {
       value: formatMetafieldValue(item.value),
     }))
     .filter((item) => item.value !== '');
+
+  const hasDescription = hasHtmlContent(product.descriptionHtml);
 
   return (
     <div className="mx-auto max-w-[1280px] px-[4vw] pb-20 pt-6">
@@ -152,7 +162,10 @@ export default function Product() {
           title={product.title}
         />
 
-        <div className="lg:sticky lg:top-24 lg:self-start">
+        <div
+          className="lg:sticky lg:top-24 lg:self-start"
+          data-selected-variant-id={selectedVariant?.id}
+        >
           <AllergenBadge allergens={product.allergens} className="mb-3" />
 
           <div className="mt-3 flex items-start justify-between gap-4">
@@ -161,7 +174,11 @@ export default function Product() {
             </h1>
             <div className="flex items-center gap-2">
               <FavoriteButton productId={product.id} title={product.title} />
-              <FittingRoomButton productId={product.id} title={product.title} />
+              <FittingRoomButton
+                canTryOn={tryOn !== null}
+                title={product.title}
+                variantId={selectedVariant.id}
+              />
             </div>
           </div>
 
@@ -184,22 +201,32 @@ export default function Product() {
             />
           </div>
 
+          {tryOn ? (
+            <TryOnSection
+              isMobile={isMobile}
+              piece={tryOn}
+              title={product.title}
+            />
+          ) : null}
+
           <div className="mt-10 divide-y divide-line border-y border-line text-sm">
-            <details open className="group py-4">
-              <summary className="flex cursor-pointer list-none items-center justify-between text-[11px] uppercase tracking-widest [&::-webkit-details-marker]:hidden">
-                {t('product.description')}
-                <span aria-hidden="true" className="group-open:hidden">
-                  +
-                </span>
-                <span aria-hidden="true" className="hidden group-open:inline">
-                  −
-                </span>
-              </summary>
-              <div
-                className="prose-sm mt-4 leading-7 text-primary [&_p]:mb-3"
-                dangerouslySetInnerHTML={{__html: product.descriptionHtml}}
-              />
-            </details>
+            {hasDescription ? (
+              <details open className="group py-4">
+                <summary className="flex cursor-pointer list-none items-center justify-between text-[11px] uppercase tracking-widest [&::-webkit-details-marker]:hidden">
+                  {t('product.description')}
+                  <span aria-hidden="true" className="group-open:hidden">
+                    +
+                  </span>
+                  <span aria-hidden="true" className="hidden group-open:inline">
+                    −
+                  </span>
+                </summary>
+                <div
+                  className="prose-sm mt-4 leading-7 text-primary [&_p]:mb-3"
+                  dangerouslySetInnerHTML={{__html: product.descriptionHtml}}
+                />
+              </details>
+            ) : null}
 
             {productDetails.length > 0 ? (
               <details className="group py-4">
@@ -314,6 +341,13 @@ const PRODUCT_VARIANT_FRAGMENT = `#graphql
     sku
     title
     unitPrice { amount currencyCode }
+    tryOnOverlay: metafield(namespace: "custom", key: "try_on_overlay") {
+      reference {
+        ... on MediaImage { image { url } }
+        ... on GenericFile { url }
+      }
+    }
+    tryOnSize: metafield(namespace: "custom", key: "try_on_size_cm") { value }
   }
 ` as const;
 

@@ -47,6 +47,7 @@ vi.mock('~/lib/profile/useAllergenMatches', () => ({
 import {FittingRoomView} from '~/components/fitting-room/FittingRoomView';
 import {ProductItem} from '~/components/product/ProductItem';
 import {LocaleContext, toAppLocale, type LocaleCode} from '~/lib/i18n';
+import type {FittingRoomPiece} from '~/lib/profile/fitting-room';
 
 const LANGUAGE = {en: 'EN', pt: 'PT_PT', fr: 'FR'} as const;
 const NBSP = String.fromCodePoint(0xa0);
@@ -131,41 +132,91 @@ describe('ProductItem in each language', () => {
 });
 
 describe('FittingRoomView in each language', () => {
-  const pieces: CatalogProduct[] = [
-    product,
-    {...product, id: 'gid://shopify/Product/2', handle: 'second'},
+  function piece(
+    variantId: string,
+    title: string,
+    withModel = true,
+  ): FittingRoomPiece {
+    return {
+      variantId,
+      product: {
+        ...product,
+        id: `gid://shopify/Product/${variantId.split('/').at(-1)}`,
+      },
+      image: product.featuredImage ?? null,
+      variantTitle: 'Default Title',
+      price: {amount: '49.00', currencyCode: 'EUR'},
+      available: true,
+      tryOn: withModel
+        ? {
+            id: variantId,
+            kind: 'necklace',
+            overlayUrl: `https://cdn.example/${title}.png?cors=1`,
+            sizeCm: 16,
+          }
+        : null,
+    };
+  }
+
+  const pieces: FittingRoomPiece[] = [
+    piece('gid://shopify/ProductVariant/1', 'aura-bracelet', false),
+    piece('gid://shopify/ProductVariant/2', 'second'),
   ];
 
   function renderView(code: LocaleCode, selectedIds: string[]) {
     return inLocale(
       code,
       <FittingRoomView
+        isMobile={false}
         movingId={null}
         onClear={vi.fn()}
         onMoveToCart={vi.fn()}
         onRemove={vi.fn()}
         onSelectAll={vi.fn()}
         onToggle={vi.fn()}
-        products={pieces}
+        pieces={pieces}
         selectedIds={selectedIds}
       />,
     );
   }
 
   it.each([
-    ['en', '2 pieces', '1 piece ready to try', 'Virtual try-on'],
-    ['pt', '2 peças', '1 peça pronta a experimentar', 'Prova virtual'],
-    ['fr', '2 pièces', '1 pièce prête à essayer', 'Essayage virtuel'],
+    [
+      'en',
+      '2 pieces',
+      '1 piece ready to try',
+      'Virtual try-on',
+      'No 3D',
+      'Try on the look',
+    ],
+    [
+      'pt',
+      '2 peças',
+      '1 peça pronta a experimentar',
+      'Prova virtual',
+      'Sem 3D',
+      'Experimentar o visual',
+    ],
+    [
+      'fr',
+      '2 pièces',
+      '1 pièce prête à essayer',
+      'Essayage virtuel',
+      'Sans 3D',
+      'Essayer le look',
+    ],
   ] as const)(
-    '%s: plural counts and the try-on placeholder',
-    (code, count, ready, tryOn) => {
-      renderView(code, [pieces[0].id]);
+    '%s: plural counts, the look builder and the No 3D marker',
+    (code, count, ready, tryOn, no3d, tryOnLook) => {
+      renderView(code, [pieces[1].variantId]);
 
       expect(screen.getByText(count)).toBeInTheDocument();
       expect(screen.getByText(ready)).toBeInTheDocument();
       expect(
         screen.getByRole('complementary', {name: tryOn}),
       ).toBeInTheDocument();
+      expect(screen.getByText(no3d)).toBeInTheDocument();
+      expect(screen.getByRole('button', {name: tryOnLook})).toBeInTheDocument();
     },
   );
 });

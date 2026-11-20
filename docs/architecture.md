@@ -127,7 +127,10 @@ Request
 - **Metafield parsing**: `app/lib/metafields.ts` (normalise text/list metafields),
   `app/lib/materials.ts` (material metaobjects), `app/lib/allergens.ts`,
   `app/lib/customization.ts` (customization options, see below),
-  `formatMetafieldValue()` (display list metafields as comma-separated text).
+  `formatMetafieldValue()` (display list metafields as comma-separated text, and treat
+  `null`/`undefined` sentinels as empty). The product page hides the Description, Details and
+  Materials sections when they have no content (whitespace/`&nbsp;`-only HTML, empty lists),
+  so an empty metafield never renders an empty accordion.
 - `app/lib/products.server.ts`: `loadProductsByIds()` loads product cards for a list of
   GIDs (`nodes(ids:)`), used by favorites and the fitting room.
 
@@ -194,7 +197,7 @@ metafields (namespace `custom`) through the Customer Account API.
 | Metafield | Parser / limits | Endpoint |
 | --- | --- | --- |
 | `custom.favorites` | `profile/schema.ts`, max 500 GIDs | `POST /api/profile/favorites` `{add?, remove?}` |
-| `custom.fitting_room` | `profile/fitting-room.ts`, max 50 GIDs | `POST /api/profile/fitting-room` `{add?, remove?}` |
+| `custom.fitting_room` | `profile/fitting-room.ts`, max 50 **variant** GIDs (one per colourway) | `POST /api/profile/fitting-room` `{add?, remove?}` |
 | `custom.preferences` | `profile/preferences.ts` (allergies, skin tone/undertone, ring sizes per finger, preferred materials/colours/gemstones) | `POST /api/profile/preferences` |
 
 - **Fields** (Template Method): each metafield is a `ProfileField` subclass
@@ -215,16 +218,156 @@ metafields (namespace `custom`) through the Customer Account API.
   once on mount and exposes optimistic toggles. If a write returns 401, it reloads the profile.
   `useFavorites()` (`lib/favorites.ts`) and `useFittingRoom()` (`lib/fitting-room.ts`)
   are thin views over it.
+- **Fitting-room gate** — the fitting room exists to try pieces on and stores **variant
+  GIDs** (one entry per colourway), so a clear and a pink variant can live side by side.
+  Only variants with try-on data (`resolveTryOn(product, variant)`, i.e. Earrings/Necklaces
+  with a transparent overlay on the variant) can enter: the product page hides the hanger
+  otherwise (`FittingRoomButton canTryOn`) and `POST /api/profile/fitting-room` validates
+  the added variant ids against the Storefront API (400 with an error code otherwise).
+  Sold-out variants may be viewed and tried on; only Move to cart is disabled. Removal is
+  always allowed. Entries that stop being eligible (overlay removed, category changed,
+  product unpublished) are **pruned when the profile loads** (`pruneFittingRoom` in
+  `lib/profile/fitting-room-gate.server.ts`), and legacy product GIDs simply stop parsing
+  into the variant list, so old entries disappear immediately. The prune is skipped when a
+  variant still has an overlay but no recognised category: that is the signature of a
+  catalogue/localization regression, and deleting the shopper's wardrobe would be worse than
+  keeping an entry that cannot be tried on. If an unsupported entry still reaches the page
+  (for example the overlay changed between the prune and the load), the loader returns it
+  with `tryOn: null` and the view lists it with a **No 3D** marker instead of hiding it; it
+  cannot be selected for a look.
 - **Pages**: `/favorites` and `/fitting-room` render client-side. They call their own loader with
-  `?ids=` from the profile state (`useFetcher`), and the loader returns product cards via
-  `loadProductsByIds`. The `fitting-room` action moves a piece to the cart and removes it
-  from the fitting room.
-- **Fitting room view** (`components/fitting-room/FittingRoomView.tsx`) contains a "Virtual
-  try-on" panel that is currently a placeholder ("coming soon").
+  `?ids=` from the profile state (`useFetcher`); favorites load product cards via
+  `loadProductsByIds`, the fitting room loads variant entries via `loadVariantsByIds`
+  (`lib/variants.server.ts`). The `fitting-room` action adds the **stored variant** to the
+  cart and removes it from the fitting room.
+- **Fitting room view** (`components/fitting-room/FittingRoomView.tsx`) lists one row per
+  **variant** (product title + colour, variant image and price): rows can be selected,
+  moved to the cart or removed, and sold-out rows keep Move to cart disabled. Selection is
+  explicit (nothing is selected on open); the checkboxes feed the look builder on the right,
+  and pieces without a model are disabled and marked **No 3D**. The look builder shows the
+  selected pieces and one **Try on the look** action (`FittingRoomLookTryOn.tsx`) that opens
+  a single try-on session with every selected piece that has an overlay. The look link
+  carries the selected variant ids (`lookTryOnLink`), so the desktop QR reproduces the same
+  set on the phone.
 - **Allergens**: `useAllergenMatches()` compares product allergens with the customer's
   allergies. `AllergenBadge` and `AddToBagGuard` (a confirm dialog before adding) use it.
 - **Ring sizes**: `RingSizeForm` (account) and `RingSizeHelp` (product page, ring products
   only; `profile/ringCategory.ts`).
+
+## Front-camera try-on
+
+A shopper can try earrings and necklaces on with the phone camera (US-017). It is not AR
+surface placement: the piece is drawn on a live selfie face.
+
+- **Gate** — `app/lib/try-on/catalog.ts`: the product's taxonomy category must be
+  **Earrings** or **Necklaces** **and the selected variant** must have `custom.try_on_overlay`
+  (a transparent PNG in Files). The category is matched by its taxonomy GID
+  (`app/lib/taxonomy.ts`), not by `category.name`, because Shopify localises the name
+  (`Earrings` → `Brincos` → `Boucles d’oreilles`); the English name is only a fallback when
+  a caller has no id. There is no product-level fallback: colours are independent, so
+  a product whose clear variant has an overlay and whose pink variant does not shows Try on
+  (and the hanger) only for clear. `custom.try_on_size_cm` on the variant sets the piece's
+  real width (default 2 cm earrings, 16 cm necklaces). Overlay URLs are loaded with
+  `?cors=1` (`try-on/url.ts`) so the product page's cached `<img>` cannot taint the canvas.
+  The page derives the piece from the **optimistic** selected variant, so the buttons swap
+  the instant a swatch is tapped.
+- **True size** — the necklace is scaled against the shopper's estimated **shoulder
+  width** (`38 cm ÷ 14.5 cm` face ratio, since the FaceLandmarker has no shoulder
+  landmarks), the earrings against the face width, so both keep their real proportions.
+  The number cannot be derived from the image, so `custom.try_on_size_cm` must be the real
+  width of the **trimmed cut-out** (a pendant-only cut-out is a few centimetres; a cut-out
+  that includes the whole chain is ~40 cm). The size lives on the variant together with the
+  overlay, so each colour is calibrated independently. Shoppers can still drag/resize in
+  photo mode.
+- **Device** — `try-on/device.ts` reads `Sec-CH-UA-Mobile` then the user agent in the
+  product loader; phones open the camera dialog and computers the QR dialog. iPadOS's
+  desktop user agent is refined client-side with `maxTouchPoints`.
+- **Runtime** — `@mediapipe/tasks-vision` (FaceLandmarker, 478 landmarks) is imported
+  lazily when the dialog opens. The classic loader (`vision_wasm_internal.js`), the WASM
+  binary and the model (`app/assets/models/face_landmarker.task`) are imported with Vite's
+  `?url` (`app/lib/try-on/assets.ts`), so Vite emits them under hashed `/assets/…` names
+  next to the app's JS/CSS and Oxygen serves them with the right MIME type and an immutable
+  cache. They used to be unversioned `public/` files; the Oxygen deployment answered a
+  missing public path with its HTML 404 page, which aborts the WASM fetch with
+  `both async and sync fetching of the wasm failed`. The dialog tries the GPU delegate and
+  falls back to CPU. The **classic** loader is used (`vision_wasm_internal.js`, passed to
+  `FaceLandmarker.createFromOptions()` in an explicit fileset): the ES-module variant is
+  evaluated as a classic script and fails at runtime with `ModuleFactory not set.` The camera
+  is requested **inside the shopper's tap** (`requestCamera()` is called from the button
+  handler, before React updates): iOS
+  Safari ties `getUserMedia` to the user gesture, so a request from an effect can be silently
+  refused. QR deep links have no gesture, so they open the dialog with an "Open camera"
+  button; `cameraSupport()` catches in-app browsers without `getUserMedia` and non-HTTPS
+  pages. `attachCameraStream` attaches the stream to the **visible** `<video>` preview and
+  starts playback without awaiting it (Safari can leave `play()` pending and then release
+  the camera); an `AbortError` is retried once after `canplay`, and a track that ends is
+  reported so the dialog can offer a retry. **The preview is the video element** — iOS
+  releases the camera of a hidden one — and the piece is painted on a transparent canvas on
+  top (`drawOverlays`); the landmarker joins later and the status reads `preparing` until
+  then, because the WASM download would otherwise delay the camera by several seconds.
+  `try-on/preload.ts` warms the WASM, the model and the JS chunk on idle on phones (and on
+  hover/focus on desktop) **and compiles the shared landmarker** before the tap
+  (`getFaceDetector()` caches one instance for the page, closed on `pagehide`), so opening
+  the dialog only starts the camera. The CSP in `app/entry.server.tsx` allows
+  `'wasm-unsafe-eval'` in `script-src` and `'self' blob:` in `worker-src` (MediaPipe
+  compiles in a worker on some Safari versions). `attachCameraStream` sets
+  `playsinline`/`webkit-playsinline`/`muted` **before** `srcObject`; the modal defers the
+  camera release by one tick so React StrictMode's simulated unmount does not stop and
+  reopen the hardware camera. When the camera or the WASM fails, the banner shows the
+  translated message **plus the raw `Name: message`** so a phone can report the cause. A
+  failed landmarker creation probes the three asset URLs (HTTP status and content type) and
+  logs the result, and the banner's detail includes the short summary, so a deployment that
+  serves HTML instead of the WASM is identifiable without a debugger.
+- **Geometry** (`try-on/anchors.ts`, pure, pixel space): earrings are top-centre anchored at
+  landmarks 177/401, pushed outwards to the lobe by `EAR_OUTWARD_RATIO` (4 % of the face
+  width, along the face's lateral axis) and lifted along the face's vertical axis by
+  `EAR_LOBE_LIFT_RATIO` (3 % of the face width), since the mesh's cheek point sits below the
+  lobe; the ear with the smaller
+  `|earX − noseX|` is hidden when the head turns (3-frame hysteresis). Necklaces anchor their
+  **top centre** at the neck base (0.18 face widths below the chin) and are masked by
+  MediaPipe's face oval (`evenodd`), so the chain arcs around the neck and never crosses the
+  face. Jitter is
+  handled in three layers: a 3-sample weighted anchor buffer (0.5/0.3/0.2, ~66 ms) rejects
+  one-frame landmark spikes, an exponential filter removes the rest (90 ms; 130 ms for the
+  necklace, whose chin/chest anchor is noisier), and a large jump is clamped to 15 % of the
+  reference width per frame instead of teleporting. When the face is briefly lost the last
+  placement is kept for 250 ms so the piece does not flicker. `try-on/frame.ts` turns one
+  landmark set into **all the overlays of a look**: necklaces are planned first (longest
+  first, so shorter chains sit on top), then every earring. Each planned overlay carries its
+  piece id, slot (`earA`, `earB`, `necklace`) and its own smoothing reference width (face for
+  earrings, shoulders for necklaces), so mixed looks filter correctly. Multiple earrings of
+  the same ear are **stacked**: the first sits on the lobe and each next one is lifted by
+  `EAR_STACK_GAP_RATIO` (5.5 % of the face width) along the face's vertical axis, simulating
+  several piercings without any catalog change. `try-on/render.ts` paints each layer with its
+  own PNG on the transparent canvas (and the full frame for photos).
+- **Many pieces** — `TryOnPiece` carries the variant id, and the dialog takes `pieces[]`.
+  `loadTryOnOverlays()` fetches every PNG in parallel and drops a piece whose overlay is
+  opaque or cannot load, so one bad file does not block the rest of the look; when nothing is
+  usable the dialog shows the unavailable/failure message. `CameraStage` and `PhotoFallback`
+  read the loaded pieces from props/refs, key their smoothing state by `id:slot` and never
+  restart the camera when another piece joins.
+- **Photo fallback** — `PhotoFallback` decodes a picked image, switches the landmarker to
+  `IMAGE` mode and composes the same overlays. Nothing is uploaded; the camera and photos
+  stay in the browser. The composed look can be dragged (pointer or arrow keys) and resized
+  with the − / + buttons, and "Reset position" returns to the face-based placement; this
+  covers poses, crops and necklace lengths the automatic anchor cannot know. The overlay is
+  checked for real transparency client-side (`try-on/overlay.ts`); an opaque PNG shows
+  "not available" instead of a rectangle.
+- **UI** — `components/try-on/TryOnLauncher.tsx` owns the shared entry-point behaviour
+  (camera/QR mode, preloading every overlay, the camera request inside the tap, and the
+  `?tryOn=1` deep link). `components/product/TryOnSection.tsx` renders the product block
+  below Add to bag and `TryOnButton` is a thin launcher wrapper for one piece. The fitting
+  room uses the same launcher for the **whole selected look** (`FittingRoomLookTryOn.tsx`);
+  its QR link includes the selected variant ids, so scanning it preselects the same pieces
+  on the phone. The dialog title and copy switch between the single-piece product strings
+  and `tryOn.look*` when no product title is passed. The PNGs are preloaded and cached
+  (`try-on/overlay.ts`) while the shopper browses, the dialog shows the live preview as soon
+  as the stream is ready, and the pieces join when the PNGs and landmarker arrive — neither
+  restarts the camera (the stages read them from refs). A skeleton block is rendered during
+  the initial permission handshake. A `?tryOn=1` link opens the dialog after a QR scan and is
+  then removed from the URL.
+- **Copy** — `product.tryOn*` and `tryOn.*` keys in all three dictionaries.
+
 
 ## Recommendation engine
 
@@ -617,6 +760,7 @@ See [testing.md](testing.md). In short:
 | Add a product trait for recommendations | `JEWELIETTE_RECOMMENDATION_PRODUCT_FRAGMENT`, `recommendation/types.ts`, `traits.ts`, `weights.ts`, `signals.ts`, plus tests. |
 | Add a catalog filter | Shopify admin (Search & Discovery filters). If it needs a new filter key, extend `allowedKeys` in `readCatalogFilters()` (`app/lib/search.ts`). UI changes go in `CatalogFilters.tsx`. |
 | Add a sort option | `SORT_OPTIONS` in `app/routes/collections.$handle.tsx`. |
+| Change the try-on gate or overlay | `app/lib/try-on/catalog.ts` (supported categories, the variant's `custom.try_on_overlay` PNG, `custom.try_on_size_cm`); variant/product loading in `app/lib/variants.server.ts`; geometry in `app/lib/try-on/anchors.ts`; MediaPipe assets in `app/lib/try-on/assets.ts` (the model lives in `app/assets/models/`). |
 | Change product customization options | Metafield definitions in the Shopify admin (see [Product customization](#product-customization)); rules in `app/lib/customization.ts`; cart check in `app/lib/customization.server.ts`; UI in `components/product/ProductCustomization.tsx`, `ProductForm.tsx` and `cart/CartLineItem.tsx`. |
 | Change order ratings | Rules in `app/lib/ratings/` (`delivery.ts`, `rating.ts`), Shopify access in `order-eligibility.server.ts` and `rating-store.server.ts`, endpoint `routes/api.order-ratings.tsx`, UI `components/account/OrderRatings.tsx`. See [Order ratings](#order-ratings-us-058). |
 | Add a customer preference | `PreferenceProfile` (`profile/types.ts`), `profile/preferences.ts` (normalise/parse), `PreferencesForm.tsx`, tests. |
@@ -644,7 +788,7 @@ has been decided.
 | 7 | The root font size is 14px, so inputs styled `text-base` render at 14px. iOS Safari zooms on focus for inputs below 16px; this zoom was not tested on a device (**unverified**). | `app/styles/tailwind.css` | US-048 (another team member) |
 | 8 | Touch targets below 44px. Header favorites and fitting-room links are `h-10 w-10`. Because spacing is `rem`-based and the root is 14px, the codebase-wide `size-11`/`min-h-11` targets compute to 38.5px, and `h-10` to 35px (calculated from the CSS, not measured in a browser). | `components/layout/Header.tsx`, `app/styles/tailwind.css` | US-048 (another team member). The new language selector uses explicit 44px targets (US-046). |
 | 9 | Playwright has only a desktop Chromium project. Phone-sized viewports are set per test in `footer.spec.ts` (375px) and, for the header and language selector only, `header.spec.ts` and `language.spec.ts` (US-046). Other flows are not tested on a phone-sized screen. | `playwright.config.ts`, `tests/e2e/` | US-048 (another team member) |
-| 10 | No 3D or customisation components exist. Virtual try-on is a placeholder panel in `FittingRoomView`. | grep | Information |
+| 10 | ~~The fitting room's virtual try-on panel is still a placeholder.~~ Resolved in US-017/US-021: the panel is a look builder; the selected pieces open one camera/QR session, the desktop QR carries their variant ids, and pieces without a model are marked "No 3D" (`app/lib/try-on/`, `app/components/try-on/`, `components/fitting-room/`). | `app/lib/try-on/`, `components/fitting-room/` | US-021 |
 | 11 | `api.profile.tsx` redefines `NO_STORE`, identical to the one exported by `lib/profile/operation.server.ts`. | source | Proposed cleanup |
 | 12 | Comments in `app/lib/context.ts` and `react-router.config.ts` mention React Router 7.9.x; the installed version is 7.16.0. | source, `package.json` | Proposed cleanup |
 | 13 | CI (`test.yml`) does not run `npm run build`. The Oxygen workflow deploys on every push to any branch. | `.github/workflows/` | Information |
