@@ -112,10 +112,12 @@ export type RatingKey = {
 };
 
 /**
- * Deterministic metaobject handle for a rating key. Shopify keeps handles
- * unique within a metaobject type, so this handle is what limits a customer
- * to one rating per order and product. Hashing keeps customer and order IDs
- * out of the handle.
+ * Deterministic storage key (metaobject handle) for a rating key: the same
+ * customer, order and product always give the same handle, which is how the
+ * store asks Shopify for one record per key (whether Shopify enforces that for
+ * explicit handles is covered in docs/architecture.md → Storage). The SHA-256
+ * only gives a fixed-length, handle-safe key; it is not a privacy measure, as
+ * the record's fields store the IDs and the hash of known IDs can be recomputed.
  */
 export async function ratingHandle(key: RatingKey): Promise<string> {
   const input = new TextEncoder().encode(
