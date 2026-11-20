@@ -407,6 +407,28 @@ export const en = {
   'order.status': 'Status',
   'order.statusNone': 'Not available',
   'order.viewStatus': 'View order status',
+  'rating.heading': 'Rate your pieces',
+  'rating.intro':
+    'Give each piece in this order a rating from 1 to 5 stars.',
+  'rating.final': 'A rating cannot be changed after you submit it.',
+  'rating.loading': 'Checking whether this order can be rated…',
+  'rating.notDelivered':
+    'You can rate the pieces in this order once the whole order has been delivered.',
+  'rating.noProducts': 'There are no pieces in this order that can be rated.',
+  'rating.unavailable': 'Ratings are not available at the moment.',
+  'rating.verificationError':
+    "We couldn't check this order's delivery right now. Please try again later.",
+  'rating.loadError':
+    "We couldn't load your ratings right now. Please try again later.",
+  'rating.legend': 'Your rating for {product}',
+  'rating.star': {one: '{count} star', other: '{count} stars'},
+  'rating.submit': 'Submit rating',
+  'rating.submitting': 'Saving your rating…',
+  'rating.yours': 'Your rating: {value} out of 5',
+  'rating.saved': 'Thank you. Your rating has been saved.',
+  'rating.error.alreadyRated': 'You have already rated this piece.',
+  'rating.error.signIn': 'Your session has ended. Sign in again to rate this piece.',
+  'rating.error.save': "We couldn't save your rating. Please try again.",
   'order.financial.AUTHORIZED': 'Authorized',
   'order.financial.EXPIRED': 'Expired',
   'order.financial.PAID': 'Paid',

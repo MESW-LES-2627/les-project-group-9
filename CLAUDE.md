@@ -25,6 +25,7 @@ to Oxygen. This file holds the standing rules for every session. Details live in
 | `npm test` | Vitest: unit (node) and component (jsdom) projects |
 | `npm run test:e2e` | Playwright, desktop Chromium, against `npm run preview` |
 | `npm run codegen` | Regenerate GraphQL and route types |
+| `npm run test:staging:ratings` | Opt-in US-058 storage checks against a real staging store (never in CI; writes only with `RATINGS_STAGING_CONFIRM_WRITES`) |
 
 ## Verification before every commit
 
@@ -53,7 +54,11 @@ app/lib/                   Domain logic and utilities (pure where possible)
   recommendation/                     Recommendation engine (pure) + candidate loader
   try-on/                             Front-camera try-on: catalog gate, geometry, device detection
   search.ts                           Filter parsing shared by collections and search
+  ratings/                            Order ratings (US-058): delivery rule, validation,
+                                      eligibility loader, Admin API rating store
+  request-origin.server.ts            Same-origin check for cookie-authenticated writes
 app/graphql/customer-account/  Customer Account API documents
+app/graphql/admin/         Admin API documents (no codegen; server-only)
 app/assets/                logo.svg and models/face_landmarker.task (imported with `?url`)
 app/styles/tailwind.css    Tailwind 4 theme tokens (colors, fonts, breakpoints, shadows)
 public/                    Remaining static files (none required at runtime)

@@ -8,6 +8,7 @@ the code; anything that was not is marked **unverified**.
 - [Routing](#routing)
 - [Shopify APIs and GraphQL](#shopify-apis-and-graphql)
 - [Product customization](#product-customization)
+- [Order ratings (US-058)](#order-ratings-us-058)
 - [Session and cart](#session-and-cart)
 - [Customer profile: favorites, fitting room, preferences](#customer-profile-favorites-fitting-room-preferences)
 - [Recommendation engine](#recommendation-engine)
@@ -53,6 +54,8 @@ Request
    the session, `i18n` and the cart fragment (`CART_QUERY_FRAGMENT` from
    `app/lib/fragments.ts`). It augments `HydrogenCustomCartFragment` so cart calls return the
    codegen'd cart type. `additionalContext` is empty. `SESSION_SECRET` is required.
+   The Admin API rating store is created per request from `context.env`
+   (`createRatingStore()`), not added to the context.
 3. **`app/root.tsx`**
    - `loader`: awaits the `Header` query (shop + `main-menu`). The `Footer` query (`footer`
      menu), `cart.get()` and `customerAccount.isLoggedIn()` are returned as promises
@@ -89,7 +92,7 @@ Request
 | Customer | `account` (layout), `account._index`, `account.profile`, `account.addresses`, `account.orders._index`, `account.orders.$id`, `account.$`, `account_.login`, `account_.authorize`, `account_.logout` |
 | Personal | `favorites`, `fitting-room` |
 | Language | `locale` (POST only: sets the language cookie and redirects back) |
-| JSON API | `api.profile`, `api.profile.favorites`, `api.profile.fitting-room`, `api.profile.preferences`, `api.recommendations` |
+| JSON API | `api.profile`, `api.profile.favorites`, `api.profile.fitting-room`, `api.profile.preferences`, `api.recommendations`, `api.order-ratings` (POST only, US-058) |
 | Content | `pages.$handle`, `policies._index`, `policies.$handle`, `blogs._index`, `blogs.$blogHandle._index`, `blogs.$blogHandle.$articleHandle` |
 | SEO | `[robots.txt]`, `[sitemap.xml]`, `sitemap.$type.$page[.xml]` |
 | Fallback | `$` (404) |
@@ -99,6 +102,10 @@ Request
 - **Storefront API**: products, collections, menus, search, pages, policies, blogs, cart.
   Documents are `#graphql` template strings next to the loader that uses them (in the route
   file or an `app/lib/*.ts` module).
+- **Admin API** (US-058 ratings only): server-side `fetch` in
+  `app/lib/ratings/rating-store.server.ts`, documents in `app/graphql/admin/` (no codegen
+  project, so they carry no `#graphql` tag and responses are checked by hand). Needs
+  `PRIVATE_ADMIN_API_CLIENT_ID`/`PRIVATE_ADMIN_API_CLIENT_SECRET` or `PRIVATE_ADMIN_API_TOKEN`.
 - **Customer Account API**: documents live in `app/graphql/customer-account/`. They are
   a separate codegen project (see `.graphqlrc.ts`). Account routes call
   `customerAccount.handleAuthStatus()` (or use the `account` layout loader) before querying.
@@ -431,6 +438,307 @@ with the active locale. Shopify content is translated in the Shopify admin (see
 - Icons: `components/shared/Icon.tsx` (inline SVG set). Prices: `components/shared/Money.tsx`
   (locale-aware; use it instead of Hydrogen's `<Money>`).
 
+## Order ratings (US-058)
+
+A signed-in shopper gives each distinct product of a **fully delivered** order a 1–5 star
+rating from the order page (`/account/orders/:id`). A rating is final: it can be read back
+but never changed, replaced or deleted by the storefront.
+
+### Approved rules and requirement clarification
+
+The project owner approved these rules on 2026-11-20 to resolve "Verified-buyer rule to
+confirm (see Q2)" in issue #79. Q2 itself is not written down in the issue or in this
+repository; the decision below is the reference.
+
+- **Entry point:** the order-detail page in the Hydrogen account area. The original
+  acceptance criterion says "when I open its page" (the product page); the owner approved
+  the order page instead. The product page has **no** rating control, and the issue text was
+  not changed.
+- **Who:** only a signed-in customer. Identity comes from the Customer Account session on
+  the server; customer IDs, emails or "verified" flags sent by the browser are ignored. The
+  order must be one that Shopify returns for that customer's account when the rating is
+  made (Shopify returns `null` for anyone else's order). There is no email matching.
+- **When:** only after the **whole order** is confirmed delivered (predicate below).
+  Payment status, refunds and returns are **not** part of the rule: they are neither
+  queried nor checked, a later return or refund does not remove the right to rate, and it
+  does not change or delete a saved rating.
+- **What:** exactly one rating per customer + order + distinct product (grouped by Shopify
+  product ID; several units or variants of a product give one rating). The same product in
+  another delivered order can be rated again for that order. Lines without a product ID
+  (deleted products, custom items) cannot be rated.
+- **Out of scope (later stories):** comments (US-059), showing ratings or averages to other
+  shoppers (US-060), sorting/filtering (US-061), moderation (US-062), store feedback
+  (US-063). No `reviews.rating`/`reviews.rating_count` metafields are written.
+
+### Delivery predicate
+
+`isOrderFullyDelivered()` (`app/lib/ratings/delivery.ts`), from Customer Account API data:
+
+1. `Order.fulfillmentStatus` is `FULFILLED` (necessary, not sufficient), and
+2. every line item with a quantity is covered, unit for unit, by fulfillments whose
+   `status` is `SUCCESS` **and** whose `latestShipmentStatus` is `DELIVERED`
+   (`fulfillmentLineItems.quantity` summed per line, so split shipments count only when
+   each one is delivered).
+
+Not accepted as delivery: `FULFILLED` alone, a `SUCCESS` fulfillment without a shipment
+status, tracking information, estimated delivery dates, elapsed time, `PICKED_UP` (local
+pickup) and any other shipment status. Missing quantities count as zero. Fulfillments that
+are cancelled, failed, pending or open add nothing, so a split order stays locked until
+every shipment holding one of its units is delivered. No payment, refund or return data is
+queried (`financialStatus`, `refunds`, `refundableQuantity` are not in the documents).
+
+Fields used (Customer Account API schema shipped with Hydrogen 2026.4):
+`Order.fulfillmentStatus` (`OrderFulfillmentStatus`), `Order.lineItems { id productId quantity }`,
+`Order.fulfillments { status (FulfillmentStatus) latestShipmentStatus (FulfillmentEventStatus)
+fulfillmentLineItems { quantity lineItem { id } } }`. All three connections are paged to the
+end; an error, a missing cursor or more than 20 pages fails closed as "could not verify"
+(never as "not delivered").
+
+**Local pickup is out of scope** for US-058: pickup orders cannot be rated. Supporting them
+would need an owner decision on whether `PICKED_UP` counts as delivery.
+
+Known limits of this predicate (they fail closed: the order cannot be rated):
+- Delivery is only known when the carrier or the merchant records a `DELIVERED` shipment
+  event. Shipments without carrier tracking need the merchant to mark them delivered in
+  the Shopify admin.
+- Local pickup orders and lines that are never shipped (e.g. digital items or units
+  removed before shipping, if Shopify still counts them in `quantity`) block the order.
+- A shipment status that later moves away from `DELIVERED` makes the order unratable
+  again; ratings already saved stay visible.
+
+**Reading is separate from authorizing.** The order page reads saved ratings for every
+product of the order whatever its current line quantity or delivery state (e.g. after a
+return), and shows them read-only. Only products whose line has a quantity, in an order
+that passes the predicate, get a rating form or are accepted by the endpoint. Saved ratings
+are hidden only when the order itself cannot be loaded (Shopify error or page limit); the
+section then shows the verification error.
+
+### Flow
+
+| Step | Code |
+| --- | --- |
+| Order page loader returns `ratings` as a promise (the order renders first; `<Suspense>` shows "Checking…") | `routes/account.orders.$id.tsx` → `loadOrderRatings()` |
+| Order lines, fulfillments and fulfillment items, every page (100 lines, 20 fulfillments, 100 items per page; more than 20 pages of any of them fails closed) | `lib/ratings/order-eligibility.server.ts`, `graphql/customer-account/CustomerOrderRatingQueries.ts` |
+| Group lines by product; validate the submission | `lib/ratings/rating.ts` |
+| Saved ratings read by exact handle | `lib/ratings/rating-store.server.ts` |
+| Form: radio group per unrated product, then read-only stars | `components/account/OrderRatings.tsx`, `StarRating.tsx` |
+| After a save: no reload of the order page. Its `shouldRevalidate` returns `false` only for POSTs to `/api/order-ratings` (201 and 409 alike), so the form shows the saved or existing value with its confirmation and other products keep unsaved choices; every other action, navigation and reload uses React Router's default | `routes/account.orders.$id.tsx` |
+| Save: `POST /api/order-ratings` `{orderId, productId, rating}` (JSON) | `routes/api.order-ratings.tsx` → `submitRating()` (`lib/ratings/ratings.server.ts`) |
+
+`POST /api/order-ratings` checks, in this order: method (405), same-origin (403
+`cross_origin`), login (401), store configured (503 `ratings_unavailable`), JSON and payload
+(400: `rating` must be a JSON integer 1–5, IDs must be Shopify GIDs), then loads the order
+again from Shopify: not the customer's (404 `order_not_found`), product not in it (422),
+not fully delivered (403 `not_delivered`), Shopify unavailable (503
+`verification_unavailable`). Then it creates the record: 201 `{productId, rating}`, or 409
+`already_rated` with the existing value, or 503 `save_failed`. Every response is
+`Cache-Control: no-store`, `Vary: Cookie`; so is the order page (`headers` export).
+
+**Same-origin check** (`lib/request-origin.server.ts`): when the browser sends
+`Sec-Fetch-Site` (set by the browser, not by page scripts), only `same-origin` is accepted;
+`same-site`, `cross-site` and `none` are rejected. If `Origin` is sent as well, its host must
+be the host the worker sees; a foreign or opaque (`null`) `Origin` next to `same-origin` is
+treated as forged and rejected (a browser reporting `same-origin` always sends its own
+origin). The scheme is not compared in that case: a real scheme difference is a different
+origin, which the browser would not report as `same-origin`. Without `Sec-Fetch-Site` (older
+browsers) the `Origin` header must equal the request's own origin exactly. With neither
+header the request is rejected, so only non-browser clients are affected. No proxy headers
+(`X-Forwarded-*`) are trusted and no CORS is granted. `Sec-Fetch-Site` is checked first because the worker
+can see a different URL than the browser: behind the Hydrogen dev tunnel (and any proxy that
+terminates TLS) the worker sees `http://…` while the page's `Origin` is `https://…`, and an
+`Origin`-only comparison rejected genuine submissions (found in the first real browser test).
+
+### Storage: private metaobjects
+
+Ratings are `product_rating` metaobjects written through the **Admin GraphQL API**
+(`ADMIN_API_VERSION` `2026-04`) by a server-only adapter, `ShopifyRatingStore`. Credentials
+and tokens never reach the browser and are not logged. Tokens come from
+`lib/ratings/admin-token.server.ts`: either a static legacy token, or a client credentials
+exchange (`POST https://<shop>.myshopify.com/admin/oauth/access_token`, form-encoded
+`grant_type=client_credentials`, `client_id`, `client_secret`) whose 24-hour token is cached
+per worker instance and renewed one minute before expiry; a 401 from the Admin API drops
+the cached token.
+
+| Field key | Type | Value |
+| --- | --- | --- |
+| `customer_id` | Single line text | Customer GID from the Customer Account API |
+| `order_id` | Single line text | Order GID |
+| `product_id` | Single line text | Product GID |
+| `rating` | Integer (min 1, max 5) | Stars |
+
+Nothing else is stored (no names, emails, prices or addresses). Shopify keeps its own
+creation and update times for each entry.
+
+**Uniqueness and immutability: UNRESOLVED until verified on staging.**
+
+The handle is `rating-` + SHA-256 of `customerId|orderId|productId`. The adapter never calls
+`metaobjectUpsert` or `metaobjectUpdate`, so it never overwrites a record itself. Whether
+Shopify keeps **one** record per handle is the open question:
+
+| Fact | Source |
+| --- | --- |
+| Handles are "unique identifiers within a metaobject type" | Admin API reference, `metaobjectByHandle` and `metaobjectUpsert` pages (read for 2026-07) |
+| `metaobjectCreate` "generates a unique handle automatically if you don't provide one"; `MetaobjectCreateInput.handle` is "auto-generated when omitted" | 2026-04 reference (the pinned version) |
+| What `metaobjectCreate` does with an **explicitly supplied** handle that already exists (an error, and which code, or a different handle) | **Not documented** for 2026-04. `MetaobjectUserErrorCode.TAKEN` ("The input value is already taken") exists, but no page ties it to handles. Product-handle behaviour (`productCreate`) is not evidence for metaobjects. |
+| Concurrency or idempotency of `metaobjectCreate` | Not documented |
+
+What the adapter does with each answer (`rating-store.server.ts`):
+- record returned **with the requested handle**: saved (201);
+- **no record** (any `userErrors`, e.g. `TAKEN`, or none): it reads the exact handle; an
+  existing record is reported unchanged (409 `already_rated`), otherwise the save failed
+  (503);
+- record returned **with another handle**: Shopify stored a second record. The adapter logs
+  `uniqueness violation`, tries to delete that record and reports the one under the exact
+  handle. **This compensation is not a guarantee**: the delete can fail, or the worker can
+  stop before it runs, leaving two records (reads still show only the exact-handle one).
+
+Uniqueness therefore holds **only if** Shopify atomically rejects a create whose explicit
+handle exists, including under concurrency. The service does not read before creating, so
+every retry and concurrent submission really reaches `metaobjectCreate`. Staging checks A1
+and A2 below decide this. **If Shopify stores the duplicate under another handle, this
+storage does not meet the requirement.** The smallest alternative to evaluate (it needs
+approval) is `metafieldsSet` with `compareDigest`, which Shopify documents as an atomic
+compare-and-set (although "create only if absent" with a `null` digest is not stated
+explicitly), on an owner the app is allowed to write. That changes scopes and storage, so it
+is not implemented.
+
+Reads use `metaobjectByHandle` with the exact handle and check that the stored IDs match the
+key.
+
+### Shopify setup (manual, by a store admin)
+
+Nothing is created automatically.
+
+1. **Metaobject definition:** Settings → Custom data → Metaobjects → Add definition.
+   - Name `Product rating`, type (API handle) **`product_rating`**.
+   - Fields as in the table above, with exactly those keys; on `rating` set the validations
+     minimum 1 and maximum 5. Make all fields required.
+   - Two separate access settings:
+     - **Admin API access: `PUBLIC_READ_WRITE`** ("merchant and other apps can read and
+       write"). Required: with `MERCHANT_READ_WRITE` or `MERCHANT_READ`, Shopify gives other
+       apps no access, so the ratings app could neither save nor read entries. This only
+       concerns authenticated Admin API apps installed on the store, not shoppers.
+     - **Storefronts access: off** (`NONE`). This is the public Storefront API; it must stay
+       off so rating records are never readable from the storefront.
+   - Turn off *Active-draft status* (publishable), *Translations* and *Web pages* (online
+     store); a rating has no draft state, nothing to translate and no public page.
+   - To check the result without the admin UI, an app with `read_metaobject_definitions`
+     can query `metaobjectDefinitionByType(type: "product_rating") { access { admin
+     storefront } fieldDefinitions { key required type { name } validations { name value } } }`.
+     The ratings code itself does not need that scope.
+2. **App with Admin API access.** Scopes: **`read_metaobjects`, `write_metaobjects`** only
+   (no product, order or customer scopes). Two options:
+   - **Dev Dashboard app (new apps since 2026-01-01).** Shopify no longer lets admins create
+     new custom apps in the store admin. Create the app in the Dev Dashboard, select the two
+     scopes on the app version, release it and install it on the store. The client
+     credentials grant only works when **the app and the store belong to the same Shopify
+     organization** (a dev store must be created from the Dev Dashboard to be in it). Copy
+     the client ID and client secret.
+   - **Existing legacy custom app** (created in the admin before 2026-01-01): give it the
+     two scopes and use its Admin API access token.
+3. **Environment** (Oxygen: Hydrogen storefront → Storefront settings → Environments and
+   variables, marked secret, for staging and production; local `.env` if needed). Set
+   `PRIVATE_ADMIN_API_CLIENT_ID` and `PRIVATE_ADMIN_API_CLIENT_SECRET` (Dev Dashboard app),
+   **or** `PRIVATE_ADMIN_API_TOKEN` (legacy app; it wins if both are set).
+   `PUBLIC_STORE_DOMAIN` must be the `*.myshopify.com` domain. Without credentials, the order
+   page shows "Ratings are not available at the moment." and the endpoint answers 503.
+4. **Credential lifecycle:** keep secrets only in Oxygen secrets and local `.env`
+   (git-ignored). Rotate the Dev Dashboard client secret there (or the legacy token by
+   reinstalling the app), update the Oxygen variables and redeploy; exchanged tokens expire
+   within 24 hours on their own. Uninstall the app to revoke access. Never paste secrets
+   into issues, PRs, logs or docs.
+   **If the store is not in the same organization as a Dev Dashboard app**, the client
+   credentials grant is not available; that would need an OAuth install flow, which this
+   story does not implement.
+
+### Staging verification
+
+Automated tests use fakes for both Shopify APIs (see [testing.md](testing.md)). They do
+**not** show how Shopify handles handle conflicts, nor a real buyer flow. Nothing below runs
+automatically; each step writes to the shop only when someone authorized for the staging
+store chooses to run it.
+
+**Verification status (2026-11-20).**
+
+| Item | Status |
+| --- | --- |
+| Store setup | `product_rating` definition and a Dev Dashboard app (`read_metaobjects`, `write_metaobjects`, plus `read_metaobject_definitions` for the preflight) configured by the project owner; a read-only preflight confirmed the field keys and types, the 1–5 validation, Admin access `PUBLIC_READ_WRITE` and Storefront access `NONE` |
+| Oxygen environment | The missing Admin API variables were added to the branch's Oxygen environment by the project owner |
+| Buyer flow (B1, B3) | Confirmed manually by the project owner, signed in as a test customer, on the local tunnel and on the Hydrogen branch deployment: rating controls on a delivered order, successful save, rating still shown read-only after reload |
+| Found and fixed during that test | Admin API calls failed in the Workers runtime ("Illegal invocation"); genuine posts were rejected as cross-origin behind the TLS-terminating dev tunnel |
+| Not manually verified | Undelivered and split-delivery blocking (B2), several units/variants, a later order of the same product, other customers and anonymous requests (B5, B6), privacy checks (B7). These are covered by automated tests with fakes only |
+| Storage uniqueness and concurrency (A, B4) | **Pending.** Not run; requires separate authorization of the store and its test writes |
+| Signed-in Playwright coverage | Still blocked; see [testing.md](testing.md) |
+| Post-save reload (PR #172 review) | The order page re-ran its loader after a 201 save (not after a 409) and dropped the confirmation; fixed with the targeted `shouldRevalidate` above and covered by `tests/components/account/OrderRatingsRevalidation.test.tsx` |
+
+**A. Storage uniqueness (acceptance blocker).** From a machine with the staging credentials,
+set these in the shell (never in committed files), then run the opt-in suite:
+
+```bash
+# PowerShell: $env:NAME = "value"
+export PUBLIC_STORE_DOMAIN=<staging-shop>.myshopify.com
+export PRIVATE_ADMIN_API_CLIENT_ID=<client id>        # or PRIVATE_ADMIN_API_TOKEN=<token>
+export PRIVATE_ADMIN_API_CLIENT_SECRET=<client secret>
+export RATINGS_STAGING_CONFIRM_WRITES=<staging-shop>.myshopify.com   # explicit authorization
+npm run test:staging:ratings
+```
+
+`tests/staging/rating-storage.staging.ts` only writes `product_rating` entries with synthetic
+IDs (`gid://shopify/Customer/0`, `gid://shopify/Order/0`, and product IDs unique to the run),
+deletes only that run's entries at the end (never another run's probes) and prints Shopify's
+raw answers for those synthetic records. A create that fails with a network, HTTP or GraphQL
+error makes the run **inconclusive** (it fails rather than passing on partial evidence). The
+read-only inspect mode prints counts only, never the records' customer or order IDs. Without
+`RATINGS_STAGING_CONFIRM_WRITES` equal to the domain, the write checks are skipped. A passing
+run is an observation of Shopify's behaviour on that store and API version on that day, not a
+documented guarantee.
+1. **Direct explicit-handle collision:** two raw `metaobjectCreate` calls with the same handle
+   (values 1, then 5). Passes only if the second is rejected (no record, with `userErrors`)
+   and exactly one entry, with value 1, exists for that probe.
+2. **Concurrent submissions:** five concurrent `createRating` calls through the production
+   adapter for one key,
+3. **with different values** (1 to 5). Passes only if exactly one call reports `created`,
+   every call reports that same value and the adapter never logged a `uniqueness violation`.
+4. **Final persistent state:** after a pause, a full listing finds exactly one entry for the
+   key, under the exact handle, with the winning value; a later retry with another value
+   leaves it unchanged.
+
+If A1 or A2 fails, uniqueness is **not** met: keep ratings off in production (leave the
+credentials unset) and decide on the alternative above.
+
+**B. Buyer flow (manual).**
+1. **Test order:** as a test customer, order two products (test payment gateway in a
+   development store). Create one fulfillment per product; mark the first delivered
+   (*Mark as delivered* or a carrier event); leave the second in transit.
+2. **Not delivered:** the order page says it can be rated once the whole order is
+   delivered; no stars.
+3. **Delivered buyer:** mark the second delivered and reload: one star group per product.
+   Rate the first product with the keyboard only (Tab, arrows, Enter): saved message and
+   read-only stars. Reload: still read-only, no control to change it.
+4. **Endpoint concurrency on a real rating:** on the same order page, for the **second,
+   still unrated** product, run in the browser console (the order GID is the base64-decoded
+   URL segment; the product GID is in the admin):
+
+   ```js
+   const orderId = 'gid://shopify/Order/<id>', productId = 'gid://shopify/Product/<id>';
+   const results = await Promise.all([1, 2, 3, 4, 5].map((rating) =>
+     fetch('/api/order-ratings', {method: 'POST', headers: {'Content-Type': 'application/json'},
+       body: JSON.stringify({orderId, productId, rating})})
+       .then(async (r) => [r.status, await r.json()])));
+   console.table(results);
+   ```
+
+   Expect one 201 and four 409, all with the same `rating`. Then count the records,
+   read-only: with the credentials above, **without** `RATINGS_STAGING_CONFIRM_WRITES`, set
+   `RATINGS_STAGING_INSPECT='<customer gid>|<order gid>|<product gid>'` and run
+   `npm run test:staging:ratings`: exactly one record, under the exact handle. Running the
+   console snippet again gives five 409 with the same value.
+5. **Non-buyer:** signed in as another customer, POST the first customer's `orderId`: 404.
+   Your own undelivered order: 403 `not_delivered`.
+6. **Anonymous:** signed out, the POST returns 401; `/account/orders/...` redirects to login.
+7. **Privacy:** the Storefront API cannot read `product_rating` (Storefronts access off);
+   page and API responses carry `Cache-Control: no-store`.
+
 ## Testing
 
 See [testing.md](testing.md). In short:
@@ -461,6 +769,7 @@ See [testing.md](testing.md). In short:
 | Add a sort option | `SORT_OPTIONS` in `app/routes/collections.$handle.tsx`. |
 | Change the try-on gate or overlay | `app/lib/try-on/catalog.ts` (supported categories, the variant's `custom.try_on_overlay` PNG, `custom.try_on_size_cm`); variant/product loading in `app/lib/variants.server.ts`; geometry in `app/lib/try-on/anchors.ts`; MediaPipe assets in `app/lib/try-on/assets.ts` (the model lives in `app/assets/models/`). |
 | Change product customization options | Metafield definitions in the Shopify admin (see [Product customization](#product-customization)); rules in `app/lib/customization.ts`; cart check in `app/lib/customization.server.ts`; UI in `components/product/ProductCustomization.tsx`, `ProductForm.tsx` and `cart/CartLineItem.tsx`. |
+| Change order ratings | Rules in `app/lib/ratings/` (`delivery.ts`, `rating.ts`), Shopify access in `order-eligibility.server.ts` and `rating-store.server.ts`, endpoint `routes/api.order-ratings.tsx`, UI `components/account/OrderRatings.tsx`. See [Order ratings](#order-ratings-us-058). |
 | Add a customer preference | `PreferenceProfile` (`profile/types.ts`), `profile/preferences.ts` (normalise/parse), `PreferencesForm.tsx`, tests. |
 | Add a UI string / translation | Add the key to `app/lib/messages/en.ts`, `pt.ts` and `fr.ts` and use `useTranslation()` (or `translatorFor` / `translatorFromMatches`). See [i18n.md](i18n.md#adding-a-string). |
 | Add a language | Add an entry to `LOCALES` and a message object in `app/lib/i18n.ts`, then publish the language in the Shopify admin. |
@@ -468,7 +777,7 @@ See [testing.md](testing.md). In short:
 | Change a theme color/font/breakpoint | `@theme` in `app/styles/tailwind.css`. |
 | Change header/footer navigation | Shopify admin menus `main-menu` / `footer`. The code fallback is `FALLBACK_HEADER_MENU` in `Header.tsx`. Layout is in `components/layout/`. Menu URLs become app paths in `toMenuPath()` (`app/lib/menu.ts`). |
 | Add a test | Unit: `tests/unit/<module>.test.ts`. Component: `tests/components/<group>/<Component>.test.tsx`. E2E: `tests/e2e/<flow>.spec.ts`. See [testing.md](testing.md). |
-| Add an environment variable | `.env.example` (no real secrets), `env.d.ts` if it needs typing, and the Oxygen environment. |
+| Add an environment variable | `.env.example` (no real secrets), `env.d.ts` if it needs typing (`interface Env`, as for `PRIVATE_ADMIN_API_TOKEN`), and the Oxygen environment. |
 
 ## Known issues
 

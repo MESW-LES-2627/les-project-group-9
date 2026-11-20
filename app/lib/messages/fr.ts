@@ -414,6 +414,30 @@ export const fr: Messages = {
   'order.status': 'Statut',
   'order.statusNone': 'Non disponible',
   'order.viewStatus': 'Voir le suivi de la commande',
+  'rating.heading': 'Notez vos pièces',
+  'rating.intro':
+    'Attribuez une note de 1 à 5 étoiles à chaque pièce de cette commande.',
+  'rating.final': 'Une note ne peut plus être modifiée une fois envoyée.',
+  'rating.loading': 'Vérification de la possibilité de noter cette commande…',
+  'rating.notDelivered':
+    'Vous pourrez noter les pièces de cette commande une fois la commande entièrement livrée.',
+  'rating.noProducts': 'Cette commande ne contient aucune pièce pouvant être notée.',
+  'rating.unavailable': 'Les notes ne sont pas disponibles pour le moment.',
+  'rating.verificationError':
+    'Impossible de vérifier la livraison de cette commande pour le moment. Veuillez réessayer plus tard.',
+  'rating.loadError':
+    'Impossible de charger vos notes pour le moment. Veuillez réessayer plus tard.',
+  'rating.legend': 'Votre note pour {product}',
+  'rating.star': {one: '{count} étoile', other: '{count} étoiles'},
+  'rating.submit': 'Envoyer la note',
+  'rating.submitting': 'Enregistrement de votre note…',
+  'rating.yours': 'Votre note : {value} sur 5',
+  'rating.saved': 'Merci. Votre note a été enregistrée.',
+  'rating.error.alreadyRated': 'Vous avez déjà noté cette pièce.',
+  'rating.error.signIn':
+    'Votre session a expiré. Reconnectez-vous pour noter cette pièce.',
+  'rating.error.save':
+    "Impossible d'enregistrer votre note. Veuillez réessayer.",
   'order.financial.AUTHORIZED': 'Autorisé',
   'order.financial.EXPIRED': 'Expiré',
   'order.financial.PAID': 'Payé',
