@@ -16,8 +16,8 @@ Previous tag: `iter-1`
 | | |
 | This tag (`iter-2`) | <https://github.com/MESW-LES-2627/les-project-group-9/tree/iter-2> |
 | | |
-| Production | none yet |
-| Staging | none yet |
+| Production | Not recorded yet (to be added with a verified deployment link at iteration close) |
+| Staging | Not recorded yet (to be added with a verified deployment link at iteration close) |
 | | |
 | CI/CD Pipeline | <https://github.com/MESW-LES-2627/les-project-group-9/actions> |
 | | |

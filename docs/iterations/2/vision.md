@@ -1,49 +1,59 @@
-# Vision: Jewliette
+# Vision: Jeweliette
 
 ## 1. Vision Statement
 
-To empower authentic self-expression by delivering a luxury, hyper-personalized fine jewelry destination from the comfort of home, combining bespoke product customization with an intelligent, tailor-made discovery experience.
+To support authentic self-expression with a personalised online destination for fashion jewelry and accessories, combining restricted product personalisation with a discovery experience shaped by each shopper's favorites and stated preferences.
 
 ## 2. Mission
 
-Jewliette bridges the gap between digital e-commerce and high-end boutique shopping. By capturing each customer's individual fit, material sensitivities, and aesthetic preferences, Jewliette transforms jewelry discovery into a seamless, inspiring, and safe experience tailored uniquely to every user.
+Jeweliette brings some of the guidance of an in-store visit to online shopping. Shoppers can record their sizes, material sensitivities and style preferences, and the store uses that information to suggest pieces, flag possible allergen matches and help them picture pieces on themselves. Material and allergen information comes from the product data the merchant maintains in Shopify: the storefront warns and informs, it does not certify that a piece is safe for a particular person.
 
 ## 3. Product Pillars
 
-### Bespoke Customization & Tactile Digital Discovery
+Each pillar separates what exists in the code on `main` (as merged on 2026-11-20) from what is roadmap. Story status is in [Section 6](#6-user-stories) and [mvp.md](./mvp.md); technical detail is in [docs/architecture.md](../../architecture.md).
 
-- **Full Product Customization:** Complete creative freedom to personalize metals, stones, and settings so every piece feels uniquely personal.
-- **Endless Stack Builder:** A modular, cross-collection engine enabling users to combine rings, bracelets, and necklaces from any line to build bespoke stacks.
-- **Virtual Try-On (AR):** High-fidelity augmented reality previewing to replicate the confidence and intimacy of trying on jewelry in-store.
+### Personalisation within defined limits
 
-### Hyper-Personalization & Safety Hub
+- **Restricted customization (E06):** on products the merchant marks as customizable, the shopper can pick a gem colour from a list set in the Shopify admin and add an engraving up to a set length (at most 40 characters). There is no free choice of metals, stones or settings. Price changes for customized pieces (US-028) are not implemented.
+- **Custom design builder (E14, Post-MVP):** building a piece from a base, metal, chain, gems and charms (US-050 to US-057) is roadmap only.
+- **Multi-piece styling:** the fitting room keeps variants that support try-on and opens them together as one look. Today this covers earrings and necklaces only; rings, bracelets and watches cannot be tried on.
+- **Front-camera try-on (E04):** on a phone, earrings and necklaces with a transparent overlay image are drawn on the live camera image using face landmarks, with a photo fallback; computers show a QR code. It is not AR surface placement, and only variants the merchant has prepared are supported.
 
-- **Comprehensive User Profile:** Centralized storage of sizing (rings, wrists, chains), preferred metal tones, favorite gemstones, and critical metal allergies (e.g., nickel sensitivities).
-- **Self-Filtering Discovery Engine:** A dynamic feed that automatically adapts to the user's profile, removing allergen risks and elevating pieces aligned with their taste.
-- **Contextual Ecosystem:** Deep integration of saved favorites and past purchases to suggest cohesive stack additions over time.
+### Preference-aware discovery
 
-### Boutique Experience at Home
+- **Preference profile (E16):** allergies, skin tone and undertone, ring sizes per finger, and preferred materials, colours and gemstones, stored in the customer's Shopify account. Shoppers can edit, export and delete it.
+- **Suggestions (E07, E16):** based on favorites and preferences. Products matching a declared allergy are left out of suggestions. Undertone contributes through a simple metal heuristic (gold: warm, silver: cool). **Skin tone is stored but does not currently change suggestions or try-on.**
+- **Allergen warnings:** a badge and a confirmation before adding to the bag when the product's allergen data in Shopify matches the shopper's allergies. A product without allergen data shows no warning, so the absence of a warning is not a guarantee.
+- **Ring sizes:** saved sizes and a size guide on ring products help choose a size; they do not guarantee fit.
 
-- **Seamless Service:** Combining the high-touch curation of an elite boutique with instant, friction-free digital interaction.
-- **Zero Sizing & Allergen Guesswork:** Eliminating common e-commerce friction points before checkout.
+### A boutique-style service online
+
+- **Languages (E12):** English (US), European Portuguese and French for the interface; catalog content is translated in Shopify.
+- **Ratings (E15):** verified buyers can rate each product of a fully delivered order (US-058), stored privately. Showing ratings to other shoppers (US-060), comments (US-059), sorting and filtering (US-061) and moderation (US-062) are separate stories and not implemented.
+- **Planned MVP additions (open):** a dedicated Trending page that shows an editorial selection managed in Shopify (US-076), merchant- or manufacturer-approved care instructions that account for mixed materials (US-077), and Sign in with Google through Shopify Customer Accounts (US-078).
+- **Post-MVP:** an immersive, scroll-based product presentation (US-079) and an interactive homepage hero (US-080). Animation libraries such as Lenis or GSAP are options to evaluate, not committed dependencies.
 
 ## 4. Product Principles
 
-1. **Safety & Comfort First:** Personalization is not just about aesthetics, it's about ensuring every recommended piece is safe to wear and accurate in fit.
-2. **Unconstrained Expression:** Tools should encourage experimentation, letting users pair pieces across collections without artificial interface boundaries.
-3. **Elevated Elegance:** Technology (filters, customizers, feeds) should feel invisible, maintaining a luxury aesthetic throughout the journey.
+1. **Inform, do not overpromise:** personalisation, warnings and size help support the shopper's decision. They depend on the data the merchant maintains and never guarantee fit or the absence of an allergen.
+2. **Experiment within supported options:** tools such as the fitting room and customization encourage combining and personalising pieces, within the options the merchant has prepared.
+3. **Elegance that does not get in the way:** visual effects and motion stay optional; buying, accessibility and reduced-motion preferences come first.
 
 ## 5. Value Proposition Summary
 
-| Target Audience Need                    | Jewliette Solution                                 | Strategic Value                         |
-| :-------------------------------------- | :------------------------------------------------- | :-------------------------------------- |
-| Fear of metal allergies & sizing errors | Profile-driven automated feed filtering            | High buyer trust & reduced return rates |
-| Hard to visualize multi-piece styling   | Interactive Stack Builder & AR Try-On              | Increased average order value (AOV)     |
-| Cluttered, generic jewelry feeds        | Curated feed based on profile, favorites & history | Faster time-to-purchase & brand loyalty |
+The outcomes are intended, not measured.
+
+| Target audience need | Jeweliette response | Intended outcome |
+| :--- | :--- | :--- |
+| Worry about metal allergies and ring sizing | Allergy profile with warnings based on product data, saved ring sizes and a size guide | Better-informed purchases and fewer avoidable returns |
+| Hard to picture several pieces together | Fitting room and front-camera try-on for earrings and necklaces | More confidence when combining pieces |
+| Generic catalogue browsing | Suggestions from favorites and preferences; an editorial Trending selection (planned) | Faster discovery of suitable pieces |
 
 ## 6. User Stories
 
-All **75 user stories** are listed below, grouped by epic. 57 are MVP and 18 are Post-MVP.
+All **80 user stories** (US-001 to US-080) are listed below, grouped by epic: **60 are in the MVP milestone and 20 in the Post-MVP milestone**. Milestones describe release scope only; they are not the iteration commitment or the implementation status (see [mvp.md](./mvp.md)).
+
+Source: GitHub issues and milestones of `MESW-LES-2627/les-project-group-9`, read on 2026-11-20 through the public REST API (all 128 issues, including closed ones). Milestone and open/closed state can change after that date; GitHub is the reference. US-076 to US-080 (#173 to #177) were added to the backlog on 2026-11-20.
 
 The MVP scope only is in [mvp.md](./mvp.md).
 
@@ -55,6 +65,7 @@ The MVP scope only is in [mvp.md](./mvp.md).
 - [US-004: As a shopper, I want to filter and sort a collection by material, color, price and availability, so that I can narrow the list to what I want](https://github.com/MESW-LES-2627/les-project-group-9/issues/25) - MVP
 - [US-005: As a shopper, I want to see badges (e.g. New, Limited) on product cards, so that I notice special pieces](https://github.com/MESW-LES-2627/les-project-group-9/issues/26) - MVP
 - [US-006: As a shopper, I want a home page with featured pieces, a brand story and collection tiles, so that I understand the store and where to start](https://github.com/MESW-LES-2627/les-project-group-9/issues/27) - MVP
+- [US-076: As a shopper, I want to browse a dedicated Trending page, so that I can discover the store's currently highlighted pieces](https://github.com/MESW-LES-2627/les-project-group-9/issues/173) - MVP
 
 ### E02: Product page (#6)
 
@@ -62,6 +73,8 @@ The MVP scope only is in [mvp.md](./mvp.md).
 - [US-008: As a shopper, I want to pick a variant with color swatches and see the gallery jump to its image, so that I can see the exact version I choose](https://github.com/MESW-LES-2627/les-project-group-9/issues/29) - MVP
 - [US-009: As a shopper, I want to see recommended products on a product page, so that I find related pieces](https://github.com/MESW-LES-2627/les-project-group-9/issues/30) - MVP
 - [US-010: As a shopper, I want to add a product to my cart from its page, so that I can buy it](https://github.com/MESW-LES-2627/les-project-group-9/issues/31) - MVP
+- [US-077: As a shopper, I want to read care instructions for a product, so that I can maintain it and avoid damaging it](https://github.com/MESW-LES-2627/les-project-group-9/issues/174) - MVP
+- [US-079: As a shopper, I want to explore a product through an immersive scrolling presentation, so that I can understand its design and details more clearly](https://github.com/MESW-LES-2627/les-project-group-9/issues/176) - Post-MVP
 
 ### E03: 3D visualizer (#7)
 
@@ -115,10 +128,12 @@ The MVP scope only is in [mvp.md](./mvp.md).
 - [US-040: As a shopper, I want to edit my first and last name, so that my account is correct](https://github.com/MESW-LES-2627/les-project-group-9/issues/61) - MVP
 - [US-041: As a shopper, I want to manage my saved addresses, so that checkout is faster](https://github.com/MESW-LES-2627/les-project-group-9/issues/62) - MVP
 - [US-042: As a shopper, I want to see my order history and order details, so that I can track what I bought](https://github.com/MESW-LES-2627/les-project-group-9/issues/63) - MVP
+- [US-078: As a shopper, I want to sign in with Google, so that I can access my customer account using a familiar sign-in method](https://github.com/MESW-LES-2627/les-project-group-9/issues/175) - MVP
 
 ### E10: Slideshow (#14)
 
 - [US-043: As a shopper, I want to view a hero banner slideshow of the store's top-selling products and click on any product, so that I can quickly explore featured items and navigate directly to their product pages.](https://github.com/MESW-LES-2627/les-project-group-9/issues/64) - MVP
+- [US-080: As a shopper, I want an interactive homepage hero, so that I can discover the brand and featured pieces through an engaging introduction](https://github.com/MESW-LES-2627/les-project-group-9/issues/177) - Post-MVP
 
 ### E11: Content (#15)
 
