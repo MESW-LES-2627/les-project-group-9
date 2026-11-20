@@ -359,6 +359,30 @@ export const pt: Messages = {
   'order.status': 'Estado',
   'order.statusNone': 'Indisponível',
   'order.viewStatus': 'Ver estado da encomenda',
+  'rating.heading': 'Avalie as suas peças',
+  'rating.intro':
+    'Dê a cada peça desta encomenda de 1 a 5 estrelas, para que outros clientes saibam o que pensa.',
+  'rating.final': 'Depois de enviada, a avaliação não pode ser alterada.',
+  'rating.loading': 'A verificar se esta encomenda pode ser avaliada…',
+  'rating.notDelivered':
+    'Pode avaliar as peças desta encomenda quando a encomenda completa tiver sido entregue.',
+  'rating.noProducts': 'Esta encomenda não tem peças que possam ser avaliadas.',
+  'rating.unavailable': 'As avaliações não estão disponíveis de momento.',
+  'rating.verificationError':
+    'Não foi possível verificar a entrega desta encomenda neste momento. Tente novamente mais tarde.',
+  'rating.loadError':
+    'Não foi possível carregar as suas avaliações neste momento. Tente novamente mais tarde.',
+  'rating.legend': 'A sua avaliação de {product}',
+  'rating.star': {one: '{count} estrela', other: '{count} estrelas'},
+  'rating.submit': 'Enviar avaliação',
+  'rating.submitting': 'A guardar a sua avaliação…',
+  'rating.yours': 'A sua avaliação: {value} de 5',
+  'rating.saved': 'Obrigado. A sua avaliação foi guardada.',
+  'rating.error.alreadyRated': 'Já avaliou esta peça.',
+  'rating.error.signIn':
+    'A sua sessão terminou. Inicie sessão novamente para avaliar esta peça.',
+  'rating.error.save':
+    'Não foi possível guardar a sua avaliação. Tente novamente.',
   'order.financial.AUTHORIZED': 'Autorizado',
   'order.financial.EXPIRED': 'Expirado',
   'order.financial.PAID': 'Pago',

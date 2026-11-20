@@ -1,4 +1,5 @@
-import {redirect, useLoaderData} from 'react-router';
+import {Suspense} from 'react';
+import {Await, redirect, useLoaderData} from 'react-router';
 import type {Route} from './+types/account.orders.$id';
 import {Image} from '@shopify/hydrogen';
 import {Money} from '~/components/shared/Money';
@@ -8,6 +9,16 @@ import type {
 } from 'customer-accountapi.generated';
 import {CUSTOMER_ORDER_QUERY} from '~/graphql/customer-account/CustomerOrderQuery';
 import {accountOrderDetail} from '~/lib/account-ui';
+import {
+  OrderRatings,
+  OrderRatingsLoading,
+} from '~/components/account/OrderRatings';
+import {NO_STORE} from '~/lib/profile/operation.server';
+import {createRatingStore} from '~/lib/ratings/rating-store.server';
+import {
+  loadOrderRatings,
+  type OrderRatingsView,
+} from '~/lib/ratings/ratings.server';
 import {
   formatDate,
   translatorFromMatches,
@@ -23,6 +34,9 @@ export const meta: Route.MetaFunction = ({data, matches}) => {
     },
   ];
 };
+
+/** Order details and ratings are specific to the signed-in customer. */
+export const headers: Route.HeadersFunction = () => NO_STORE;
 
 export async function loader({params, context}: Route.LoaderArgs) {
   const {customerAccount} = context;
@@ -77,12 +91,20 @@ export async function loader({params, context}: Route.LoaderArgs) {
         ).percentage
       : null;
 
+  // Not awaited: the order renders while delivery and saved ratings load.
+  const ratings: Promise<OrderRatingsView> = loadOrderRatings({
+    customerAccount,
+    store: createRatingStore(context.env),
+    orderId: order.id,
+  }).catch(() => ({status: 'load_error'}));
+
   return {
     order,
     lineItems,
     discountValue,
     discountPercentage,
     fulfillmentStatus,
+    ratings,
   };
 }
 
@@ -93,6 +115,7 @@ export default function OrderRoute() {
     discountValue,
     discountPercentage,
     fulfillmentStatus,
+    ratings,
   } = useLoaderData<typeof loader>();
   const t = useTranslation();
   const {tag} = useLocale();
@@ -205,6 +228,11 @@ export default function OrderRoute() {
           </div>
         </div>
       </div>
+      <Suspense fallback={<OrderRatingsLoading />}>
+        <Await resolve={ratings}>
+          {(view) => <OrderRatings view={view} />}
+        </Await>
+      </Suspense>
       <br />
       <p>
         <a target="_blank" href={order.statusPageUrl} rel="noreferrer">

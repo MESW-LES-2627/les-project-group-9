@@ -390,6 +390,86 @@ export type OrderQuery = {
   >;
 };
 
+export type OrderRatingLinesQueryVariables = CustomerAccountAPI.Exact<{
+  orderId: CustomerAccountAPI.Scalars['ID']['input'];
+  after?: CustomerAccountAPI.InputMaybe<
+    CustomerAccountAPI.Scalars['String']['input']
+  >;
+  language?: CustomerAccountAPI.InputMaybe<CustomerAccountAPI.LanguageCode>;
+}>;
+
+export type OrderRatingLinesQuery = {
+  customer: Pick<CustomerAccountAPI.Customer, 'id'>;
+  order?: CustomerAccountAPI.Maybe<
+    Pick<CustomerAccountAPI.Order, 'id' | 'fulfillmentStatus'> & {
+      lineItems: {
+        nodes: Array<
+          Pick<
+            CustomerAccountAPI.LineItem,
+            'id' | 'productId' | 'quantity' | 'title'
+          > & {
+            image?: CustomerAccountAPI.Maybe<
+              Pick<
+                CustomerAccountAPI.Image,
+                'url' | 'altText' | 'width' | 'height'
+              >
+            >;
+          }
+        >;
+        pageInfo: Pick<
+          CustomerAccountAPI.PageInfo,
+          'hasNextPage' | 'endCursor'
+        >;
+      };
+    }
+  >;
+};
+
+export type OrderRatingFulfillmentsQueryVariables = CustomerAccountAPI.Exact<{
+  orderId: CustomerAccountAPI.Scalars['ID']['input'];
+  first: CustomerAccountAPI.Scalars['Int']['input'];
+  after?: CustomerAccountAPI.InputMaybe<
+    CustomerAccountAPI.Scalars['String']['input']
+  >;
+  itemsAfter?: CustomerAccountAPI.InputMaybe<
+    CustomerAccountAPI.Scalars['String']['input']
+  >;
+  language?: CustomerAccountAPI.InputMaybe<CustomerAccountAPI.LanguageCode>;
+}>;
+
+export type OrderRatingFulfillmentsQuery = {
+  order?: CustomerAccountAPI.Maybe<
+    Pick<CustomerAccountAPI.Order, 'id'> & {
+      fulfillments: {
+        edges: Array<
+          Pick<CustomerAccountAPI.FulfillmentEdge, 'cursor'> & {
+            node: Pick<
+              CustomerAccountAPI.Fulfillment,
+              'id' | 'status' | 'latestShipmentStatus'
+            > & {
+              fulfillmentLineItems: {
+                nodes: Array<
+                  Pick<CustomerAccountAPI.FulfillmentLineItem, 'quantity'> & {
+                    lineItem: Pick<CustomerAccountAPI.LineItem, 'id'>;
+                  }
+                >;
+                pageInfo: Pick<
+                  CustomerAccountAPI.PageInfo,
+                  'hasNextPage' | 'endCursor'
+                >;
+              };
+            };
+          }
+        >;
+        pageInfo: Pick<
+          CustomerAccountAPI.PageInfo,
+          'hasNextPage' | 'endCursor'
+        >;
+      };
+    }
+  >;
+};
+
 export type OrderItemFragment = Pick<
   CustomerAccountAPI.Order,
   | 'financialStatus'
@@ -568,6 +648,14 @@ interface GeneratedQueryTypes {
   '#graphql\n  fragment OrderMoney on MoneyV2 {\n    amount\n    currencyCode\n  }\n  fragment DiscountApplication on DiscountApplication {\n    value {\n      __typename\n      ... on MoneyV2 {\n        ...OrderMoney\n      }\n      ... on PricingPercentageValue {\n        percentage\n      }\n    }\n  }\n  fragment OrderLineItemFull on LineItem {\n    id\n    title\n    quantity\n    price {\n      ...OrderMoney\n    }\n    discountAllocations {\n      allocatedAmount {\n        ...OrderMoney\n      }\n      discountApplication {\n        ...DiscountApplication\n      }\n    }\n    totalDiscount {\n      ...OrderMoney\n    }\n    image {\n      altText\n      height\n      url\n      id\n      width\n    }\n    variantTitle\n  }\n  fragment Order on Order {\n    id\n    name\n    confirmationNumber\n    statusPageUrl\n    fulfillmentStatus\n    processedAt\n    fulfillments(first: 1) {\n      nodes {\n        status\n      }\n    }\n    totalTax {\n      ...OrderMoney\n    }\n    totalPrice {\n      ...OrderMoney\n    }\n    subtotal {\n      ...OrderMoney\n    }\n    shippingAddress {\n      name\n      formatted(withName: true)\n      formattedArea\n    }\n    discountApplications(first: 100) {\n      nodes {\n        ...DiscountApplication\n      }\n    }\n    lineItems(first: 100) {\n      nodes {\n        ...OrderLineItemFull\n      }\n    }\n  }\n  query Order($orderId: ID!, $language: LanguageCode)\n    @inContext(language: $language) {\n    order(id: $orderId) {\n      ... on Order {\n        ...Order\n      }\n    }\n  }\n': {
     return: OrderQuery;
     variables: OrderQueryVariables;
+  };
+  '#graphql\n  query OrderRatingLines(\n    $orderId: ID!\n    $after: String\n    $language: LanguageCode\n  ) @inContext(language: $language) {\n    customer {\n      id\n    }\n    order(id: $orderId) {\n      id\n      fulfillmentStatus\n      lineItems(first: 100, after: $after) {\n        nodes {\n          id\n          productId\n          quantity\n          title\n          image {\n            url\n            altText\n            width\n            height\n          }\n        }\n        pageInfo {\n          hasNextPage\n          endCursor\n        }\n      }\n    }\n  }\n': {
+    return: OrderRatingLinesQuery;
+    variables: OrderRatingLinesQueryVariables;
+  };
+  '#graphql\n  query OrderRatingFulfillments(\n    $orderId: ID!\n    $first: Int!\n    $after: String\n    $itemsAfter: String\n    $language: LanguageCode\n  ) @inContext(language: $language) {\n    order(id: $orderId) {\n      id\n      fulfillments(first: $first, after: $after) {\n        edges {\n          cursor\n          node {\n            id\n            status\n            latestShipmentStatus\n            fulfillmentLineItems(first: 100, after: $itemsAfter) {\n              nodes {\n                quantity\n                lineItem {\n                  id\n                }\n              }\n              pageInfo {\n                hasNextPage\n                endCursor\n              }\n            }\n          }\n        }\n        pageInfo {\n          hasNextPage\n          endCursor\n        }\n      }\n    }\n  }\n': {
+    return: OrderRatingFulfillmentsQuery;
+    variables: OrderRatingFulfillmentsQueryVariables;
   };
   '#graphql\n  #graphql\n  fragment CustomerOrders on Customer {\n    orders(\n      sortKey: PROCESSED_AT,\n      reverse: true,\n      first: $first,\n      last: $last,\n      before: $startCursor,\n      after: $endCursor,\n      query: $query\n    ) {\n      nodes {\n        ...OrderItem\n      }\n      pageInfo {\n        hasPreviousPage\n        hasNextPage\n        endCursor\n        startCursor\n      }\n    }\n  }\n  #graphql\n  fragment OrderItem on Order {\n    totalPrice {\n      amount\n      currencyCode\n    }\n    financialStatus\n    fulfillmentStatus\n    fulfillments(first: 1) {\n      nodes {\n        status\n      }\n    }\n    id\n    number\n    confirmationNumber\n    processedAt\n  }\n\n\n  query CustomerOrders(\n    $endCursor: String\n    $first: Int\n    $last: Int\n    $startCursor: String\n    $query: String\n    $language: LanguageCode\n  ) @inContext(language: $language) {\n    customer {\n      ...CustomerOrders\n    }\n  }\n': {
     return: CustomerOrdersQuery;
