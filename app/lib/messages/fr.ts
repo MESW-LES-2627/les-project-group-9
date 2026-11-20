@@ -199,6 +199,12 @@ export const fr: Messages = {
   'product.detail.metal': 'Métal',
   'product.detail.gemstone': 'Pierre',
   'product.detail.gemColor': 'Couleur de la pierre',
+  'product.customize.title': 'Personnaliser',
+  'product.customize.engraving': 'Gravure',
+  'product.customize.engravingRemaining': {
+    one: '{count} caractère restant',
+    other: '{count} caractères restants',
+  },
 
   // Front-camera try-on
   'tryOn.title': 'Essayer {title}',
@@ -479,6 +485,18 @@ export const fr: Messages = {
   'preferences.save': 'Enregistrer les préférences',
   'preferences.saved': 'Préférences enregistrées.',
   'preferences.saveError': 'Impossible d’enregistrer les préférences.',
+  'profile.data.title': 'Vos données',
+  'profile.data.intro':
+    'Téléchargez une copie de vos préférences ou supprimez-les de votre profil.',
+  'profile.data.download': 'Télécharger mes préférences',
+  'profile.data.delete': 'Supprimer mes préférences',
+  'profile.data.deleteConfirm':
+    'Cela supprime vos préférences enregistrées. Continuer ?',
+  'profile.data.confirm': 'Confirmer la suppression',
+  'profile.data.cancel': 'Annuler',
+  'profile.data.deleting': 'Suppression…',
+  'profile.data.deleted': 'Vos préférences ont été supprimées.',
+  'profile.data.deleteError': 'Impossible de supprimer vos préférences.',
   'ring.title': 'Tailles de bague',
   'ring.intro':
     'Enregistrez votre taille de bague (taille américaine) pour chaque doigt. Les bagues afficheront vos tailles enregistrées.',

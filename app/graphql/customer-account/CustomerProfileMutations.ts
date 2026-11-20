@@ -10,3 +10,17 @@ export const METAFIELDS_SET_MUTATION = `#graphql
     }
   }
 ` as const;
+
+export const METAFIELDS_DELETE_MUTATION = `#graphql
+  mutation CustomerMetafieldsDelete($metafields: [MetafieldIdentifierInput!]!) {
+    metafieldsDelete(metafields: $metafields) {
+      deletedMetafields {
+        key
+        namespace
+      }
+      userErrors {
+        message
+      }
+    }
+  }
+` as const;

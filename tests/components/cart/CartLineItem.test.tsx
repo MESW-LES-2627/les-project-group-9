@@ -43,7 +43,7 @@ vi.mock('~/lib/variants', () => ({
 }));
 
 import {CartLineItem} from '~/components/cart/CartLineItem';
-import {DEFAULT_APP_LOCALE, LocaleContext} from '~/lib/i18n';
+import {DEFAULT_APP_LOCALE, LocaleContext, toAppLocale} from '~/lib/i18n';
 
 function makeLine(overrides: Partial<CartLine> = {}) {
   return {
@@ -125,5 +125,57 @@ describe('CartLineItem', () => {
     );
 
     expect(screen.queryByText(/Default Title/)).not.toBeInTheDocument();
+  });
+
+  it('shows the gem color and engraving under the product name', () => {
+    renderLine(
+      makeLine({
+        attributes: [
+          {key: 'Gem color', value: 'Ruby'},
+          {key: 'Engraving', value: 'Ana & Rui'},
+        ],
+      } as Partial<CartLine>),
+    );
+
+    expect(screen.getByText('Gem color')).toBeInTheDocument();
+    expect(screen.getByText('Ruby')).toBeInTheDocument();
+    expect(screen.getByText('Engraving')).toBeInTheDocument();
+    // Shown exactly as typed (not upper-cased, not parsed as HTML).
+    expect(screen.getByText('Ana & Rui')).toBeInTheDocument();
+  });
+
+  it('labels the customization in the active language', () => {
+    render(
+      <LocaleContext.Provider
+        value={toAppLocale({language: 'PT_PT', country: 'PT'})}
+      >
+        <ul>
+          <CartLineItem
+            childrenMap={{}}
+            layout="page"
+            line={makeLine({
+              attributes: [
+                {key: 'Gem color', value: 'Ruby'},
+                {key: 'Engraving', value: 'Ana'},
+              ],
+            } as Partial<CartLine>)}
+          />
+        </ul>
+      </LocaleContext.Provider>,
+    );
+
+    expect(screen.getByText('Cor da pedra')).toBeInTheDocument();
+    expect(screen.getByText('Gravação')).toBeInTheDocument();
+  });
+
+  it('shows no customization for lines without it', () => {
+    renderLine(
+      makeLine({
+        attributes: [{key: 'gift_note', value: 'Hi'}],
+      } as Partial<CartLine>),
+    );
+
+    expect(screen.queryByText('Engraving')).not.toBeInTheDocument();
+    expect(screen.queryByText('Hi')).not.toBeInTheDocument();
   });
 });

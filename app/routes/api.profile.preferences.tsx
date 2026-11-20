@@ -1,6 +1,9 @@
 import {data} from 'react-router';
 import type {Route} from './+types/api.profile.preferences';
-import {writeCustomerPreferences} from '~/lib/profile/customer.server';
+import {
+  deleteCustomerPreferences,
+  writeCustomerPreferences,
+} from '~/lib/profile/customer.server';
 import {normalizePreferencesPatch} from '~/lib/profile/preferences';
 
 const NO_STORE = {
@@ -9,7 +12,7 @@ const NO_STORE = {
 } as const;
 
 export async function action({request, context}: Route.ActionArgs) {
-  if (request.method !== 'POST') {
+  if (request.method !== 'POST' && request.method !== 'DELETE') {
     return data({error: 'Method not allowed'}, {
       status: 405,
       headers: NO_STORE,
@@ -22,6 +25,26 @@ export async function action({request, context}: Route.ActionArgs) {
       status: 401,
       headers: NO_STORE,
     });
+  }
+
+  if (request.method === 'DELETE') {
+    try {
+      const preferences = await deleteCustomerPreferences(context);
+      return data({preferences}, {headers: NO_STORE});
+    } catch (error) {
+      return data(
+        {
+          error:
+            error instanceof Error
+              ? error.message
+              : 'Could not delete preferences',
+        },
+        {
+          status: 400,
+          headers: NO_STORE,
+        },
+      );
+    }
   }
 
   let payload: unknown;

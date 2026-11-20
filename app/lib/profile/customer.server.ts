@@ -1,6 +1,9 @@
 import type {HydrogenRouterContextProvider} from '@shopify/hydrogen';
 import {CUSTOMER_PROFILE_QUERY} from '~/graphql/customer-account/CustomerProfileQueries';
-import {METAFIELDS_SET_MUTATION} from '~/graphql/customer-account/CustomerProfileMutations';
+import {
+  METAFIELDS_DELETE_MUTATION,
+  METAFIELDS_SET_MUTATION,
+} from '~/graphql/customer-account/CustomerProfileMutations';
 import {normalizePreferences, preferencesField} from './preferences';
 import type {ProfileField} from './profile-field';
 import {favoritesList} from './schema';
@@ -70,6 +73,40 @@ export class CustomerProfileRepository {
     return field.parse(saved);
   }
 
+  /** Removes the stored preferences metafield. Missing metafields are fine. */
+  async removePreferences(): Promise<PreferenceProfile> {
+    const profile = await this.read();
+    if (!profile.customerId) {
+      throw new Error('Customer not found');
+    }
+
+    const {data, errors} = await this.#context.customerAccount.mutate(
+      METAFIELDS_DELETE_MUTATION,
+      {
+        variables: {
+          metafields: [
+            {
+              ownerId: profile.customerId,
+              namespace: 'custom',
+              key: preferencesField.key,
+            },
+          ],
+        },
+      },
+    );
+
+    if (errors?.length) {
+      throw new Error(errors[0].message);
+    }
+
+    const result = data?.metafieldsDelete;
+    if (result?.userErrors?.length) {
+      throw new Error(result.userErrors[0].message);
+    }
+
+    return normalizePreferences(null);
+  }
+
   async #writeMetafield(
     customerId: string,
     key: string,
@@ -133,4 +170,10 @@ export function writeCustomerPreferences(
   patch: Partial<PreferenceProfile>,
 ): Promise<PreferenceProfile> {
   return new CustomerProfileRepository(context).update(preferencesField, patch);
+}
+
+export function deleteCustomerPreferences(
+  context: Context,
+): Promise<PreferenceProfile> {
+  return new CustomerProfileRepository(context).removePreferences();
 }

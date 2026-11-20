@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   open: vi.fn(),
   requestSubmit: vi.fn(),
   useAllergenMatches: vi.fn(),
+  cartInputs: vi.fn(),
 }));
 
 vi.mock('react-router', () => ({
@@ -37,11 +38,20 @@ vi.mock('~/lib/profile/ProfileProvider', () => ({
 
 vi.mock('@shopify/hydrogen', () => {
   const CartForm = Object.assign(
-    ({children}: {children: (fetcher: {state: string}) => React.ReactNode}) => (
-      <form onSubmit={(event) => event.preventDefault()}>
-        {children({state: 'idle'})}
-      </form>
-    ),
+    ({
+      children,
+      inputs,
+    }: {
+      children: (fetcher: {state: string}) => React.ReactNode;
+      inputs: unknown;
+    }) => {
+      mocks.cartInputs(inputs);
+      return (
+        <form onSubmit={(event) => event.preventDefault()}>
+          {children({state: 'idle'})}
+        </form>
+      );
+    },
     {ACTIONS: {LinesAdd: 'LinesAdd'}},
   );
 
@@ -99,6 +109,7 @@ beforeEach(() => {
   mocks.navigate.mockReset();
   mocks.open.mockReset();
   mocks.requestSubmit.mockReset();
+  mocks.cartInputs.mockReset();
   mocks.useAllergenMatches.mockReset();
   mocks.useAllergenMatches.mockReturnValue({matches: [], loading: false});
 
@@ -393,5 +404,52 @@ it('uses the swatch image as the background when the option provides one', () =>
 
   expect(screen.getByRole('button', {name: 'Silver'})).toHaveStyle({
     backgroundImage: 'url(/silver.jpg)',
+  });
+});
+
+describe('ProductForm customization', () => {
+  const customization = {
+    gemColors: [
+      {value: 'ruby', label: 'Ruby'},
+      {value: 'sapphire', label: 'Sapphire'},
+    ],
+    engravingMaxLength: 10,
+  };
+
+  function lastLine() {
+    const inputs = mocks.cartInputs.mock.lastCall?.[0] as {
+      lines: Array<{merchandiseId: string; attributes?: unknown}>;
+    };
+    return inputs.lines[0];
+  }
+
+  it('adds no attributes to a product that is not customizable', () => {
+    renderForm();
+
+    expect(screen.queryByRole('region', {name: 'Customize'})).not.toBeInTheDocument();
+    expect(lastLine()).not.toHaveProperty('attributes');
+  });
+
+  it('sends the chosen gem color and engraving with the cart line', async () => {
+    render(
+      <ProductForm
+        productOptions={productOptions}
+        selectedVariant={selectedVariant}
+        customization={customization}
+      />,
+    );
+
+    expect(lastLine().attributes).toEqual([{key: 'Gem color', value: 'Ruby'}]);
+
+    await userEvent.click(screen.getByRole('radio', {name: 'Sapphire'}));
+    await userEvent.type(screen.getByLabelText('Engraving'), ' Ana ');
+
+    expect(lastLine()).toMatchObject({
+      merchandiseId: 'variant-gold',
+      attributes: [
+        {key: 'Gem color', value: 'Sapphire'},
+        {key: 'Engraving', value: 'Ana'},
+      ],
+    });
   });
 });

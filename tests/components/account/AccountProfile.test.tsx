@@ -28,6 +28,10 @@ vi.mock('~/components/account/RingSizeForm', () => ({
   RingSizeForm: () => null,
 }));
 
+vi.mock('~/components/account/PreferencesData', () => ({
+  PreferencesData: () => null,
+}));
+
 import AccountProfile from '~/routes/account.profile';
 import {LocaleContext, toAppLocale, type LocaleCode} from '~/lib/i18n';
 
