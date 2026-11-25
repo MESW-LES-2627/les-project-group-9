@@ -3,11 +3,14 @@ import {
   ENGRAVING_LENGTH_CAP,
   customizationAttributes,
   customizationLineDetails,
+  engravingLength,
   hasCustomizationAttributes,
   initialCustomizationChoice,
   isAllowedGemColor,
   isEngravingWithinLimit,
+  normalizeEngraving,
   validateCustomizationAttributes,
+  validateEngraving,
   parseEngravingMaxLength,
   parseGemColorChoices,
   parseProductCustomization,
@@ -101,6 +104,54 @@ describe('parseEngravingMaxLength', () => {
 
   it.each([null, '', '0', '-3', '2.5', 'abc'])('returns null for %j', (value) => {
     expect(parseEngravingMaxLength(value)).toBeNull();
+  });
+});
+
+describe('engraving normalization and validation', () => {
+  it('trims, composes accents and keeps the shopper casing', () => {
+    expect(normalizeEngraving('  Ana\u00a0 Maria  ')).toBe('Ana Maria');
+    expect(normalizeEngraving('e\u0301')).toBe('é');
+  });
+
+  it('counts code points, not UTF-16 units', () => {
+    expect(engravingLength('é')).toBe(1);
+    expect(engravingLength('Ana')).toBe(3);
+  });
+
+  it('accepts names, numbers and simple punctuation', () => {
+    for (const value of [
+      'Ana',
+      'Ana Maria',
+      'A & J',
+      '18/11/2026',
+      'Best friends!',
+      'O’Neill',
+    ]) {
+      expect(validateEngraving(40, value)).toBeNull();
+    }
+  });
+
+  it('rejects markup, emoji, newlines and hidden characters', () => {
+    for (const value of [
+      '<b>Ana</b>',
+      'Ana😊',
+      'Ana\nB',
+      'Ana\tB',
+      'Ana\u200b',
+      'Ana\u202e',
+    ]) {
+      expect(validateEngraving(5, value)).toBe('invalid-characters');
+    }
+  });
+
+  it('rejects text over the limit', () => {
+    expect(validateEngraving(5, 'Anabel')).toBe('too-long');
+    expect(validateEngraving(5, '  Ana  ')).toBeNull();
+  });
+
+  it('treats empty and whitespace-only as valid', () => {
+    expect(validateEngraving(5, '')).toBeNull();
+    expect(validateEngraving(5, '   ')).toBeNull();
   });
 });
 
@@ -222,6 +273,27 @@ describe('validateCustomizationAttributes', () => {
       ).toEqual({ok: false, error: 'engraving-not-allowed'});
     },
   );
+
+  it.each(['Ana😊', 'Ana\u200b', 'Ana\u202e', '<b>Ana</b>'])(
+    'rejects the disallowed engraving %j',
+    (value) => {
+      expect(
+        validateCustomizationAttributes(customization, [engraving(value)]),
+      ).toEqual({ok: false, error: 'engraving-not-allowed'});
+    },
+  );
+
+  it('preserves case and normalizes whitespace in the cart attribute', () => {
+    expect(
+      validateCustomizationAttributes(
+        {...customization, engravingMaxLength: 20},
+        [engraving('  Ana\u00a0 Maria  ')],
+      ),
+    ).toEqual({
+      ok: true,
+      attributes: [{key: 'Engraving', value: 'Ana Maria'}],
+    });
+  });
 
   it('rejects an engraving when the product offers none', () => {
     expect(

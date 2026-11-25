@@ -15,6 +15,7 @@ import {isColorOption, isSizeOption} from '~/lib/options';
 import {
   customizationAttributes,
   initialCustomizationChoice,
+  validateEngraving,
   type ProductCustomization as Customization,
 } from '~/lib/customization';
 
@@ -41,6 +42,11 @@ export function ProductForm({
   const [choice, setChoice] = useState(() =>
     initialCustomizationChoice(customization),
   );
+  const engravingMaxLength = customization?.engravingMaxLength ?? null;
+  const engravingError =
+    engravingMaxLength !== null
+      ? validateEngraving(engravingMaxLength, choice.engraving)
+      : null;
 
   const attributes = customizationAttributes(customization, choice);
   const lines: OptimisticCartLineInput[] = selectedVariant
@@ -165,6 +171,7 @@ export function ProductForm({
           customization={customization}
           value={choice}
           onChange={setChoice}
+          engravingError={engravingError}
         />
       ) : null}
 
@@ -184,7 +191,8 @@ export function ProductForm({
                     !selectedVariant ||
                     !selectedVariant.availableForSale ||
                     fetcher.state !== 'idle' ||
-                    loading
+                    loading ||
+                    engravingError !== null
                   }
                   onClick={onClick}
                   className="flex min-h-12 w-full items-center justify-center bg-primary px-6 text-xs font-medium uppercase tracking-widest text-white transition-colors hover:bg-bark disabled:cursor-not-allowed disabled:opacity-50"

@@ -194,12 +194,22 @@ export const pt: Messages = {
   'product.detail.metal': 'Metal',
   'product.detail.gemstone': 'Pedra preciosa',
   'product.detail.gemColor': 'Cor da pedra',
-  'product.customize.title': 'Personalizar',
+  'product.customize.sectionTitle': 'Personalizar',
+  'product.customize.optional': 'Opcional',
+  'product.customize.included': 'Incluído',
   'product.customize.engraving': 'Gravação',
-  'product.customize.engravingRemaining': {
-    one: '{count} carácter restante',
-    other: '{count} caracteres restantes',
+  'product.customize.engravingSummary': '«\u00a0{text}\u00a0»',
+  'product.customize.engravingPlaceholderSingle': 'Um carácter',
+  'product.customize.engravingPlaceholderDefault': 'Escreva a gravação',
+  'product.customize.engravingPreview': 'Pré-visualização',
+  'product.customize.engravingCounter': '{count}/{max}',
+  'product.customize.engravingTooLong': {
+    one: 'A gravação pode ter até {count} carácter.',
+    other: 'A gravação pode ter até {count} caracteres.',
   },
+  'product.customize.engravingInvalid':
+    'Use letras, números, espaços e pontuação simples.',
+  'product.customize.engravingCheck': 'Verificar gravação',
 
   // Front-camera try-on
   'tryOn.title': 'Experimentar {title}',

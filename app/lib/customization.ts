@@ -2,6 +2,16 @@ import {normalizeValue} from '~/lib/metafields';
 
 export const ENGRAVING_LENGTH_CAP = 40;
 
+/**
+ * Letters (including accents), combining marks, numbers, spaces and the simple
+ * punctuation we allow on a piece. Notably absent: emoji, markup, control
+ * characters, zero-width and bidi controls, newlines and tabs.
+ */
+export const ENGRAVING_ALLOWED_PATTERN =
+  /^[\p{L}\p{M}\p{N} '’&.,!?+\-/:()]*$/u;
+
+export type EngravingError = 'too-long' | 'invalid-characters';
+
 export type GemColorChoice = {
   value: string;
   label: string;
@@ -69,12 +79,50 @@ export function isAllowedGemColor(
   return customization.gemColors.some((color) => color.value === value);
 }
 
+/**
+ * Trims the text and composes accents, so the same name is stored one way.
+ * Case is deliberately preserved: the shopper decides how the engraving reads.
+ */
+export function normalizeEngraving(value: string): string {
+  return value
+    .normalize('NFC')
+    .replace(/\u00a0/g, ' ')
+    .trim()
+    .replace(/ {2,}/g, ' ');
+}
+
+/** Counts Unicode code points, so an accented character counts as one. */
+function textLength(value: string): number {
+  return [...value].length;
+}
+
+export function engravingLength(value: string): number {
+  return textLength(normalizeEngraving(value));
+}
+
+function isAllowedEngravingText(value: string): boolean {
+  // `$` can match before a trailing newline, so compare the whole match.
+  return value.match(ENGRAVING_ALLOWED_PATTERN)?.[0] === value;
+}
+
+/** Shared client/server validation for an engraving option with a known limit. */
+export function validateEngraving(
+  maxLength: number,
+  value: string,
+): EngravingError | null {
+  const text = normalizeEngraving(value);
+  if (!text) return null;
+  if (!isAllowedEngravingText(text)) return 'invalid-characters';
+  if (textLength(text) > maxLength) return 'too-long';
+  return null;
+}
+
 export function isEngravingWithinLimit(
   customization: ProductCustomization,
   text: string,
 ): boolean {
   const max = customization.engravingMaxLength;
-  return max !== null && text.length <= max;
+  return max !== null && engravingLength(text) <= max;
 }
 
 /** Metafields the customization rules read, shared by the product page and the cart. */
@@ -114,10 +162,6 @@ export type CustomizationValidation =
 
 const CUSTOMIZATION_KEYS = new Set<string>(Object.values(CUSTOMIZATION_ATTRIBUTE));
 
-// Control characters cannot be engraved and would garble the order.
-// eslint-disable-next-line no-control-regex
-const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f]/;
-
 /** Starting choice: the first allowed gem color and no engraving. */
 export function initialCustomizationChoice(
   customization: ProductCustomization | null | undefined,
@@ -143,7 +187,7 @@ export function customizationAttributes(
     attributes.push({key: CUSTOMIZATION_ATTRIBUTE.gemColor, value: color.label});
   }
 
-  const engraving = choice.engraving.trim();
+  const engraving = normalizeEngraving(choice.engraving);
   if (engraving && customization.engravingMaxLength !== null) {
     attributes.push({key: CUSTOMIZATION_ATTRIBUTE.engraving, value: engraving});
   }
@@ -190,11 +234,11 @@ export function validateCustomizationAttributes(
       continue;
     }
 
-    const engraving = attribute.value.trim();
+    const engraving = normalizeEngraving(attribute.value);
     if (!engraving) continue;
     if (
-      CONTROL_CHARACTERS.test(engraving) ||
-      !isEngravingWithinLimit(customization, engraving)
+      customization.engravingMaxLength === null ||
+      validateEngraving(customization.engravingMaxLength, engraving) !== null
     ) {
       return {ok: false, error: 'engraving-not-allowed'};
     }
