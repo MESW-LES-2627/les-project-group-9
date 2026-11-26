@@ -17,7 +17,8 @@ code offers:
 - **Front-camera try-on** for earrings and necklaces that have a try-on overlay, on a phone
   (desktop shows a QR code), including a multi-piece look from the fitting room
 - **Restricted customization** on products the merchant enables: a gem colour from an
-  allowed list and an engraving up to a set length
+  allowed list and an engraving up to a set length, with a live preview and
+  character validation
 - **Order ratings** (US-058): 1–5 stars per product of a fully delivered order, stored
   privately; they are not shown publicly yet
 - **English (US), Portuguese (Portugal) and French**: language selection and a fully

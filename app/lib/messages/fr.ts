@@ -199,12 +199,22 @@ export const fr: Messages = {
   'product.detail.metal': 'Métal',
   'product.detail.gemstone': 'Pierre',
   'product.detail.gemColor': 'Couleur de la pierre',
-  'product.customize.title': 'Personnaliser',
+  'product.customize.sectionTitle': 'Personnaliser',
+  'product.customize.optional': 'Facultatif',
+  'product.customize.included': 'Inclus',
   'product.customize.engraving': 'Gravure',
-  'product.customize.engravingRemaining': {
-    one: '{count} caractère restant',
-    other: '{count} caractères restants',
+  'product.customize.engravingSummary': '«\u00a0{text}\u00a0»',
+  'product.customize.engravingPlaceholderSingle': 'Un caractère',
+  'product.customize.engravingPlaceholderDefault': 'Saisissez votre gravure',
+  'product.customize.engravingPreview': 'Aperçu',
+  'product.customize.engravingCounter': '{count}/{max}',
+  'product.customize.engravingTooLong': {
+    one: 'La gravure peut contenir jusqu’à {count} caractère.',
+    other: 'La gravure peut contenir jusqu’à {count} caractères.',
   },
+  'product.customize.engravingInvalid':
+    'Utilisez des lettres, des chiffres, des espaces et une ponctuation simple.',
+  'product.customize.engravingCheck': 'Vérifier la gravure',
 
   // Front-camera try-on
   'tryOn.title': 'Essayer {title}',

@@ -204,12 +204,22 @@ export const en = {
   'product.detail.metal': 'Metal',
   'product.detail.gemstone': 'Gemstone',
   'product.detail.gemColor': 'Gem color',
-  'product.customize.title': 'Customize',
+  'product.customize.sectionTitle': 'Personalize',
+  'product.customize.optional': 'Optional',
+  'product.customize.included': 'Included',
   'product.customize.engraving': 'Engraving',
-  'product.customize.engravingRemaining': {
-    one: '{count} character left',
-    other: '{count} characters left',
+  'product.customize.engravingSummary': '“{text}”',
+  'product.customize.engravingPlaceholderSingle': 'One character',
+  'product.customize.engravingPlaceholderDefault': 'Type your engraving',
+  'product.customize.engravingPreview': 'Preview',
+  'product.customize.engravingCounter': '{count}/{max}',
+  'product.customize.engravingTooLong': {
+    one: 'Engraving can be up to {count} character.',
+    other: 'Engraving can be up to {count} characters.',
   },
+  'product.customize.engravingInvalid':
+    'Use letters, numbers, spaces and simple punctuation only.',
+  'product.customize.engravingCheck': 'Check engraving',
 
   // Front-camera try-on
   'tryOn.title': 'Try on {title}',

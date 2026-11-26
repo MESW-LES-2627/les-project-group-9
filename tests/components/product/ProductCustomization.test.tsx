@@ -5,6 +5,7 @@ import {describe, expect, it, vi} from 'vitest';
 import {ProductCustomization} from '~/components/product/ProductCustomization';
 import {
   initialCustomizationChoice,
+  validateEngraving,
   type CustomizationChoice,
   type ProductCustomization as Customization,
 } from '~/lib/customization';
@@ -25,10 +26,16 @@ function Harness({
     initialCustomizationChoice(customization),
   );
 
+  const engravingError =
+    customization.engravingMaxLength === null
+      ? null
+      : validateEngraving(customization.engravingMaxLength, value.engraving);
+
   return (
     <ProductCustomization
       customization={customization}
       value={value}
+      engravingError={engravingError}
       onChange={(next) => {
         setValue(next);
         onChange(next);
@@ -41,7 +48,6 @@ describe('ProductCustomization', () => {
   it('offers only the allowed gem colors, with the first selected', () => {
     render(<Harness customization={{gemColors, engravingMaxLength: null}} />);
 
-    expect(screen.getByRole('region', {name: 'Customize'})).toBeInTheDocument();
     expect(screen.getAllByRole('radio')).toHaveLength(2);
     expect(screen.getByRole('radio', {name: 'Ruby'})).toBeChecked();
     expect(screen.queryByLabelText('Engraving')).not.toBeInTheDocument();
@@ -66,7 +72,58 @@ describe('ProductCustomization', () => {
     });
   });
 
-  it('limits the engraving to the max length and counts down', async () => {
+  it('renders one engraving row with the editor already open', () => {
+    render(
+      <Harness
+        customization={{gemColors: [], engravingMaxLength: 20}}
+      />,
+    );
+
+    expect(screen.getByText('Optional')).toBeInTheDocument();
+    expect(screen.queryByText('Personalize')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Engraving')).toHaveAttribute(
+      'placeholder',
+      'Type your engraving',
+    );
+    expect(screen.getByText('0/20')).toBeInTheDocument();
+    expect(screen.queryByText(/Reverse side/)).not.toBeInTheDocument();
+  });
+
+  it('adapts the copy and singular error for a one-character product', async () => {
+    render(
+      <Harness
+        customization={{gemColors: [], engravingMaxLength: 1}}
+      />,
+    );
+
+    const input = screen.getByLabelText('Engraving');
+    expect(input).toHaveAttribute('placeholder', 'One character');
+    expect(screen.getByText('0/1')).toBeInTheDocument();
+
+    await userEvent.type(input, 'AB');
+
+    expect(
+      screen.getByText('Engraving can be up to 1 character.'),
+    ).toBeInTheDocument();
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+  });
+
+  it('shows the shopper text in the preview without changing case', async () => {
+    render(
+      <Harness
+        customization={{gemColors: [], engravingMaxLength: 20}}
+      />,
+    );
+
+    const input = screen.getByLabelText('Engraving');
+    await userEvent.type(input, 'Ana Maria');
+
+    expect(screen.getByText('Preview')).toBeInTheDocument();
+    expect(screen.getByText('Ana Maria')).toBeInTheDocument();
+    expect(screen.getByText('9/20')).toBeInTheDocument();
+  });
+
+  it('does not truncate over-limit text and explains the error', async () => {
     const onChange = vi.fn();
     render(
       <Harness
@@ -76,23 +133,55 @@ describe('ProductCustomization', () => {
     );
 
     const input = screen.getByLabelText('Engraving');
-    expect(input).toHaveAttribute('maxLength', '5');
-    expect(input).toHaveAccessibleDescription('5 characters left');
-    expect(screen.queryByRole('radio')).not.toBeInTheDocument();
+    expect(input).not.toHaveAttribute('maxLength');
 
-    await userEvent.type(input, 'Ana');
-    expect(input).toHaveAccessibleDescription('2 characters left');
+    await userEvent.type(input, 'Anabel');
 
-    await userEvent.type(input, 'belle');
-    expect(input).toHaveValue('Anabe');
-    expect(input).toHaveAccessibleDescription('0 characters left');
-    expect(onChange).toHaveBeenLastCalledWith({gemColor: '', engraving: 'Anabe'});
+    expect(input).toHaveValue('Anabel');
+    expect(screen.getByText('6/5')).toBeInTheDocument();
+    expect(
+      screen.getByText('Engraving can be up to 5 characters.'),
+    ).toBeInTheDocument();
+    expect(onChange).toHaveBeenLastCalledWith({
+      gemColor: '',
+      engraving: 'Anabel',
+    });
   });
 
-  it('uses the singular form for one character left', async () => {
-    render(<Harness customization={{gemColors: [], engravingMaxLength: 2}} />);
+  it('explains disallowed characters', async () => {
+    render(
+      <Harness
+        customization={{gemColors: [], engravingMaxLength: 20}}
+      />,
+    );
 
-    await userEvent.type(screen.getByLabelText('Engraving'), 'A');
-    expect(screen.getByText('1 character left')).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText('Engraving'), '<');
+
+    expect(
+      screen.getByText(
+        'Use letters, numbers, spaces and simple punctuation only.',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText('Engraving')).toHaveAttribute(
+      'aria-invalid',
+      'true',
+    );
+  });
+
+  it('trims and normalizes spaces for the preview and counter', async () => {
+    render(
+      <Harness
+        customization={{gemColors: [], engravingMaxLength: 20}}
+      />,
+    );
+
+    const input = screen.getByLabelText('Engraving');
+    await userEvent.type(input, '  Ana  Maria  ');
+
+    expect(screen.getByText('Ana Maria')).toBeInTheDocument();
+    expect(screen.getByText('9/20')).toBeInTheDocument();
+
+    await userEvent.tab();
+    expect(input).toHaveValue('Ana Maria');
   });
 });

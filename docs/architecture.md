@@ -141,14 +141,14 @@ Request
 
 ## Product customization
 
-Store admins choose which products can be customized (engraving and gem color, epic E06)
-with three product metafields. The product page shows a **Customize** panel only for
-products marked as customizable that have at least one valid option.
+Store admins choose which products can be customized (engraving and gem colour, epic E06)
+with three product metafields. The product page shows a personalization row only for
+products marked as customizable that have a valid engraving option.
 
 | Metafield (namespace `custom`) | Type | Meaning |
 | --- | --- | --- |
 | `customizable` | True or false | Turns the options on for the product. |
-| `customization_gem_colors` | Single line text, **List of values** | Gem colors the shopper may choose. Shown as typed (Shopify content, translated in the admin). |
+| `customization_gem_colors` | Single line text, **List of values** | Gem colours the shopper may choose. Shown as typed (Shopify content, translated in the admin). |
 | `engraving_max_length` | Integer (min 1, max 40) | Maximum engraving length. Empty means no engraving. |
 
 - **Admin setup:** Settings → Metafields and metaobjects → Products → Add definition. The
@@ -158,29 +158,52 @@ products marked as customizable that have at least one valid option.
   three metafields; `PRODUCT_FRAGMENT` (`products.$handle.tsx`) and the cart check both use
   it. The loader calls `parseProductCustomization()` and returns `customization` (or
   `null`). `ProductForm` (keyed by product, so the choice resets on another product) holds
-  the shopper's choice and renders `ProductCustomization.tsx` above the add-to-bag button:
-  gem colors as a radio group, engraving as an input with `maxLength` and a
-  remaining-characters counter.
+  the shopper's choice and renders `ProductCustomization.tsx` above the add-to-bag button.
+- **Section foundation:** `PersonalizationSection`
+  (`app/components/product/PersonalizationSection.tsx`) owns the reusable row/editor
+  contract described by `PersonalizationGroupBase` and the `PersonalizationGroup` union
+  (`app/lib/personalization.ts`). With one group it renders a single open row and no
+  section header; with two or more it renders the `Personalize` header, summary rows and
+  one open editor at a time. Rows use `errorSummary` for their error state and `PriceDelta`
+  for `+€35`/`Included`/`−€35` amounts. Only the `engraving` group exists in this
+  iteration; metal, stone and artwork are future groups.
+- **Engraving row:** `EngravingEditor`
+  (`app/components/product/EngravingEditor.tsx`) renders a single-line input, a
+  `used/max` character counter, an error line shown only when invalid, and a live text
+  preview. The input has no native `maxLength`: over-limit text is shown with an error and
+  the Add to bag button is disabled. The placeholder is limit-aware (`One character` for a
+  max of 1, otherwise `Type your engraving`); there is no persistent helper text. Case is
+  preserved. Gem colours remain in the existing `ProductCustomization` fieldset and are not
+  part of this section yet.
 - **Rules in `parseProductCustomization()`:** returns `null` unless `customizable` is
-  `true` and at least one option is valid. Gem colors are trimmed and de-duplicated by slug
+  `true` and at least one option is valid. Gem colours are trimmed and de-duplicated by slug
   (`value` is the slug, `label` the admin text). Engraving limits that are not positive
   integers are ignored; larger values are capped at `ENGRAVING_LENGTH_CAP` (40).
+- **Engraving normalization and security:** `normalizeEngraving()` applies Unicode NFC,
+  converts non-breaking spaces, trims and collapses repeated spaces; the editor applies it
+  on blur so the input, counter and preview agree. Case is preserved.
+  `validateEngraving()` allows letters (including accents), numbers, spaces and
+  `' ’ & . , ! ? + - / : ( )`; it rejects emoji, markup, control characters, newlines,
+  tabs, zero-width characters and bidi controls. Length is counted in Unicode code points,
+  not UTF-16 units. The same helpers run in the cart action.
 - **Cart line attributes:** `customizationAttributes()` turns the choice into cart line
   attributes, keyed by `CUSTOMIZATION_ATTRIBUTE`: `Gem color` (the admin label) and
-  `Engraving` (trimmed; left out when empty). The keys are identifiers in English because
-  Shopify shows them as-is at checkout and on the order. The same piece with a different
-  customization becomes a separate cart line.
+  `Engraving` (normalized; left out when empty). The keys are identifiers in English
+  because Shopify shows them as-is at checkout and on the order. The same piece with a
+  different customization becomes a separate cart line.
 - **Server validation:** the `cart` action passes `LinesAdd` lines to
   `validateCartLinesCustomization()` (`app/lib/customization.server.ts`). For lines with
   customization attributes it loads the variants' product metafields (no cache) and runs
-  `validateCustomizationAttributes()`: the product must be customizable, the gem color must
-  be allowed, and the engraving must fit the limit and contain no control characters. Any
+  `validateCustomizationAttributes()`: the product must be customizable, the gem colour must
+  be allowed, and the engraving must pass the same normalization/character/length rules. Any
   failure returns 400 with an error code (`errors: [{code}]`) and leaves the cart unchanged.
   `LinesUpdate` requests that set customization attributes are rejected, because the
   storefront never changes a customization after it is added.
-- **Shopping bag:** `CartLineItem` lists the gem color and engraving under the product name
-  (`customizationLineDetails()`), with translated labels; the engraving is shown as typed.
-- **Not done yet:** price changes for customized pieces (US-028) and the 3D preview (US-027).
+- **Shopping bag:** `CartLineItem` lists the gem colour and engraving under the product name
+  (`customizationLineDetails()`), with translated labels; the engraving keeps the
+  shopper's case.
+- **Not done yet:** metal/stone/artwork groups, price changes for customized pieces
+  (US-028) and the 3D preview (US-027).
 
 ## Session and cart
 

@@ -426,7 +426,7 @@ describe('ProductForm customization', () => {
   it('adds no attributes to a product that is not customizable', () => {
     renderForm();
 
-    expect(screen.queryByRole('region', {name: 'Customize'})).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Engraving')).not.toBeInTheDocument();
     expect(lastLine()).not.toHaveProperty('attributes');
   });
 
@@ -451,5 +451,22 @@ describe('ProductForm customization', () => {
         {key: 'Engraving', value: 'Ana'},
       ],
     });
+  });
+
+  it('disables add to bag while the engraving is invalid', async () => {
+    render(
+      <ProductForm
+        productOptions={productOptions}
+        selectedVariant={selectedVariant}
+        customization={customization}
+      />,
+    );
+
+    await userEvent.type(screen.getByLabelText('Engraving'), 'Anabel Maria');
+
+    expect(
+      screen.getByText('Engraving can be up to 10 characters.'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', {name: 'Add to bag'})).toBeDisabled();
   });
 });

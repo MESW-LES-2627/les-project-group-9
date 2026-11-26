@@ -41,7 +41,10 @@ const MYSHOPIFY_DOMAIN = /^[a-z0-9][a-z0-9-]*\.myshopify\.com$/;
  * secret (the static token wins when both are set). Returns `null` (ratings
  * unavailable) otherwise, e.g. in CI against mock.shop.
  */
-export function readAdminConfig(env: RatingStoreEnv): AdminConfig | null {
+export function readAdminConfig(
+  env: RatingStoreEnv | null | undefined,
+): AdminConfig | null {
+  if (!env) return null;
   const domain = env.PUBLIC_STORE_DOMAIN?.trim()
     .replace(/^https?:\/\//, '')
     .replace(/\/+$/, '')
