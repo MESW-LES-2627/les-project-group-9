@@ -176,6 +176,8 @@ export const fr: Messages = {
   'product.optionSoldOut': '{name} (épuisé)',
   'product.noImage': 'Aucune image disponible',
   'product.showImage': 'Afficher l’image {index} sur {total}',
+  'product.3d': '3D',
+  'product.show3d': 'Afficher la vue 3D',
   'product.price': 'Prix',
   'product.allergenBadge': 'Allergène',
   'product.favoriteRemove': 'Retirer {title} des favoris',

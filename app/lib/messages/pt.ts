@@ -171,6 +171,8 @@ export const pt: Messages = {
   'product.optionSoldOut': '{name} (esgotado)',
   'product.noImage': 'Imagem indisponível',
   'product.showImage': 'Mostrar imagem {index} de {total}',
+  'product.3d': '3D',
+  'product.show3d': 'Mostrar a vista 3D',
   'product.price': 'Preço',
   'product.allergenBadge': 'Alergénio',
   'product.favoriteRemove': 'Remover {title} dos favoritos',
