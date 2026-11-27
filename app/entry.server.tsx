@@ -33,6 +33,12 @@ export default async function handleRequest(
     // these with its defaults, so only the extra hosts are listed.
     styleSrc: ['https://fonts.googleapis.com'],
     fontSrc: ['https://fonts.gstatic.com', 'data:'],
+    // The product 3D models (US-011) are fetched by <model-viewer> from the
+    // store's checkout domain, not cdn.shopify.com: the Storefront API serves
+    // their GLB sources from jeweliette-checkout.myshopify.com/cdn/… . The
+    // glTF loader then extracts embedded textures as blob: URLs, so those
+    // need connect-src access too.
+    connectSrc: ['https://jeweliette-checkout.myshopify.com', 'blob:'],
     // MediaPipe compiles its WASM in a worker on some Safari versions.
     workerSrc: ["'self'", 'blob:'],
   });
