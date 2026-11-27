@@ -1830,6 +1830,22 @@ export type ProductFragment = Pick<
       Pick<StorefrontAPI.Image, 'id' | 'url' | 'altText' | 'width' | 'height'>
     >;
   };
+  media: {
+    nodes: Array<
+      | {__typename: 'ExternalVideo' | 'MediaImage' | 'Video'}
+      | ({__typename: 'Model3d'} & Pick<StorefrontAPI.Model3d, 'id' | 'alt'> & {
+            sources: Array<
+              Pick<
+                StorefrontAPI.Model3dSource,
+                'url' | 'mimeType' | 'format' | 'filesize'
+              >
+            >;
+            previewImage?: StorefrontAPI.Maybe<
+              Pick<StorefrontAPI.Image, 'url' | 'altText' | 'width' | 'height'>
+            >;
+          })
+    >;
+  };
   collections: {
     nodes: Array<Pick<StorefrontAPI.Collection, 'title' | 'handle'>>;
   };
@@ -2017,6 +2033,28 @@ export type ProductQuery = {
             StorefrontAPI.Image,
             'id' | 'url' | 'altText' | 'width' | 'height'
           >
+        >;
+      };
+      media: {
+        nodes: Array<
+          | {__typename: 'ExternalVideo' | 'MediaImage' | 'Video'}
+          | ({__typename: 'Model3d'} & Pick<
+              StorefrontAPI.Model3d,
+              'id' | 'alt'
+            > & {
+                sources: Array<
+                  Pick<
+                    StorefrontAPI.Model3dSource,
+                    'url' | 'mimeType' | 'format' | 'filesize'
+                  >
+                >;
+                previewImage?: StorefrontAPI.Maybe<
+                  Pick<
+                    StorefrontAPI.Image,
+                    'url' | 'altText' | 'width' | 'height'
+                  >
+                >;
+              })
         >;
       };
       collections: {
@@ -2640,7 +2678,7 @@ interface GeneratedQueryTypes {
     return: PoliciesQuery;
     variables: PoliciesQueryVariables;
   };
-  '#graphql\n  query Product(\n    $country: CountryCode\n    $handle: String!\n    $language: LanguageCode\n    $selectedOptions: [SelectedOptionInput!]!\n  ) @inContext(country: $country, language: $language) {\n    product(handle: $handle) { ...Product }\n  }\n  #graphql\n  fragment Product on Product {\n    id\n    title\n    vendor\n    handle\n    descriptionHtml\n    description\n    encodedVariantExistence\n    encodedVariantAvailability\n    productType\n    jewelryMaterial: metafield(namespace: "shopify", key: "jewelry-material") {\n      ...JewelietteMaterialMetafield\n    }\n    watchMaterial: metafield(namespace: "shopify", key: "watch-material") {\n      ...JewelietteMaterialMetafield\n    }\n    metal: metafield(namespace: "custom", key: "metal") { value }\n    gemstone: metafield(namespace: "custom", key: "gemstone") { value }\n    gemColor: metafield(namespace: "custom", key: "gem_color") { value }\n    allergens: metafield(namespace: "custom", key: "allergens") { value }\n    ...ProductCustomizationFields\n    images(first: 10) { nodes { id url altText width height } }\n    collections(first: 1) { nodes { title handle } }\n    category { id name }\n    options {\n      name\n      optionValues {\n        name\n        firstSelectableVariant { ...ProductVariant }\n        swatch { color image { previewImage { url } } }\n      }\n    }\n    selectedOrFirstAvailableVariant(selectedOptions: $selectedOptions, ignoreUnknownOptions: true, caseInsensitiveMatch: true) {\n      ...ProductVariant\n    }\n    adjacentVariants(selectedOptions: $selectedOptions) { ...ProductVariant }\n    seo { description title }\n  }\n  #graphql\n  fragment ProductVariant on ProductVariant {\n    availableForSale\n    compareAtPrice { amount currencyCode }\n    id\n    image { __typename id url altText width height }\n    price { amount currencyCode }\n    product { title handle }\n    selectedOptions { name value }\n    sku\n    title\n    unitPrice { amount currencyCode }\n    tryOnOverlay: metafield(namespace: "custom", key: "try_on_overlay") {\n      reference {\n        ... on MediaImage { image { url } }\n        ... on GenericFile { url }\n      }\n    }\n    tryOnSize: metafield(namespace: "custom", key: "try_on_size_cm") { value }\n  }\n\n  #graphql\n  fragment JewelietteMaterialMetafield on Metafield {\n    references(first: 10) {\n      nodes {\n        ... on Metaobject {\n          handle\n          fields { key value }\n        }\n      }\n    }\n  }\n\n  #graphql\n  fragment ProductCustomizationFields on Product {\n    customizable: metafield(namespace: "custom", key: "customizable") { value }\n    customizationGemColors: metafield(namespace: "custom", key: "customization_gem_colors") { value }\n    engravingMaxLength: metafield(namespace: "custom", key: "engraving_max_length") { value }\n  }\n\n\n': {
+  '#graphql\n  query Product(\n    $country: CountryCode\n    $handle: String!\n    $language: LanguageCode\n    $selectedOptions: [SelectedOptionInput!]!\n  ) @inContext(country: $country, language: $language) {\n    product(handle: $handle) { ...Product }\n  }\n  #graphql\n  fragment Product on Product {\n    id\n    title\n    vendor\n    handle\n    descriptionHtml\n    description\n    encodedVariantExistence\n    encodedVariantAvailability\n    productType\n    jewelryMaterial: metafield(namespace: "shopify", key: "jewelry-material") {\n      ...JewelietteMaterialMetafield\n    }\n    watchMaterial: metafield(namespace: "shopify", key: "watch-material") {\n      ...JewelietteMaterialMetafield\n    }\n    metal: metafield(namespace: "custom", key: "metal") { value }\n    gemstone: metafield(namespace: "custom", key: "gemstone") { value }\n    gemColor: metafield(namespace: "custom", key: "gem_color") { value }\n    allergens: metafield(namespace: "custom", key: "allergens") { value }\n    ...ProductCustomizationFields\n    images(first: 10) { nodes { id url altText width height } }\n    media(first: 10) {\n      nodes {\n        __typename\n        ... on Model3d {\n          id\n          alt\n          sources { url mimeType format filesize }\n          previewImage { url altText width height }\n        }\n      }\n    }\n    collections(first: 1) { nodes { title handle } }\n    category { id name }\n    options {\n      name\n      optionValues {\n        name\n        firstSelectableVariant { ...ProductVariant }\n        swatch { color image { previewImage { url } } }\n      }\n    }\n    selectedOrFirstAvailableVariant(selectedOptions: $selectedOptions, ignoreUnknownOptions: true, caseInsensitiveMatch: true) {\n      ...ProductVariant\n    }\n    adjacentVariants(selectedOptions: $selectedOptions) { ...ProductVariant }\n    seo { description title }\n  }\n  #graphql\n  fragment ProductVariant on ProductVariant {\n    availableForSale\n    compareAtPrice { amount currencyCode }\n    id\n    image { __typename id url altText width height }\n    price { amount currencyCode }\n    product { title handle }\n    selectedOptions { name value }\n    sku\n    title\n    unitPrice { amount currencyCode }\n    tryOnOverlay: metafield(namespace: "custom", key: "try_on_overlay") {\n      reference {\n        ... on MediaImage { image { url } }\n        ... on GenericFile { url }\n      }\n    }\n    tryOnSize: metafield(namespace: "custom", key: "try_on_size_cm") { value }\n  }\n\n  #graphql\n  fragment JewelietteMaterialMetafield on Metafield {\n    references(first: 10) {\n      nodes {\n        ... on Metaobject {\n          handle\n          fields { key value }\n        }\n      }\n    }\n  }\n\n  #graphql\n  fragment ProductCustomizationFields on Product {\n    customizable: metafield(namespace: "custom", key: "customizable") { value }\n    customizationGemColors: metafield(namespace: "custom", key: "customization_gem_colors") { value }\n    engravingMaxLength: metafield(namespace: "custom", key: "engraving_max_length") { value }\n  }\n\n\n': {
     return: ProductQuery;
     variables: ProductQueryVariables;
   };
