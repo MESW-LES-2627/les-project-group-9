@@ -182,6 +182,8 @@ export const en = {
   'product.optionSoldOut': '{name} (sold out)',
   'product.noImage': 'No image available',
   'product.showImage': 'Show image {index} of {total}',
+  'product.3d': '3D',
+  'product.show3d': 'Show the 3D view',
   'product.price': 'Price',
   'product.allergenBadge': 'Allergen',
   'product.favoriteRemove': 'Remove {title} from favorites',

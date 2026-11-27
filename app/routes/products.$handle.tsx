@@ -30,6 +30,7 @@ import {
   formatMetafieldValue,
 } from '~/lib/jeweliette-catalog';
 import {materialsForColor, parseProductMaterials} from '~/lib/materials';
+import {pick3dModel} from '~/lib/model3d';
 import {hasHtmlContent} from '~/lib/html';
 import {isColorOption} from '~/lib/options';
 import {isRingProduct} from '~/lib/profile/ringCategory';
@@ -114,6 +115,7 @@ export default function Product() {
     selectedOrFirstAvailableVariant: selectedVariant,
   });
 
+  const model = pick3dModel(product.media.nodes);
   const collection = product.collections.nodes[0];
   const materials = parseProductMaterials(product);
   const colorOption = product.options?.find((option) =>
@@ -169,10 +171,14 @@ export default function Product() {
       </nav>
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-14">
+        {/* Keyed by product so media state (manual pick, model failure)
+            resets when navigating between products. */}
         <ProductGallery
+          key={product.id}
           images={product.images.nodes}
           variantImage={selectedVariant?.image}
           title={product.title}
+          model={model}
         />
 
         <div
@@ -393,6 +399,17 @@ const PRODUCT_FRAGMENT = `#graphql
     allergens: metafield(namespace: "custom", key: "allergens") { value }
     ...ProductCustomizationFields
     images(first: 10) { nodes { id url altText width height } }
+    media(first: 10) {
+      nodes {
+        __typename
+        ... on Model3d {
+          id
+          alt
+          sources { url mimeType format filesize }
+          previewImage { url altText width height }
+        }
+      }
+    }
     collections(first: 1) { nodes { title handle } }
     category { id name }
     options {
